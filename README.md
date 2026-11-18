@@ -16,3 +16,9 @@ Roteiro sugerido para a apresentação:
 2. Acompanhe o status mudar sozinho de **Recebido** para **Aguardando N4** e **Cadastrado no N4** (com aviso no sino).
 3. Clique em **Ver detalhes** para mostrar o histórico de cada etapa.
 4. Use os **Filtros de consulta**, ordene as colunas e clique em **Exportar Excel** (gera um `.xlsx`).
+
+## Apresentação — antes e depois das automações
+
+`apresentacao/antes-e-depois-automacoes.pptx` (6 slides, com notas do apresentador) e a versão em PDF.
+Conteúdo: cadastro da SDA no PTVV e no Loga-AI (antes e depois das planilhas) e o projeto Intercâmbios (Loga-AI + Navis N4).
+Os slides são gerados por `apresentacao/gerar-slides.js` (pptxgenjs).
