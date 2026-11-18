@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Intercâmbios — log·aí Interno</title>
+<title>Intercâmbios TVV</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -267,7 +267,7 @@ table.grid{width:100%;border-collapse:collapse;min-width:1040px}
 .paper-foot{margin-top:24px;font-size:9.5px;color:#9AA3AF;text-align:center}
 
 /* ---------- Toast ---------- */
-.toasts{position:fixed;right:20px;bottom:20px;display:flex;flex-direction:column;gap:10px;z-index:200;max-width:min(380px,calc(100vw - 32px))}
+.toasts{position:fixed;right:calc(20px + env(safe-area-inset-right, 0px));bottom:calc(20px + env(safe-area-inset-bottom, 0px));display:flex;flex-direction:column;gap:10px;z-index:200;max-width:min(380px,calc(100vw - 32px))}
 .toast{display:flex;align-items:flex-start;gap:10px;background:#1F2937;color:#fff;padding:12px 14px;border-radius:6px;box-shadow:var(--shadow);font-size:13px;animation:rise .2s ease-out}
 .toast svg{margin-top:1px}
 .toast.success svg{color:#7FD99A}
@@ -910,7 +910,21 @@ function buildXlsx(sheetName, header, rows, widths) {
     { name: 'xl/worksheets/sheet1.xml', data: head + `<worksheet xmlns="${NS}/spreadsheetml/2006/main"><dimension ref="${ref}"/><sheetViews><sheetView workbookViewId="0"><pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews><cols>${widths.map((w, i) => `<col min="${i + 1}" max="${i + 1}" width="${w}" customWidth="1"/>`).join('')}</cols><sheetData>${row(header, 1, 1)}${rows.map((r, i) => row(r, i + 2)).join('')}</sheetData><autoFilter ref="${ref}"/></worksheet>` },
   ], `${MIME}.sheet`);
 }
-$('#btnExport').addEventListener('click', () => {
+/* Publicado como link, o visualizador só entrega arquivos pelo recurso "downloads" (o visitante confirma).
+   Aberto direto do computador, não existe window.claude e o download é feito pelo próprio navegador. */
+async function saveFile(filename, blob) {
+  if (window.claude && typeof window.claude.use === 'function') {
+    const dl = await window.claude.use('downloads');
+    if (!dl) throw { code: 'unavailable' };
+    await dl.save({ filename, data: blob });
+    return;
+  }
+  const url = URL.createObjectURL(blob);
+  const a = Object.assign(document.createElement('a'), { href: url, download: filename });
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+$('#btnExport').addEventListener('click', async () => {
   const list = getList();
   if (!list.length) { toast('Não há registros para exportar.', 'error'); return; }
   const cols = visibleCols().filter(c => !c.noExport);
@@ -918,10 +932,15 @@ $('#btnExport').addEventListener('click', () => {
   const d = new Date(), stamp = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
   const data = list.map(r => cols.map(c => plain(r, c.key)));
   const widths = cols.map((c, i) => Math.max(c.label.length, ...data.map(d => String(d[i]).length)) + 3);
-  const url = URL.createObjectURL(buildXlsx('Solicitações', cols.map(c => c.label), data, widths));
-  const a = Object.assign(document.createElement('a'), { href: url, download: `solicitacoes-intercambio-${stamp}.xlsx` });
-  document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 1000);
-  toast(`${list.length} ${list.length === 1 ? 'registro exportado' : 'registros exportados'} para Excel.`);
+  try {
+    await saveFile(`solicitacoes-intercambio-${stamp}.xlsx`, buildXlsx('Solicitações', cols.map(c => c.label), data, widths));
+    toast(`${list.length} ${list.length === 1 ? 'registro exportado' : 'registros exportados'} para Excel.`);
+  } catch (e) {
+    const code = e && e.code;
+    if (code === 'declined') toast('Exportação cancelada.', 'info');
+    else if (code === 'rate_limited') toast('Já existe um download aguardando confirmação. Conclua ou feche antes de exportar de novo.', 'info');
+    else toast('Não foi possível exportar nesta tela. Abra a demo pelo arquivo no computador para baixar o Excel.', 'error');
+  }
 });
 
 /* ================= Modal ================= */
@@ -1013,7 +1032,8 @@ async function autoN4(id) {
 /* ---------- Documento ---------- */
 function showDoc(id) {
   const r = findRow(id); if (!r) return;
-  if (r.fileUrl) {
+  // O PDF real só é exibido quando a demo é aberta pelo arquivo; publicada como link, mostra o comprovante ilustrativo
+  if (r.fileUrl && location.protocol === 'file:') {
     openModal({ title: r.doc, wide: true,
       body: `<iframe class="pdf-frame" src="${r.fileUrl}" title="${esc(r.doc)}"></iframe>`,
       foot: `<a class="btn btn-ghost" href="${r.fileUrl}" target="_blank" rel="noopener">Abrir em nova aba</a><button class="btn btn-primary" data-back="${r.id}">Ver detalhes da solicitação</button>` });
