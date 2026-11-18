@@ -12,6 +12,7 @@ const fa = require('react-icons/fa');
 const { applyTheme } = require(process.argv[2]);
 const OUT = path.join(__dirname, 'antes-e-depois-automacoes.pptx');
 const IMG_DEMO = path.join(__dirname, 'img', 'demo-intercambios.png');
+const DEMO_URL = 'https://claude.ai/artifact/KPV9K8urnLch5fWNxiCC4E'; // demo publicada (abre só para quem recebeu acesso)
 
 /* ---------- Identidade log·aí (mesmas cores da demo) ---------- */
 const HEX = {
@@ -250,8 +251,12 @@ const subtitle = (slide, t) => text(slide, t, { x: 0.6, y: 1.17, w: 12.13, h: 0.
   subtitle(s, 'Projeto no Loga-AI integrado ao Navis N4 · viabilidade confirmada pela TI');
   const iw = 7.2, ih = iw * 1760 / 2744;
   s.addShape(S.RECTANGLE, { x: 0.58, y: 1.78, w: iw + 0.04, h: ih + 0.04, fill: { color: C.background1 }, line: { color: HEX.line, width: 1 }, shadow: shadow(), objectName: 'Moldura protótipo' });
-  s.addImage({ path: IMG_DEMO, x: 0.6, y: 1.8, w: iw, h: ih, objectName: 'Protótipo Intercâmbios', altText: 'Tela de Intercâmbios no Loga-AI: um PDF sendo lido, um intercâmbio aguardando o N4 e os anteriores já cadastrados no N4' });
-  text(s, 'Protótipo navegável: o PDF entra e o status muda sozinho até “Cadastrado no N4”', { x: 0.6, y: 1.8 + ih + 0.1, w: iw, h: 0.3, fontSize: 12, italic: true, color: C.text2 });
+  s.addImage({ path: IMG_DEMO, x: 0.6, y: 1.8, w: iw, h: ih, objectName: 'Protótipo Intercâmbios', altText: 'Tela de Intercâmbios no Loga-AI: um PDF sendo lido, um intercâmbio aguardando o N4 e os anteriores já cadastrados no N4',
+    hyperlink: { url: DEMO_URL, tooltip: 'Abrir o protótipo navegável' } });
+  s.addText([
+    { text: 'Protótipo navegável (clique para abrir): ', options: { color: C.text2 } },
+    { text: DEMO_URL.replace('https://', ''), options: { bold: true, hyperlink: { url: DEMO_URL, tooltip: 'Abrir o protótipo navegável' } } },
+  ], { x: 0.6, y: 1.8 + ih + 0.1, w: iw, h: 0.3, fontSize: 12, margin: 0, valign: 'top', isTextBox: true, objectName: 'Link do protótipo' });
   const fluxo = [
     ['Cliente envia o PDF', 'Dados e intercâmbio em PDF direto no Loga-AI'],
     ['Loga-AI registra', 'Guarda o documento e a data, e lê os dados do PDF'],
@@ -266,7 +271,7 @@ const subtitle = (slide, t) => text(slide, t, { x: 0.6, y: 1.17, w: 12.13, h: 0.
     text(s, fluxo[i][0], { x: x + 0.75, y: y + 0.02, w: 3.7, h: 0.36, fontSize: 17, bold: true, color: C.text1 });
     text(s, fluxo[i][1], { x: x + 0.75, y: y + 0.4, w: 3.73, h: 0.6, fontSize: 14, color: C.text2 });
   }
-  s.addNotes('Com o projeto, o cliente envia os dados e o PDF direto no Loga-AI. O sistema registra o documento e a data, lê os dados e o Navis N4 puxa o intercâmbio automaticamente, sem digitação e sem conferência manual. O status só muda para Cadastrado no N4 depois da confirmação do N4. A TI já confirmou a viabilidade e o protótipo navegável está pronto para demonstrar.');
+  s.addNotes('Com o projeto, o cliente envia os dados e o PDF direto no Loga-AI. O sistema registra o documento e a data, lê os dados e o Navis N4 puxa o intercâmbio automaticamente, sem digitação e sem conferência manual. O status só muda para Cadastrado no N4 depois da confirmação do N4. A TI já confirmou a viabilidade e o protótipo navegável está pronto para demonstrar: clique na imagem ou no link abaixo dela para abrir (' + DEMO_URL + ').');
 
   /* =============== 6. RESUMO =============== */
   pres.addSection({ title: 'Resumo' });
