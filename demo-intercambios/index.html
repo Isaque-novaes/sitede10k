@@ -233,7 +233,11 @@ table.grid{width:100%;border-collapse:collapse;min-width:1040px}
 .hint.warn{color:#B54708}
 .hint.err{color:var(--bad-fg)}
 .control.is-invalid{border-color:#E57466}
-input[type=file].control{padding:7px 10px;height:auto}
+.file-pick{display:flex;align-items:center;gap:12px;min-height:38px;border:1px dashed var(--field-line);border-radius:3px;padding:6px 10px;background:#FAFBFC}
+.form-grid .file-pick label{display:inline-flex;margin:0;font-weight:600;cursor:pointer}
+.file-pick input:focus-visible + label{box-shadow:var(--focus)}
+.file-name{font-size:13px;color:var(--muted);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.file-name.has-file{color:var(--ink);font-weight:500}
 
 .spinner{width:14px;height:14px;border:2px solid rgba(255,255,255,.45);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite}
 
@@ -679,7 +683,9 @@ function toast(msg, type = 'success') {
   const el = document.createElement('div');
   el.className = `toast ${type}`;
   el.innerHTML = `${ICON[type === 'success' ? 'check' : type]}<div>${msg}</div>`;
-  $('#toasts').appendChild(el);
+  const box = $('#toasts');
+  while (box.children.length >= 2) box.firstElementChild.remove();
+  box.appendChild(el);
   setTimeout(() => { el.classList.add('out'); setTimeout(() => el.remove(), 260); }, 3600);
 }
 
@@ -1084,7 +1090,7 @@ $('#btnNovo').addEventListener('click', () => {
     body: `<form id="newForm" class="form-grid" novalidate>
       <div>
         <label for="nCont">Contêiner <span class="req">*</span></label>
-        <input class="control" id="nCont" maxlength="11" placeholder="Ex.: MSCU1234566" autofocus autocomplete="off" style="text-transform:uppercase">
+        <input class="control" id="nCont" maxlength="11" placeholder="Ex.: MSCU1234566" autofocus autocomplete="off">
         <div class="hint" id="nContHint">4 letras + 7 dígitos (padrão ISO 6346)</div>
       </div>
       <div>
@@ -1093,7 +1099,7 @@ $('#btnNovo').addEventListener('click', () => {
       </div>
       <div>
         <label for="nPlaca">Placa do veículo</label>
-        <input class="control" id="nPlaca" maxlength="8" placeholder="Ex.: ABC1D23" style="text-transform:uppercase">
+        <input class="control" id="nPlaca" maxlength="8" placeholder="Ex.: ABC1D23">
       </div>
       <div>
         <label for="nLacre">Lacre</label>
@@ -1101,7 +1107,11 @@ $('#btnNovo').addEventListener('click', () => {
       </div>
       <div class="span2">
         <label for="nFile">Documento (PDF)</label>
-        <input class="control" type="file" id="nFile" accept="application/pdf,.pdf">
+        <div class="file-pick">
+          <input type="file" id="nFile" accept="application/pdf,.pdf" class="sr-only">
+          <label for="nFile" class="btn btn-ghost btn-sm">Escolher arquivo</label>
+          <span class="file-name" id="nFileName">Nenhum arquivo selecionado</span>
+        </div>
       </div>
       <div class="span2">
         <label for="nObs">Observações</label>
@@ -1126,6 +1136,12 @@ $('#modal').addEventListener('input', e => {
   if (e.target.id === 'nCont') { e.target.value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ''); contHint(e.target.value); }
   if (e.target.id === 'nPlaca') e.target.value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
   if (e.target.id === 'motivo') { e.target.classList.remove('is-invalid'); $('#motivoErr').textContent = ''; }
+});
+$('#modal').addEventListener('change', e => {
+  if (e.target.id !== 'nFile') return;
+  const f = e.target.files[0], out = $('#nFileName');
+  out.textContent = f ? `${f.name} · ${fmtSize(f.size)}` : 'Nenhum arquivo selecionado';
+  out.classList.toggle('has-file', !!f);
 });
 $('#modal').addEventListener('click', e => {
   if (e.target.id !== 'saveNew') return;
