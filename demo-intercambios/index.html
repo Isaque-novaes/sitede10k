@@ -1,0 +1,1242 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Intercâmbios — log·aí Interno</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --header:#5B6B84;
+  --header-hover:rgba(255,255,255,.10);
+  --nav-active:#A6D46A;
+  --env-bg:#EAF4FC;
+  --env-line:#D5E6F4;
+  --ink:#3A4556;
+  --text:#374151;
+  --muted:#6B7280;
+  --line:#E2E6EC;
+  --line-soft:#ECEFF3;
+  --card-head:#F2F4F7;
+  --field-line:#CDD3DC;
+  --primary:#1F4E8C;
+  --primary-hover:#183F73;
+  --th:#5E6E87;
+  --stripe:#F8F9FB;
+  --info-bg:#E1EEFB; --info-fg:#2462A6;
+  --ok-bg:#DFF2E4;   --ok-fg:#2B7A44;
+  --mut-bg:#EBEDF0;  --mut-fg:#6B7280;
+  --bad-bg:#FBE3E1;  --bad-fg:#B42318;
+  --warn:#F2A93B;
+  --focus:0 0 0 3px rgba(31,78,140,.28);
+  --shadow:0 10px 30px rgba(15,23,42,.14), 0 2px 6px rgba(15,23,42,.08);
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;font-size:14px;line-height:1.4;color:var(--text);background:#fff;-webkit-font-smoothing:antialiased}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+svg{flex:none}
+:focus-visible{outline:none;box-shadow:var(--focus)}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);border:0}
+
+/* ---------- Topbar ---------- */
+.topbar{height:70px;background:var(--header);color:#fff;display:flex;align-items:center;justify-content:space-between;padding:0 24px;position:relative;z-index:30}
+.brand{display:flex;align-items:center;gap:12px;color:#fff;text-decoration:none}
+.brand-mark{display:grid;grid-template-columns:repeat(3,8px);gap:2.5px}
+.brand-mark i{width:8px;height:8px;border-radius:1px;background:#9CCB5B}
+.brand-mark i:nth-child(even){background:#CFE6AE}
+.brand-name{font-size:25px;font-weight:700;letter-spacing:-.4px}
+.brand-name b{font-weight:700;opacity:.85;margin:0 1px}
+.brand-sep{width:1px;height:28px;background:rgba(255,255,255,.35);margin:0 4px}
+.brand-sub{font-size:19px;font-weight:400;opacity:.95}
+
+.mainnav{display:flex;align-items:center;gap:6px}
+.nav-item{position:relative}
+.nav-btn{display:flex;align-items:center;gap:6px;background:none;border:0;color:#fff;font-size:14px;font-weight:500;padding:8px 9px;border-radius:4px;white-space:nowrap}
+.nav-btn:hover,.nav-btn[aria-expanded="true"]{background:var(--header-hover)}
+.nav-btn.is-active{color:var(--nav-active)}
+.nav-btn .caret{font-size:11px;opacity:.85;margin-left:-1px}
+.bell{position:relative;padding:8px 10px;margin-right:4px}
+.bell .badge-count{position:absolute;top:2px;right:2px;min-width:15px;height:15px;padding:0 3px;border-radius:999px;background:var(--warn);color:#fff;font-size:9.5px;font-weight:700;display:grid;place-items:center;line-height:1}
+.bell .badge-count[hidden]{display:none}
+.bell svg{color:#F5C04A}
+.nav-toggle{display:none;background:none;border:0;color:#fff;padding:8px;border-radius:4px}
+
+.dropdown{position:absolute;top:calc(100% + 10px);right:0;min-width:230px;background:#fff;color:var(--text);border:1px solid var(--line);border-radius:6px;box-shadow:var(--shadow);padding:6px;display:none;z-index:40}
+.dropdown.is-open{display:block;animation:pop .14s ease-out}
+.dropdown.left{left:0;right:auto}
+.dd-item{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;text-align:left;background:none;border:0;padding:8px 10px;border-radius:4px;font-size:13.5px;color:var(--text)}
+.dd-item:hover{background:#F1F4F8}
+.dd-item.is-current{color:var(--primary);font-weight:600;background:#EEF3FA}
+.dd-sep{height:1px;background:var(--line-soft);margin:6px 4px}
+.dd-label{font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);padding:6px 10px 4px}
+
+.notes{width:340px;padding:0}
+.notes-head{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:1px solid var(--line-soft)}
+.notes-head strong{font-size:14px;color:var(--ink)}
+.notes-list{list-style:none;margin:0;padding:4px;max-height:340px;overflow:auto}
+.note{display:flex;gap:10px;width:100%;text-align:left;background:none;border:0;padding:10px;border-radius:4px}
+.note:hover{background:#F1F4F8}
+.note-dot{width:8px;height:8px;border-radius:50%;background:transparent;margin-top:6px;flex:none}
+.note.is-unread .note-dot{background:var(--primary)}
+.note-title{font-size:13px;font-weight:600;color:var(--ink)}
+.note-sub{font-size:12px;color:var(--muted);margin-top:2px}
+.note-time{font-size:11px;color:#9AA3AF;margin-top:4px}
+.notes-empty{padding:22px 14px;text-align:center;color:var(--muted);font-size:13px}
+
+/* ---------- Env bar ---------- */
+.envbar{background:var(--env-bg);border-bottom:1px solid var(--env-line);display:flex;align-items:center;justify-content:space-between;gap:16px;padding:12px 24px;font-size:13.5px;color:#475569}
+.envbar > span{display:flex;align-items:center;gap:8px}
+.envbar > span > span{display:block}
+.envbar strong{color:#334155;font-weight:600}
+.envbar svg{color:#7B8794}
+
+/* ---------- Page ---------- */
+.page{padding:22px 24px 36px}
+.page-head{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:18px}
+.page-head h1{margin:0;font-size:35px;line-height:1.15;font-weight:700;color:var(--ink);letter-spacing:-.6px}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;height:38px;padding:0 18px;border-radius:3px;border:1px solid transparent;font-size:14px;font-weight:600;white-space:nowrap;transition:background .15s,border-color .15s,color .15s}
+.btn-primary{background:var(--primary);color:#fff}
+.btn-primary:hover{background:var(--primary-hover)}
+.btn-sm{height:32px;padding:0 14px;font-size:13px}
+.btn-ghost{background:#fff;color:var(--ink);border-color:var(--field-line)}
+.btn-ghost:hover{background:#F5F7FA}
+.btn-danger{background:#fff;color:var(--bad-fg);border-color:#F1B9B3}
+.btn-danger:hover{background:#FEF3F2}
+.btn-success{background:#2B7A44;color:#fff}
+.btn-success:hover{background:#226337}
+.btn[disabled]{opacity:.7;cursor:progress}
+
+.card{border:1px solid var(--line);border-radius:4px;background:#fff;margin-bottom:20px}
+.card-head{background:var(--card-head);border-bottom:1px solid var(--line);padding:12px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px;border-radius:4px 4px 0 0;min-height:46px}
+.card-head h2{margin:0;font-size:15px;font-weight:600;color:var(--ink)}
+.card-body{padding:18px 16px}
+
+/* Dropzone */
+.dropzone{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;min-height:96px;border:1.5px dashed #C6CED9;border-radius:3px;background:#FAFBFC;cursor:pointer;text-align:center;padding:16px;transition:background .15s,border-color .15s}
+.dropzone:hover{background:#F5F8FB;border-color:#9FB0C6}
+.dropzone.is-drag{background:#EEF4FB;border-color:var(--primary)}
+.dropzone.is-busy{cursor:default}
+.dz-main{font-size:15px;color:#4B5563}
+.dz-sub{font-size:11.5px;color:var(--muted)}
+.dz-last{font-size:12px;color:var(--ok-fg);margin-top:2px}
+.dz-file{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--ink);font-weight:500}
+.dz-progress{width:min(420px,100%);height:6px;border-radius:999px;background:#E5EAF0;overflow:hidden}
+.dz-bar{height:100%;width:0;background:var(--primary);transition:width .4s ease}
+.dz-step{font-size:12px;color:var(--muted)}
+
+/* Filters */
+.filters{display:grid;grid-template-columns:repeat(5,minmax(0,1fr)) auto;gap:16px;align-items:end}
+.field label{display:block;font-size:13px;font-weight:600;color:var(--ink);margin-bottom:7px}
+.control{width:100%;height:38px;border:1px solid var(--field-line);border-radius:3px;background:#fff;padding:0 11px;font-size:13px;color:var(--text)}
+.control::placeholder{color:#9AA3AF}
+.control:focus{border-color:var(--primary);box-shadow:var(--focus);outline:none}
+select.control,.control.has-caret{appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M0 0h10L5 6z' fill='%23717B88'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:30px}
+select.control.is-empty{color:#9AA3AF}
+select.control option{color:var(--text)}
+input.control.has-caret::-webkit-calendar-picker-indicator{opacity:0}
+textarea.control{height:auto;min-height:84px;padding:9px 11px;resize:vertical;line-height:1.45}
+.filter-actions{display:flex;gap:10px}
+.icon-btn{width:38px;height:38px;display:grid;place-items:center;border-radius:3px;border:1px solid var(--field-line);background:#fff;color:#4B5563}
+.icon-btn:hover{background:#F5F7FA}
+.icon-btn.primary{background:var(--primary);border-color:var(--primary);color:#fff}
+.icon-btn.primary:hover{background:var(--primary-hover)}
+.icon-btn[aria-pressed="true"]{background:#EEF3FA;border-color:#9FB4D3;color:var(--primary)}
+.filters-more{display:none;grid-template-columns:repeat(5,minmax(0,1fr));gap:16px;margin-top:16px;padding-top:16px;border-top:1px dashed var(--line)}
+.filters-more.is-open{display:grid}
+
+/* Table */
+.table-wrap{overflow-x:auto}
+table.grid{width:100%;border-collapse:collapse;min-width:1040px}
+.grid th{background:var(--th);color:#fff;font-size:13px;font-weight:600;text-align:left;padding:0 13px;height:36px;white-space:nowrap}
+.th-sort{display:inline-flex;align-items:center;gap:7px;background:none;border:0;color:inherit;font-weight:600;padding:0;font-size:13px}
+.th-sort svg{opacity:.7}
+.th-sort .up,.th-sort .down{opacity:.55}
+.th-sort.is-asc .up,.th-sort.is-desc .down{opacity:1}
+.grid td{padding:0 13px;height:46px;border-bottom:1px solid var(--line-soft);font-size:13px;color:var(--text);white-space:nowrap}
+.grid tbody tr:nth-child(odd) td{background:var(--stripe)}
+.grid tbody tr:hover td{background:#F1F5FA}
+.grid tbody tr.is-new td{animation:flash 2.8s ease-out}
+.grid td.empty{text-align:center;height:120px;color:var(--muted);white-space:normal;background:#fff!important}
+.link{background:none;border:0;padding:0;color:var(--primary);font-weight:600;font-size:13px;text-decoration:none}
+.link:hover{text-decoration:underline}
+.doc-cell{display:inline-block;max-width:190px;overflow:hidden;text-overflow:ellipsis;vertical-align:middle}
+.badge{display:inline-block;padding:3px 8px;border-radius:2px;font-size:11.5px;font-weight:600;line-height:1.35}
+.b-info{background:var(--info-bg);color:var(--info-fg)}
+.b-ok{background:var(--ok-bg);color:var(--ok-fg)}
+.b-mut{background:var(--mut-bg);color:var(--mut-fg)}
+.b-bad{background:var(--bad-bg);color:var(--bad-fg)}
+
+.table-foot{display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:16px 22px;padding:14px 16px;font-size:13px;color:#4B5563}
+.cols-wrap{position:relative}
+.cols-pop{position:absolute;bottom:calc(100% + 10px);right:0;width:250px;background:#fff;border:1px solid var(--line);border-radius:6px;box-shadow:var(--shadow);padding:8px;display:none;z-index:20}
+.cols-pop.is-open{display:block;animation:pop .14s ease-out}
+.cols-pop label{display:flex;align-items:center;gap:9px;padding:7px 8px;border-radius:4px;font-size:13px;cursor:pointer}
+.cols-pop label:hover{background:#F1F4F8}
+.cols-pop input{accent-color:var(--primary);width:15px;height:15px}
+.per-page{display:flex;align-items:center;gap:10px}
+.per-page select{height:30px;width:auto;padding:0 26px 0 9px;font-size:12.5px;background-position:right 9px center}
+.pager{display:flex;align-items:center;gap:4px}
+.pg{min-width:26px;height:26px;display:grid;place-items:center;border:0;background:none;border-radius:3px;font-size:12.5px;color:#6B7280;padding:0 6px}
+.pg:hover:not([disabled]):not(.is-current){background:#EEF1F5}
+.pg[disabled]{opacity:.4;cursor:default}
+.pg.is-current{background:var(--primary);color:#fff;font-weight:600}
+
+.demo-note{text-align:center;font-size:11.5px;color:#9AA3AF;margin-top:6px}
+
+/* ---------- Modal ---------- */
+.modal-backdrop{position:fixed;inset:0;background:rgba(15,23,42,.45);display:flex;align-items:flex-start;justify-content:center;padding:6vh 16px 24px;z-index:100;overflow:auto}
+.modal-backdrop[hidden]{display:none}
+.modal{background:#fff;border-radius:6px;box-shadow:var(--shadow);width:min(680px,100%);animation:rise .18s ease-out}
+.modal.is-wide{width:min(860px,100%)}
+.modal-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 18px;border-bottom:1px solid var(--line);background:var(--card-head);border-radius:6px 6px 0 0}
+.modal-head h3{margin:0;font-size:16px;font-weight:600;color:var(--ink)}
+.modal-close{width:32px;height:32px;border:0;background:none;border-radius:4px;color:#64748B;display:grid;place-items:center}
+.modal-close:hover{background:#E6EAF0}
+.modal-body{padding:18px}
+.modal-foot{display:flex;justify-content:flex-end;flex-wrap:wrap;gap:10px;padding:14px 18px;border-top:1px solid var(--line)}
+.modal-foot:empty{display:none}
+
+.det-top{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap;padding-bottom:14px;border-bottom:1px solid var(--line-soft);margin-bottom:14px}
+.det-kicker{font-size:12px;color:var(--muted);margin-bottom:2px}
+.det-big{font-size:22px;font-weight:700;color:var(--ink);letter-spacing:.3px}
+.det-badges{display:flex;gap:8px;flex-wrap:wrap}
+.det-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 24px;margin:0}
+.det-grid div{min-width:0}
+.det-grid dt{font-size:12px;color:var(--muted);margin-bottom:2px}
+.det-grid dd{margin:0;font-size:13.5px;color:var(--ink);font-weight:500;overflow-wrap:anywhere}
+.det-grid .span2{grid-column:1/-1}
+.det-sec{font-size:13px;font-weight:600;color:var(--ink);margin:20px 0 10px;text-transform:uppercase;letter-spacing:.04em}
+.timeline{list-style:none;margin:0;padding:0 0 0 4px}
+.timeline li{position:relative;padding:0 0 14px 20px;border-left:2px solid var(--line)}
+.timeline li:last-child{border-left-color:transparent;padding-bottom:0}
+.timeline li::before{content:"";position:absolute;left:-6px;top:3px;width:10px;height:10px;border-radius:50%;background:#fff;border:2px solid #9FB0C6}
+.timeline li:last-child::before{border-color:var(--primary);background:var(--primary)}
+.tl-text{font-size:13px;color:var(--ink)}
+.tl-meta{font-size:11.5px;color:var(--muted);margin-top:2px}
+.reject-box{margin-top:16px;padding:14px;border:1px solid #F1B9B3;background:#FFFBFA;border-radius:4px}
+.reject-box label{display:block;font-size:13px;font-weight:600;color:var(--ink);margin-bottom:7px}
+.reject-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:10px}
+.callout{padding:10px 12px;border-radius:4px;font-size:13px}
+.callout.bad{background:var(--bad-bg);color:#7A271A}
+
+.form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 18px}
+.form-grid .span2{grid-column:1/-1}
+.form-grid label{display:block;font-size:13px;font-weight:600;color:var(--ink);margin-bottom:7px}
+.req{color:var(--bad-fg)}
+.hint{font-size:12px;margin-top:6px;color:var(--muted);min-height:16px}
+.hint.ok{color:var(--ok-fg)}
+.hint.warn{color:#B54708}
+.hint.err{color:var(--bad-fg)}
+.control.is-invalid{border-color:#E57466}
+input[type=file].control{padding:7px 10px;height:auto}
+
+.spinner{width:14px;height:14px;border:2px solid rgba(255,255,255,.45);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite}
+
+/* Mock PDF */
+.pdf-frame{width:100%;height:70vh;border:1px solid var(--line);border-radius:4px}
+.paper-bg{background:#E9ECF0;padding:22px;border-radius:4px}
+.paper{background:#fff;max-width:640px;margin:0 auto;padding:30px 34px;box-shadow:0 2px 10px rgba(0,0,0,.12);font-size:12px;color:#1F2937}
+.paper-head{display:flex;align-items:center;justify-content:space-between;gap:12px;border-bottom:2px solid #1F2937;padding-bottom:12px}
+.paper-brand{display:flex;align-items:center;gap:8px;font-weight:700;font-size:15px}
+.paper-brand .brand-mark{grid-template-columns:repeat(3,6px);gap:2px}
+.paper-brand .brand-mark i{width:6px;height:6px}
+.paper-title{text-align:center;font-weight:700;font-size:13px;letter-spacing:.03em}
+.paper-title small{display:block;font-weight:400;font-size:10px;color:#6B7280;letter-spacing:0}
+.paper-num{font-weight:700;font-size:12px;text-align:right}
+.paper table{width:100%;border-collapse:collapse;margin-top:16px}
+.paper th,.paper td{border:1px solid #CBD2DA;padding:6px 8px;text-align:left;font-size:11.5px}
+.paper th{background:#F3F5F7;font-weight:600;width:22%}
+.paper-sec{margin-top:16px;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.05em}
+.paper-checks{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:8px}
+.paper-checks span{border:1px solid #CBD2DA;padding:5px 8px;font-size:11px}
+.paper-sign{display:grid;grid-template-columns:1fr 1fr;gap:40px;margin-top:40px}
+.paper-sign div{border-top:1px solid #1F2937;padding-top:4px;text-align:center;font-size:10.5px;color:#4B5563}
+.paper-foot{margin-top:24px;font-size:9.5px;color:#9AA3AF;text-align:center}
+
+/* ---------- Toast ---------- */
+.toasts{position:fixed;right:20px;bottom:20px;display:flex;flex-direction:column;gap:10px;z-index:200;max-width:min(380px,calc(100vw - 32px))}
+.toast{display:flex;align-items:flex-start;gap:10px;background:#1F2937;color:#fff;padding:12px 14px;border-radius:6px;box-shadow:var(--shadow);font-size:13px;animation:rise .2s ease-out}
+.toast svg{margin-top:1px}
+.toast.success svg{color:#7FD99A}
+.toast.info svg{color:#93C5FD}
+.toast.error svg{color:#FCA5A5}
+.toast.out{opacity:0;transform:translateY(6px);transition:opacity .25s,transform .25s}
+
+@keyframes pop{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
+@keyframes rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@keyframes flash{0%,35%{background:#FFF4CC}100%{background:transparent}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+
+/* ---------- Responsive ---------- */
+@media (max-width:1180px){
+  .filters{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .filters-more{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .filter-actions{grid-column:span 1}
+}
+@media (max-width:1080px){
+  .nav-toggle{display:block}
+  .mainnav{display:none;position:absolute;top:70px;left:0;right:0;background:var(--header);flex-direction:column;align-items:stretch;padding:8px 16px 14px;gap:2px;box-shadow:0 8px 20px rgba(0,0,0,.15)}
+  .mainnav.is-open{display:flex}
+  .nav-btn{width:100%;justify-content:flex-start;padding:10px 8px}
+  .bell{width:auto}
+  .dropdown,.notes{position:static;width:100%;margin:4px 0 8px;box-shadow:none}
+}
+@media (max-width:720px){
+  .topbar{padding:0 16px}
+  .brand-name{font-size:22px}
+  .brand-sub{font-size:16px}
+  .envbar{flex-direction:column;align-items:flex-start;gap:6px;padding:10px 16px}
+  .page{padding:18px 16px 28px}
+  .page-head h1{font-size:28px}
+  .page-head .btn{padding:0 14px}
+  .filters,.filters-more{grid-template-columns:1fr}
+  .det-grid,.form-grid{grid-template-columns:1fr}
+  .table-foot{justify-content:flex-start}
+  .paper{padding:20px 16px}
+  .paper-checks{grid-template-columns:1fr 1fr}
+}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <a class="brand" href="#" aria-label="log·aí Interno — início">
+    <span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>
+    <span class="brand-name">log<b>·</b>aí</span>
+    <span class="brand-sep" aria-hidden="true"></span>
+    <span class="brand-sub">Interno</span>
+  </a>
+
+  <button class="nav-toggle" id="navToggle" aria-label="Abrir menu" aria-expanded="false" aria-controls="mainnav">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+  </button>
+
+  <nav class="mainnav" id="mainnav" aria-label="Navegação principal">
+    <div class="nav-item">
+      <button class="nav-btn bell" data-menu="notes" aria-expanded="false" aria-label="Notificações">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a6 6 0 0 0-6 6v3.6l-1.7 3.4A1 1 0 0 0 5.2 16.5h13.6a1 1 0 0 0 .9-1.5L18 11.6V8a6 6 0 0 0-6-6Zm-2.8 16a2.9 2.9 0 0 0 5.6 0Z"/></svg>
+        <span class="badge-count" id="noteCount">4</span>
+      </button>
+      <div class="dropdown notes" id="menu-notes" role="menu">
+        <div class="notes-head"><strong>Notificações</strong><button class="link" id="markAll">Marcar todas como lidas</button></div>
+        <ul class="notes-list" id="notesList"></ul>
+      </div>
+    </div>
+
+    <div class="nav-item">
+      <button class="nav-btn" data-menu="consultas" aria-expanded="false">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+        Consultas <span class="caret">▾</span>
+      </button>
+      <div class="dropdown left" id="menu-consultas" role="menu">
+        <button class="dd-item" data-soon>Solicitações</button>
+        <button class="dd-item" data-soon>Contêineres</button>
+        <button class="dd-item" data-soon>Agendamentos</button>
+        <button class="dd-item" data-soon>Movimentações do pátio</button>
+      </div>
+    </div>
+
+    <div class="nav-item">
+      <button class="nav-btn is-active" data-menu="cadastros" aria-expanded="false">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><rect x="3" y="4" width="18" height="16" rx="1.5"/><path d="M3 9.5h18M3 14.5h18"/></svg>
+        Cadastros <span class="caret">▾</span>
+      </button>
+      <div class="dropdown left" id="menu-cadastros" role="menu">
+        <button class="dd-item is-current" data-close>Intercâmbios
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+        </button>
+        <button class="dd-item" data-soon>Transportadoras</button>
+        <button class="dd-item" data-soon>Motoristas</button>
+        <button class="dd-item" data-soon>Veículos</button>
+        <button class="dd-item" data-soon>Clientes</button>
+      </div>
+    </div>
+
+    <div class="nav-item">
+      <button class="nav-btn" data-menu="relatorios" aria-expanded="false">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M3 3h8v8H3zM13 3h8v8h-8zM3 13h8v8H3zM13 13h8v8h-8z"/></svg>
+        Relatórios <span class="caret">▾</span>
+      </button>
+      <div class="dropdown left" id="menu-relatorios" role="menu">
+        <button class="dd-item" data-soon>Solicitações por período</button>
+        <button class="dd-item" data-soon>Pendências no Navis N4</button>
+        <button class="dd-item" data-soon>Produtividade da conferência</button>
+      </div>
+    </div>
+
+    <div class="nav-item">
+      <button class="nav-btn" data-menu="grades" aria-expanded="false">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+        Grades <span class="caret">▾</span>
+      </button>
+      <div class="dropdown left" id="menu-grades" role="menu">
+        <button class="dd-item" data-soon>Grade de janelas</button>
+        <button class="dd-item" data-soon>Grade de recebimento</button>
+      </div>
+    </div>
+
+    <div class="nav-item">
+      <button class="nav-btn" data-menu="planejamento" aria-expanded="false">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><ellipse cx="12" cy="5.5" rx="8" ry="3"/><path d="M4 5.5v13c0 1.7 3.6 3 8 3s8-1.3 8-3v-13M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/></svg>
+        Planejamento <span class="caret">▾</span>
+      </button>
+      <div class="dropdown" id="menu-planejamento" role="menu">
+        <button class="dd-item" data-soon>Plano de pátio</button>
+        <button class="dd-item" data-soon>Programação de navios</button>
+      </div>
+    </div>
+
+    <div class="nav-item">
+      <button class="nav-btn" data-menu="conta" aria-expanded="false">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm0 4.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 0 1 0-7Zm0 13.5a8 8 0 0 1-6-2.7c.9-1.9 3.3-3 6-3s5.1 1.1 6 3a8 8 0 0 1-6 2.7Z"/></svg>
+        Conta <span class="caret">▾</span>
+      </button>
+      <div class="dropdown" id="menu-conta" role="menu">
+        <div class="dd-label">Planejamento · TVV</div>
+        <button class="dd-item" data-soon>Meu perfil</button>
+        <button class="dd-item" data-soon>Trocar terminal</button>
+        <div class="dd-sep"></div>
+        <button class="dd-item" id="resetDemo">Restaurar dados da demonstração</button>
+        <button class="dd-item" data-soon>Sair</button>
+      </div>
+    </div>
+  </nav>
+</header>
+
+<div class="envbar">
+  <span>
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9.5"/><path d="M12 11v6M12 7.5v.01"/></svg>
+    <span>Você está operando no ambiente&nbsp;<strong>TVV — Terminal Primário</strong></span>
+  </span>
+  <span>
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="2.5"/><path d="M12 7.5V21M5 12H2a10 10 0 0 0 20 0h-3M8.5 11h7"/></svg>
+    Ambiente principal do TVV para gestão de solicitações do terminal.
+  </span>
+</div>
+
+<main class="page">
+  <div class="page-head">
+    <h1>Intercâmbios</h1>
+    <button class="btn btn-primary" id="btnNovo">+ Novo intercâmbio</button>
+  </div>
+
+  <!-- Envio de PDF -->
+  <section class="card" aria-labelledby="t-upload">
+    <div class="card-head"><h2 id="t-upload">Enviar PDF do intercâmbio</h2></div>
+    <div class="card-body">
+      <div class="dropzone" id="dropzone" role="button" tabindex="0" aria-describedby="dzHelp">
+        <input type="file" id="fileInput" accept="application/pdf,.pdf" multiple hidden>
+        <div id="dzContent"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Filtros -->
+  <section class="card" aria-labelledby="t-filtros">
+    <div class="card-head"><h2 id="t-filtros">Filtros de consulta</h2></div>
+    <div class="card-body">
+      <form id="filterForm" autocomplete="off">
+        <div class="filters">
+          <div class="field">
+            <label for="fNum">Nº do intercâmbio</label>
+            <input class="control" id="fNum" name="num" placeholder="Ex.: INT-2026-0456">
+          </div>
+          <div class="field">
+            <label for="fCont">Contêiner</label>
+            <input class="control has-caret" id="fCont" name="cont" list="contList" placeholder="Digite o contêiner">
+            <datalist id="contList"></datalist>
+          </div>
+          <div class="field">
+            <label for="fPeriodo">Período</label>
+            <select class="control" id="fPeriodo" name="periodo">
+              <option value="">Selecione</option>
+              <option value="hoje">Hoje</option>
+              <option value="7">Últimos 7 dias</option>
+              <option value="30">Últimos 30 dias</option>
+              <option value="90">Últimos 90 dias</option>
+              <option value="ano">Este ano</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="fStatus">Status da solicitação</label>
+            <select class="control" id="fStatus" name="status">
+              <option value="">Selecione</option>
+              <option value="conferencia">Em conferência</option>
+              <option value="aprovada">Aprovada</option>
+              <option value="reprovada">Reprovada</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="fN4">Status no Navis N4</label>
+            <select class="control" id="fN4" name="n4">
+              <option value="">Selecione</option>
+              <option value="cadastrado">Cadastrado</option>
+              <option value="nao">Não cadastrado</option>
+            </select>
+          </div>
+          <div class="filter-actions">
+            <button type="submit" class="icon-btn primary" aria-label="Pesquisar" title="Pesquisar">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/></svg>
+            </button>
+            <button type="button" class="icon-btn" id="btnMore" aria-pressed="false" aria-controls="filtersMore" aria-label="Mais filtros" title="Mais filtros">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M3.5 4.5h17l-6.8 8v6.2l-3.4 1.8v-8z"/></svg>
+            </button>
+            <button type="button" class="icon-btn" id="btnClear" aria-label="Limpar filtros" title="Limpar filtros">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M9 2h6l1 2h5v2H3V4h5zM5 8h14l-1.1 13.1A1 1 0 0 1 16.9 22H7.1a1 1 0 0 1-1-.9z"/></svg>
+            </button>
+          </div>
+        </div>
+        <div class="filters-more" id="filtersMore">
+          <div class="field">
+            <label for="fResp">Responsável</label>
+            <select class="control" id="fResp" name="resp">
+              <option value="">Selecione</option>
+              <option>Planejamento</option>
+              <option>Operações</option>
+              <option>Gate</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="fTipo">Tipo do contêiner</label>
+            <select class="control" id="fTipo" name="tipo">
+              <option value="">Selecione</option>
+            </select>
+          </div>
+        </div>
+      </form>
+    </div>
+  </section>
+
+  <!-- Tabela -->
+  <section class="card" aria-labelledby="t-sol">
+    <div class="card-head">
+      <h2 id="t-sol" aria-live="polite">Solicitações (<span id="count">0</span>)</h2>
+      <button class="btn btn-primary btn-sm" id="btnExport">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="3" width="18" height="18" rx="1.5"/><path d="M3 9h18M3 15h18M9 9v12"/></svg>
+        Exportar Excel
+      </button>
+    </div>
+    <div class="table-wrap">
+      <table class="grid">
+        <thead id="thead"></thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+    <div class="table-foot">
+      <div class="cols-wrap">
+        <button class="link" id="btnCols" aria-expanded="false" aria-controls="colsPop">Exibir Colunas</button>
+        <div class="cols-pop" id="colsPop"></div>
+      </div>
+      <div class="per-page">
+        <label for="pageSize">Itens por página:</label>
+        <select class="control" id="pageSize">
+          <option>10</option>
+          <option selected>20</option>
+          <option>50</option>
+        </select>
+      </div>
+      <div class="pager" id="pager" aria-label="Paginação"></div>
+      <div>Total de páginas: <span id="totalPages">1</span></div>
+    </div>
+  </section>
+
+  <p class="demo-note">Protótipo navegável para demonstração · dados fictícios</p>
+</main>
+
+<div class="modal-backdrop" id="modal" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal-head">
+      <h3 id="modalTitle"></h3>
+      <button class="modal-close" data-modal-close aria-label="Fechar">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+    <div class="modal-foot" id="modalFoot"></div>
+  </div>
+</div>
+
+<div class="toasts" id="toasts" aria-live="polite"></div>
+
+<script>
+(() => {
+'use strict';
+
+/* ================= Utilitários ================= */
+const $ = (s, el = document) => el.querySelector(s);
+const $$ = (s, el = document) => [...el.querySelectorAll(s)];
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const pad = n => String(n).padStart(2, '0');
+const fmtDate = d => `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+const fmtSize = b => b < 1048576 ? `${Math.max(1, Math.round(b / 1024))} KB` : `${(b / 1048576).toFixed(1).replace('.', ',')} MB`;
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const pick = arr => arr[Math.floor(Math.random() * arr.length)];
+const digits = n => Array.from({length: n}, () => Math.floor(Math.random() * 10)).join('');
+
+const ICON = {
+  check: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>',
+  info: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9.5"/><path d="M12 11v6M12 7.5v.01"/></svg>',
+  error: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9.5"/><path d="M12 7v6M12 16.5v.01"/></svg>',
+  pdf: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#B42318" stroke-width="1.8" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>',
+  sort: '<svg width="9" height="12" viewBox="0 0 9 12" fill="currentColor"><path class="up" d="M4.5 0 9 5H0z"/><path class="down" d="M4.5 12 0 7h9z"/></svg>',
+  first: '<svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M5 4h2.5v16H5zM20 4v16L9 12z"/></svg>',
+  prev: '<svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M18 4v16L6 12z"/></svg>',
+  next: '<svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M6 4v16l12-8z"/></svg>',
+  last: '<svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M16.5 4H19v16h-2.5zM4 4v16l11-8z"/></svg>',
+};
+
+/* ISO 6346 — dígito verificador do contêiner */
+const LETTER_VAL = (() => { const m = {}; let v = 10; for (const ch of 'ABCDEFGHIJKLMNOPQRSTUVWXYZ') { if (v % 11 === 0) v++; m[ch] = v++; } return m; })();
+const checkDigit = base => { let s = 0; for (let i = 0; i < 10; i++) s += (i < 4 ? LETTER_VAL[base[i]] : +base[i]) * 2 ** i; return s % 11 % 10; };
+const CONT_RE = /^[A-Z]{3}[UJZ]\d{7}$/;
+
+/* ================= Domínio ================= */
+const STATUS = {
+  conferencia: { label: 'Em conferência', cls: 'b-info' },
+  aprovada:    { label: 'Aprovada',       cls: 'b-ok' },
+  reprovada:   { label: 'Reprovada',      cls: 'b-bad' },
+};
+const N4 = {
+  nao:        { label: 'Não cadastrado', cls: 'b-mut' },
+  cadastrado: { label: 'Cadastrado',     cls: 'b-ok' },
+};
+const TIPOS = ["20' DC (22G1)", "40' DC (42G1)", "40' HC (45G1)", "40' RF (45R1)", "20' RF (22R1)"];
+const TRANSP = ['Rodoviário Litoral Ltda.', 'Carga Leste Transportes', 'Translog Serra Ltda.', 'Via Porto Cargas'];
+const OWNERS = ['CAAU', 'MSCU', 'TGHU', 'CMAU', 'TCLU', 'SEGU', 'HLXU', 'MRKU'];
+const COLS = [
+  { key: 'id',        label: 'Nº do intercâmbio',     sort: true, lock: true },
+  { key: 'container', label: 'Contêiner',             sort: true },
+  { key: 'date',      label: 'Data da solicitação',   sort: true },
+  { key: 'doc',       label: 'Documento' },
+  { key: 'status',    label: 'Status da solicitação', sort: true },
+  { key: 'n4',        label: 'Status no Navis N4',    sort: true },
+  { key: 'resp',      label: 'Responsável' },
+  { key: 'actions',   label: 'Ações', lock: true, noExport: true },
+];
+
+const h = (at, text, who) => ({ at: new Date(at), text, who });
+function seedRows() {
+  const base = { doc: 'intercambio.pdf', resp: 'Planejamento', origem: 'Upload de PDF' };
+  return [
+    { ...base, id: 'INT-2026-0456', container: 'CAAU7416961', date: new Date('2026-11-10T09:31'), status: 'conferencia', n4: 'nao',
+      tipo: "40' HC (45G1)", placa: 'RQX4F21', lacre: 'TVV1182034', transp: TRANSP[0],
+      history: [h('2026-11-10T09:31', 'Solicitação criada a partir do documento intercambio.pdf', 'Planejamento'),
+                h('2026-11-10T09:31', 'Dados do contêiner extraídos do PDF', 'Sistema'),
+                h('2026-11-10T09:32', 'Encaminhada para conferência', 'Sistema')] },
+    { ...base, id: 'INT-2026-0455', container: 'MSCU3920147', date: new Date('2026-11-10T08:12'), status: 'aprovada', n4: 'cadastrado',
+      tipo: "40' DC (42G1)", placa: 'PPK2B87', lacre: 'TVV1181977', transp: TRANSP[1],
+      history: [h('2026-11-10T08:12', 'Solicitação criada a partir do documento intercambio.pdf', 'Planejamento'),
+                h('2026-11-10T08:12', 'Dados do contêiner extraídos do PDF', 'Sistema'),
+                h('2026-11-10T08:37', 'Conferência concluída — solicitação aprovada', 'Planejamento'),
+                h('2026-11-10T08:38', 'Unidade cadastrada no Navis N4', 'Integração Navis N4')] },
+    { ...base, id: 'INT-2026-0454', container: 'TGHU8451203', date: new Date('2026-11-09T17:48'), status: 'conferencia', n4: 'nao',
+      tipo: "20' DC (22G1)", placa: 'MTZ7C14', lacre: 'TVV1181902', transp: TRANSP[2],
+      history: [h('2026-11-09T17:48', 'Solicitação criada a partir do documento intercambio.pdf', 'Planejamento'),
+                h('2026-11-09T17:48', 'Dados do contêiner extraídos do PDF', 'Sistema'),
+                h('2026-11-09T17:49', 'Encaminhada para conferência', 'Sistema')] },
+    { ...base, id: 'INT-2026-0453', container: 'CMAU5063788', date: new Date('2026-11-09T15:22'), status: 'aprovada', n4: 'cadastrado',
+      tipo: "40' RF (45R1)", placa: 'QRB3H09', lacre: 'TVV1181855', transp: TRANSP[3],
+      history: [h('2026-11-09T15:22', 'Solicitação criada a partir do documento intercambio.pdf', 'Planejamento'),
+                h('2026-11-09T15:22', 'Dados do contêiner extraídos do PDF', 'Sistema'),
+                h('2026-11-09T15:46', 'Conferência concluída — solicitação aprovada', 'Planejamento'),
+                h('2026-11-09T15:47', 'Unidade cadastrada no Navis N4', 'Integração Navis N4')] },
+  ];
+}
+function seedNotes() {
+  return [
+    { title: 'INT-2026-0456 aguardando conferência', sub: 'Contêiner CAAU7416961', at: new Date('2026-11-10T09:32'), read: false, rowId: 'INT-2026-0456' },
+    { title: 'INT-2026-0455 cadastrado no Navis N4', sub: 'Contêiner MSCU3920147', at: new Date('2026-11-10T08:38'), read: false, rowId: 'INT-2026-0455' },
+    { title: 'INT-2026-0454 aguardando conferência', sub: 'Contêiner TGHU8451203', at: new Date('2026-11-09T17:49'), read: false, rowId: 'INT-2026-0454' },
+    { title: 'INT-2026-0453 cadastrado no Navis N4', sub: 'Contêiner CMAU5063788', at: new Date('2026-11-09T15:47'), read: false, rowId: 'INT-2026-0453' },
+  ];
+}
+const emptyFilters = () => ({ num: '', cont: '', periodo: '', status: '', n4: '', resp: '', tipo: '' });
+
+const state = {
+  rows: seedRows(),
+  notes: seedNotes(),
+  filters: emptyFilters(),
+  sort: { key: 'date', dir: 'desc' },
+  page: 1,
+  pageSize: 20,
+  hidden: new Set(),
+  flash: new Set(),
+};
+const findRow = id => state.rows.find(r => r.id === id);
+const nextId = () => {
+  const max = Math.max(0, ...state.rows.map(r => +r.id.split('-').pop()));
+  return `INT-${new Date().getFullYear()}-${String(max + 1).padStart(4, '0')}`;
+};
+
+/* ================= Toast ================= */
+function toast(msg, type = 'success') {
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.innerHTML = `${ICON[type === 'success' ? 'check' : type]}<div>${msg}</div>`;
+  $('#toasts').appendChild(el);
+  setTimeout(() => { el.classList.add('out'); setTimeout(() => el.remove(), 260); }, 3600);
+}
+
+/* ================= Filtros + ordenação ================= */
+function getList() {
+  const f = state.filters, now = new Date();
+  const list = state.rows.filter(r => {
+    if (f.num && !r.id.toLowerCase().includes(f.num.trim().toLowerCase())) return false;
+    if (f.cont && !r.container.toLowerCase().includes(f.cont.replace(/\s/g, '').toLowerCase())) return false;
+    if (f.status && r.status !== f.status) return false;
+    if (f.n4 && r.n4 !== f.n4) return false;
+    if (f.resp && r.resp !== f.resp) return false;
+    if (f.tipo && r.tipo !== f.tipo) return false;
+    if (f.periodo) {
+      if (f.periodo === 'hoje') return r.date.toDateString() === now.toDateString();
+      if (f.periodo === 'ano') return r.date.getFullYear() === now.getFullYear();
+      const from = new Date(now); from.setHours(0, 0, 0, 0); from.setDate(from.getDate() - (+f.periodo - 1));
+      if (r.date < from) return false;
+    }
+    return true;
+  });
+  const { key, dir } = state.sort, m = dir === 'asc' ? 1 : -1;
+  const val = r => key === 'date' ? r.date.getTime() : key === 'status' ? STATUS[r.status].label : key === 'n4' ? N4[r.n4].label : String(r[key]);
+  return list.sort((a, b) => {
+    const x = val(a), y = val(b);
+    const c = typeof x === 'number' ? x - y : x.localeCompare(y, 'pt-BR');
+    return c * m || b.date - a.date;
+  });
+}
+
+/* ================= Render ================= */
+const visibleCols = () => COLS.filter(c => !state.hidden.has(c.key));
+const badge = (map, k) => `<span class="badge ${map[k].cls}">${map[k].label}</span>`;
+
+function cell(r, key) {
+  switch (key) {
+    case 'date': return fmtDate(r.date);
+    case 'doc': return r.doc
+      ? `<button class="link doc-cell" data-act="doc" data-id="${r.id}" title="${esc(r.doc)}">${esc(r.doc)}</button>`
+      : '<span style="color:#9AA3AF">—</span>';
+    case 'status': return badge(STATUS, r.status);
+    case 'n4': return badge(N4, r.n4);
+    case 'actions': return `<button class="link" data-act="details" data-id="${r.id}">Ver detalhes</button>`;
+    default: return esc(r[key]);
+  }
+}
+
+function render() {
+  const cols = visibleCols();
+  const list = getList();
+  const pages = Math.max(1, Math.ceil(list.length / state.pageSize));
+  state.page = Math.min(Math.max(1, state.page), pages);
+  const start = (state.page - 1) * state.pageSize;
+  const pageRows = list.slice(start, start + state.pageSize);
+
+  $('#count').textContent = list.length;
+  $('#totalPages').textContent = pages;
+
+  $('#thead').innerHTML = '<tr>' + cols.map(c => {
+    if (!c.sort) return `<th scope="col">${c.label}</th>`;
+    const on = state.sort.key === c.key;
+    const aria = on ? (state.sort.dir === 'asc' ? 'ascending' : 'descending') : 'none';
+    return `<th scope="col" aria-sort="${aria}"><button class="th-sort ${on ? 'is-' + state.sort.dir : ''}" data-sort="${c.key}">${c.label}${ICON.sort}</button></th>`;
+  }).join('') + '</tr>';
+
+  $('#tbody').innerHTML = pageRows.length
+    ? pageRows.map(r => `<tr class="${state.flash.has(r.id) ? 'is-new' : ''}">${cols.map(c => `<td>${cell(r, c.key)}</td>`).join('')}</tr>`).join('')
+    : `<tr><td class="empty" colspan="${cols.length}">Nenhuma solicitação encontrada para os filtros informados.<br><button class="link" data-act="clear" style="margin-top:8px">Limpar filtros</button></td></tr>`;
+  state.flash.clear();
+
+  // paginação
+  const lo = Math.max(1, Math.min(state.page - 2, pages - 4)), hi = Math.min(pages, lo + 4);
+  let html = `<button class="pg" data-page="1" ${state.page === 1 ? 'disabled' : ''} aria-label="Primeira página">${ICON.first}</button>
+              <button class="pg" data-page="${state.page - 1}" ${state.page === 1 ? 'disabled' : ''} aria-label="Página anterior">${ICON.prev}</button>`;
+  for (let p = lo; p <= hi; p++) html += `<button class="pg ${p === state.page ? 'is-current' : ''}" data-page="${p}" ${p === state.page ? 'aria-current="page"' : ''}>${p}</button>`;
+  html += `<button class="pg" data-page="${state.page + 1}" ${state.page === pages ? 'disabled' : ''} aria-label="Próxima página">${ICON.next}</button>
+           <button class="pg" data-page="${pages}" ${state.page === pages ? 'disabled' : ''} aria-label="Última página">${ICON.last}</button>`;
+  $('#pager').innerHTML = html;
+
+  // sugestões de contêiner
+  $('#contList').innerHTML = state.rows.map(r => `<option value="${r.container}">`).join('');
+}
+
+function renderNotes() {
+  const unread = state.notes.filter(n => !n.read).length;
+  const badgeEl = $('#noteCount');
+  badgeEl.textContent = unread;
+  badgeEl.hidden = unread === 0;
+  $('#notesList').innerHTML = state.notes.length
+    ? state.notes.map((n, i) => `<li><button class="note ${n.read ? '' : 'is-unread'}" data-note="${i}">
+        <span class="note-dot"></span>
+        <span><div class="note-title">${esc(n.title)}</div><div class="note-sub">${esc(n.sub)}</div><div class="note-time">${fmtDate(n.at)}</div></span>
+      </button></li>`).join('')
+    : '<li class="notes-empty">Nenhuma notificação.</li>';
+}
+function pushNote(title, sub, rowId) {
+  state.notes.unshift({ title, sub, at: new Date(), read: false, rowId });
+  renderNotes();
+}
+
+function renderCols() {
+  $('#colsPop').innerHTML = COLS.filter(c => c.key !== 'actions').map(c =>
+    `<label><input type="checkbox" data-col="${c.key}" ${state.hidden.has(c.key) ? '' : 'checked'} ${c.lock ? 'disabled' : ''}>${c.label}</label>`).join('');
+}
+
+/* ================= Menus / dropdowns ================= */
+let openMenu = null;
+function closeMenus() {
+  $$('.dropdown.is-open').forEach(d => d.classList.remove('is-open'));
+  $$('[data-menu][aria-expanded="true"]').forEach(b => b.setAttribute('aria-expanded', 'false'));
+  $('#colsPop').classList.remove('is-open');
+  $('#btnCols').setAttribute('aria-expanded', 'false');
+  openMenu = null;
+}
+document.addEventListener('click', e => {
+  const trigger = e.target.closest('[data-menu]');
+  if (trigger) {
+    const name = trigger.dataset.menu, was = openMenu === name;
+    closeMenus();
+    if (!was) { $('#menu-' + name).classList.add('is-open'); trigger.setAttribute('aria-expanded', 'true'); openMenu = name; }
+    return;
+  }
+  if (e.target.closest('[data-soon]')) { closeMenus(); toast('Módulo fora do escopo desta demonstração.', 'info'); return; }
+  if (e.target.closest('[data-close]')) { closeMenus(); return; }
+  if (!e.target.closest('.dropdown, .cols-wrap')) closeMenus();
+});
+$('#navToggle').addEventListener('click', () => {
+  const nav = $('#mainnav'), open = nav.classList.toggle('is-open');
+  $('#navToggle').setAttribute('aria-expanded', String(open));
+});
+
+$('#notesList').addEventListener('click', e => {
+  const b = e.target.closest('[data-note]'); if (!b) return;
+  const n = state.notes[+b.dataset.note]; n.read = true; renderNotes(); closeMenus();
+  if (findRow(n.rowId)) showDetails(n.rowId);
+});
+$('#markAll').addEventListener('click', () => { state.notes.forEach(n => n.read = true); renderNotes(); });
+
+$('#resetDemo').addEventListener('click', () => {
+  state.rows.forEach(r => r.fileUrl && URL.revokeObjectURL(r.fileUrl));
+  state.rows = seedRows(); state.notes = seedNotes();
+  resetFilters(); state.sort = { key: 'date', dir: 'desc' }; state.hidden.clear();
+  closeMenus(); renderCols(); renderNotes(); render(); dzIdle();
+  toast('Dados da demonstração restaurados.', 'info');
+});
+
+/* ================= Filtros ================= */
+const form = $('#filterForm');
+function syncSelectColors() { $$('select.control', form).forEach(s => s.classList.toggle('is-empty', !s.value)); }
+function resetFilters() { form.reset(); state.filters = emptyFilters(); state.page = 1; syncSelectColors(); }
+form.addEventListener('change', syncSelectColors);
+form.addEventListener('submit', e => {
+  e.preventDefault();
+  const fd = new FormData(form);
+  state.filters = { ...emptyFilters(), ...Object.fromEntries(fd.entries()) };
+  state.page = 1;
+  render();
+});
+$('#btnClear').addEventListener('click', () => { resetFilters(); render(); });
+$('#btnMore').addEventListener('click', () => {
+  const open = $('#filtersMore').classList.toggle('is-open');
+  $('#btnMore').setAttribute('aria-pressed', String(open));
+});
+$('#fTipo').insertAdjacentHTML('beforeend', TIPOS.map(t => `<option>${t}</option>`).join(''));
+
+/* ================= Tabela: eventos ================= */
+$('#thead').addEventListener('click', e => {
+  const b = e.target.closest('[data-sort]'); if (!b) return;
+  const k = b.dataset.sort;
+  state.sort = state.sort.key === k ? { key: k, dir: state.sort.dir === 'asc' ? 'desc' : 'asc' } : { key: k, dir: k === 'date' ? 'desc' : 'asc' };
+  render();
+});
+$('#tbody').addEventListener('click', e => {
+  const b = e.target.closest('[data-act]'); if (!b) return;
+  if (b.dataset.act === 'details') showDetails(b.dataset.id);
+  if (b.dataset.act === 'doc') showDoc(b.dataset.id);
+  if (b.dataset.act === 'clear') { resetFilters(); render(); }
+});
+$('#pager').addEventListener('click', e => {
+  const b = e.target.closest('[data-page]'); if (!b || b.disabled) return;
+  state.page = +b.dataset.page; render();
+});
+$('#pageSize').addEventListener('change', e => { state.pageSize = +e.target.value; state.page = 1; render(); });
+$('#btnCols').addEventListener('click', () => {
+  const pop = $('#colsPop'), open = !pop.classList.contains('is-open');
+  closeMenus();
+  pop.classList.toggle('is-open', open);
+  $('#btnCols').setAttribute('aria-expanded', String(open));
+});
+$('#colsPop').addEventListener('change', e => {
+  const k = e.target.dataset.col; if (!k) return;
+  e.target.checked ? state.hidden.delete(k) : state.hidden.add(k);
+  render();
+});
+
+/* ================= Exportar Excel ================= */
+/* Gera um .xlsx real sem bibliotecas externas (zip sem compressão + SpreadsheetML) */
+const CRC_TABLE = (() => { const t = new Uint32Array(256); for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; } return t; })();
+const crc32 = b => { let c = 0xFFFFFFFF; for (let i = 0; i < b.length; i++) c = CRC_TABLE[(c ^ b[i]) & 0xFF] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; };
+function zipStore(files, type) {
+  const enc = new TextEncoder(), parts = [], central = [];
+  let offset = 0;
+  for (const f of files) {
+    const name = enc.encode(f.name), data = enc.encode(f.data), crc = crc32(data);
+    const lh = new DataView(new ArrayBuffer(30));
+    lh.setUint32(0, 0x04034b50, true); lh.setUint16(4, 20, true); lh.setUint16(6, 0x0800, true);
+    lh.setUint16(12, 0x21, true); lh.setUint32(14, crc, true); lh.setUint32(18, data.length, true);
+    lh.setUint32(22, data.length, true); lh.setUint16(26, name.length, true);
+    parts.push(lh, name, data);
+    const ch = new DataView(new ArrayBuffer(46));
+    ch.setUint32(0, 0x02014b50, true); ch.setUint16(4, 20, true); ch.setUint16(6, 20, true); ch.setUint16(8, 0x0800, true);
+    ch.setUint16(14, 0x21, true); ch.setUint32(16, crc, true); ch.setUint32(20, data.length, true);
+    ch.setUint32(24, data.length, true); ch.setUint16(28, name.length, true); ch.setUint32(42, offset, true);
+    central.push(ch, name);
+    offset += 30 + name.length + data.length;
+  }
+  const size = central.reduce((s, c) => s + c.byteLength, 0);
+  const end = new DataView(new ArrayBuffer(22));
+  end.setUint32(0, 0x06054b50, true); end.setUint16(8, files.length, true); end.setUint16(10, files.length, true);
+  end.setUint32(12, size, true); end.setUint32(16, offset, true);
+  return new Blob([...parts, ...central, end], { type });
+}
+function buildXlsx(sheetName, header, rows, widths) {
+  const x = v => String(v).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  const colName = i => { let s = ''; for (i++; i; i = Math.floor((i - 1) / 26)) s = String.fromCharCode(65 + (i - 1) % 26) + s; return s; };
+  const row = (vals, r, st) => `<row r="${r}">${vals.map((v, i) => `<c r="${colName(i)}${r}" t="inlineStr"${st ? ` s="${st}"` : ''}><is><t xml:space="preserve">${x(v)}</t></is></c>`).join('')}</row>`;
+  const last = colName(header.length - 1), n = rows.length + 1, ref = `A1:${last}${n}`;
+  const head = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n';
+  const NS = 'http://schemas.openxmlformats.org';
+  const MIME = 'application/vnd.openxmlformats-officedocument.spreadsheetml';
+  return zipStore([
+    { name: '[Content_Types].xml', data: head + `<Types xmlns="${NS}/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="${MIME}.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="${MIME}.worksheet+xml"/><Override PartName="/xl/styles.xml" ContentType="${MIME}.styles+xml"/></Types>` },
+    { name: '_rels/.rels', data: head + `<Relationships xmlns="${NS}/package/2006/relationships"><Relationship Id="rId1" Type="${NS}/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>` },
+    { name: 'xl/workbook.xml', data: head + `<workbook xmlns="${NS}/spreadsheetml/2006/main" xmlns:r="${NS}/officeDocument/2006/relationships"><sheets><sheet name="${x(sheetName)}" sheetId="1" r:id="rId1"/></sheets><definedNames><definedName name="_xlnm._FilterDatabase" localSheetId="0" hidden="1">'${x(sheetName)}'!$A$1:$${last}$${n}</definedName></definedNames></workbook>` },
+    { name: 'xl/_rels/workbook.xml.rels', data: head + `<Relationships xmlns="${NS}/package/2006/relationships"><Relationship Id="rId1" Type="${NS}/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Type="${NS}/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>` },
+    { name: 'xl/styles.xml', data: head + `<styleSheet xmlns="${NS}/spreadsheetml/2006/main"><fonts count="2"><font><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="11"/><color rgb="FFFFFFFF"/><name val="Calibri"/></font></fonts><fills count="3"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FF5E6E87"/><bgColor indexed="64"/></patternFill></fill></fills><borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="2"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/><xf numFmtId="0" fontId="1" fillId="2" borderId="0" xfId="0" applyFont="1" applyFill="1"/></cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>` },
+    { name: 'xl/worksheets/sheet1.xml', data: head + `<worksheet xmlns="${NS}/spreadsheetml/2006/main"><dimension ref="${ref}"/><sheetViews><sheetView workbookViewId="0"><pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews><cols>${widths.map((w, i) => `<col min="${i + 1}" max="${i + 1}" width="${w}" customWidth="1"/>`).join('')}</cols><sheetData>${row(header, 1, 1)}${rows.map((r, i) => row(r, i + 2)).join('')}</sheetData><autoFilter ref="${ref}"/></worksheet>` },
+  ], `${MIME}.sheet`);
+}
+$('#btnExport').addEventListener('click', () => {
+  const list = getList();
+  if (!list.length) { toast('Não há registros para exportar.', 'error'); return; }
+  const cols = visibleCols().filter(c => !c.noExport);
+  const plain = (r, k) => k === 'date' ? fmtDate(r.date) : k === 'status' ? STATUS[r.status].label : k === 'n4' ? N4[r.n4].label : (r[k] ?? '');
+  const d = new Date(), stamp = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  const data = list.map(r => cols.map(c => plain(r, c.key)));
+  const widths = cols.map((c, i) => Math.max(c.label.length, ...data.map(d => String(d[i]).length)) + 3);
+  const url = URL.createObjectURL(buildXlsx('Solicitações', cols.map(c => c.label), data, widths));
+  const a = Object.assign(document.createElement('a'), { href: url, download: `solicitacoes-intercambio-${stamp}.xlsx` });
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 1000);
+  toast(`${list.length} ${list.length === 1 ? 'registro exportado' : 'registros exportados'} para Excel.`);
+});
+
+/* ================= Modal ================= */
+let lastFocus = null;
+function openModal({ title, body, foot = '', wide = false }) {
+  const m = $('#modal');
+  if (m.hidden) lastFocus = document.activeElement;
+  $('#modalTitle').textContent = title;
+  $('#modalBody').innerHTML = body;
+  $('#modalFoot').innerHTML = foot;
+  $('.modal', m).classList.toggle('is-wide', wide);
+  m.hidden = false;
+  document.body.style.overflow = 'hidden';
+  const f = $('#modalBody [autofocus]') || $('#modalFoot .btn:last-child') || $('.modal-close', m);
+  f && f.focus();
+}
+function closeModal() {
+  const m = $('#modal'); if (m.hidden) return;
+  m.hidden = true; document.body.style.overflow = '';
+  lastFocus && lastFocus.focus && lastFocus.focus();
+}
+$('#modal').addEventListener('mousedown', e => { if (e.target.id === 'modal') closeModal(); });
+$('#modal').addEventListener('click', e => { if (e.target.closest('[data-modal-close]')) closeModal(); });
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') { if (!$('#modal').hidden) closeModal(); else closeMenus(); }
+  if (e.key === 'Tab' && !$('#modal').hidden) {
+    const f = $$('#modal button:not([disabled]), #modal input, #modal select, #modal textarea, #modal a[href], #modal iframe');
+    if (!f.length) return;
+    if (e.shiftKey && document.activeElement === f[0]) { e.preventDefault(); f[f.length - 1].focus(); }
+    else if (!e.shiftKey && document.activeElement === f[f.length - 1]) { e.preventDefault(); f[0].focus(); }
+  }
+});
+
+/* ---------- Detalhes ---------- */
+function showDetails(id, opts = {}) {
+  const r = findRow(id); if (!r) return;
+  const dd = (label, val, cls = '') => `<div class="${cls}"><dt>${label}</dt><dd>${val}</dd></div>`;
+  const body = `
+    <div class="det-top">
+      <div><div class="det-kicker">Contêiner</div><div class="det-big">${esc(r.container)}</div></div>
+      <div class="det-badges">${badge(STATUS, r.status)}${badge(N4, r.n4)}</div>
+    </div>
+    <dl class="det-grid">
+      ${dd('Nº do intercâmbio', esc(r.id))}
+      ${dd('Tipo do contêiner', esc(r.tipo || '—'))}
+      ${dd('Data da solicitação', fmtDate(r.date))}
+      ${dd('Responsável', esc(r.resp))}
+      ${dd('Placa do veículo', esc(r.placa || '—'))}
+      ${dd('Lacre', esc(r.lacre || '—'))}
+      ${dd('Transportadora', esc(r.transp || '—'))}
+      ${dd('Origem', esc(r.origem))}
+      ${dd('Documento', r.doc ? `<button class="link" data-det-doc>${esc(r.doc)}</button>` : '—', 'span2')}
+      ${r.obs ? dd('Observações', esc(r.obs), 'span2') : ''}
+    </dl>
+    ${r.status === 'reprovada' && r.motivo ? `<div class="callout bad" style="margin-top:14px"><strong>Motivo da reprovação:</strong> ${esc(r.motivo)}</div>` : ''}
+    <h4 class="det-sec">Histórico</h4>
+    <ol class="timeline">${r.history.map(ev => `<li><div class="tl-text">${esc(ev.text)}</div><div class="tl-meta">${fmtDate(ev.at)} · ${esc(ev.who)}</div></li>`).join('')}</ol>
+    ${opts.rejecting ? `<div class="reject-box">
+        <label for="motivo">Motivo da reprovação <span class="req">*</span></label>
+        <textarea class="control" id="motivo" autofocus placeholder="Ex.: divergência no número do lacre informado no documento."></textarea>
+        <div class="hint err" id="motivoErr"></div>
+        <div class="reject-actions">
+          <button class="btn btn-ghost" data-det="cancel-reject">Cancelar</button>
+          <button class="btn btn-danger" data-det="confirm-reject">Confirmar reprovação</button>
+        </div>
+      </div>` : ''}`;
+
+  let foot = '<button class="btn btn-ghost" data-modal-close>Fechar</button>';
+  if (!opts.rejecting) {
+    if (r.status === 'conferencia') foot += '<button class="btn btn-danger" data-det="reject">Reprovar</button><button class="btn btn-success" data-det="approve">Aprovar solicitação</button>';
+    else if (r.status === 'aprovada' && r.n4 === 'nao') foot += '<button class="btn btn-primary" data-det="n4">Cadastrar no Navis N4</button>';
+    else if (r.status === 'reprovada') foot += '<button class="btn btn-primary" data-det="reopen">Reabrir conferência</button>';
+  } else foot = '';
+
+  openModal({ title: `Intercâmbio ${r.id}`, body, foot });
+  $('#modal').dataset.row = id;
+}
+
+$('#modal').addEventListener('click', async e => {
+  if (e.target.closest('[data-det-doc]')) { showDoc($('#modal').dataset.row); return; }
+  const b = e.target.closest('[data-det]'); if (!b) return;
+  const r = findRow($('#modal').dataset.row); if (!r) return;
+  const act = b.dataset.det;
+  if (act === 'approve') {
+    r.status = 'aprovada';
+    r.history.push(h(new Date(), 'Conferência concluída — solicitação aprovada', 'Planejamento'));
+    toast(`Solicitação <strong>${r.id}</strong> aprovada.`);
+    state.flash.add(r.id); render(); showDetails(r.id);
+  }
+  if (act === 'reject') showDetails(r.id, { rejecting: true });
+  if (act === 'cancel-reject') showDetails(r.id);
+  if (act === 'confirm-reject') {
+    const motivo = $('#motivo').value.trim();
+    if (!motivo) { $('#motivoErr').textContent = 'Informe o motivo para reprovar a solicitação.'; $('#motivo').classList.add('is-invalid'); $('#motivo').focus(); return; }
+    r.status = 'reprovada'; r.motivo = motivo;
+    r.history.push(h(new Date(), 'Solicitação reprovada na conferência', 'Planejamento'));
+    toast(`Solicitação <strong>${r.id}</strong> reprovada.`, 'info');
+    state.flash.add(r.id); render(); showDetails(r.id);
+  }
+  if (act === 'reopen') {
+    r.status = 'conferencia'; delete r.motivo;
+    r.history.push(h(new Date(), 'Solicitação reaberta para conferência', 'Planejamento'));
+    state.flash.add(r.id); render(); showDetails(r.id);
+  }
+  if (act === 'n4') {
+    b.disabled = true; b.innerHTML = '<span class="spinner"></span> Enviando ao Navis N4…';
+    await sleep(1400);
+    r.n4 = 'cadastrado';
+    r.history.push(h(new Date(), 'Unidade cadastrada no Navis N4', 'Integração Navis N4'));
+    pushNote(`${r.id} cadastrado no Navis N4`, `Contêiner ${r.container}`, r.id);
+    toast(`Unidade <strong>${r.container}</strong> cadastrada no Navis N4.`);
+    state.flash.add(r.id); render();
+    if (!$('#modal').hidden && $('#modal').dataset.row === r.id) showDetails(r.id);
+  }
+});
+
+/* ---------- Documento ---------- */
+function showDoc(id) {
+  const r = findRow(id); if (!r) return;
+  if (r.fileUrl) {
+    openModal({ title: r.doc, wide: true,
+      body: `<iframe class="pdf-frame" src="${r.fileUrl}" title="${esc(r.doc)}"></iframe>`,
+      foot: `<a class="btn btn-ghost" href="${r.fileUrl}" target="_blank" rel="noopener">Abrir em nova aba</a><button class="btn btn-primary" data-back="${r.id}">Ver detalhes da solicitação</button>` });
+  } else {
+    openModal({ title: `${r.doc} — ${r.id}`, wide: true,
+      body: `<div class="paper-bg"><div class="paper">
+        <div class="paper-head">
+          <div class="paper-brand"><span class="brand-mark"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>log·aí</div>
+          <div class="paper-title">COMPROVANTE DE INTERCÂMBIO<small>Equipment Interchange Receipt</small></div>
+          <div class="paper-num">Nº ${esc(r.id)}</div>
+        </div>
+        <table>
+          <tr><th>Terminal</th><td>TVV — Terminal Primário</td><th>Data/Hora</th><td>${fmtDate(r.date)}</td></tr>
+          <tr><th>Contêiner</th><td><strong>${esc(r.container)}</strong></td><th>Tipo ISO</th><td>${esc(r.tipo || '—')}</td></tr>
+          <tr><th>Lacre</th><td>${esc(r.lacre || '—')}</td><th>Placa</th><td>${esc(r.placa || '—')}</td></tr>
+          <tr><th>Transportadora</th><td colspan="3">${esc(r.transp || '—')}</td></tr>
+        </table>
+        <div class="paper-sec">Inspeção do equipamento</div>
+        <div class="paper-checks"><span>☑ Painéis laterais</span><span>☑ Portas</span><span>☑ Piso</span><span>☑ Teto</span><span>☑ Estrutura frontal</span><span>☑ Lacre íntegro</span></div>
+        <div class="paper-sign"><div>Vistoriador do terminal</div><div>Motorista</div></div>
+        <div class="paper-foot">Documento ilustrativo gerado para demonstração.</div>
+      </div></div>`,
+      foot: `<button class="btn btn-primary" data-back="${r.id}">Ver detalhes da solicitação</button>` });
+  }
+}
+$('#modal').addEventListener('click', e => { const b = e.target.closest('[data-back]'); if (b) showDetails(b.dataset.back); });
+
+/* ---------- Novo intercâmbio ---------- */
+$('#btnNovo').addEventListener('click', () => {
+  openModal({ title: 'Novo intercâmbio',
+    body: `<form id="newForm" class="form-grid" novalidate>
+      <div>
+        <label for="nCont">Contêiner <span class="req">*</span></label>
+        <input class="control" id="nCont" maxlength="11" placeholder="Ex.: MSCU1234566" autofocus autocomplete="off" style="text-transform:uppercase">
+        <div class="hint" id="nContHint">4 letras + 7 dígitos (padrão ISO 6346)</div>
+      </div>
+      <div>
+        <label for="nTipo">Tipo do contêiner <span class="req">*</span></label>
+        <select class="control" id="nTipo">${TIPOS.map(t => `<option ${t.startsWith("40' HC") ? 'selected' : ''}>${t}</option>`).join('')}</select>
+      </div>
+      <div>
+        <label for="nPlaca">Placa do veículo</label>
+        <input class="control" id="nPlaca" maxlength="8" placeholder="Ex.: ABC1D23" style="text-transform:uppercase">
+      </div>
+      <div>
+        <label for="nLacre">Lacre</label>
+        <input class="control" id="nLacre" maxlength="20" placeholder="Ex.: TVV1182100">
+      </div>
+      <div class="span2">
+        <label for="nFile">Documento (PDF)</label>
+        <input class="control" type="file" id="nFile" accept="application/pdf,.pdf">
+      </div>
+      <div class="span2">
+        <label for="nObs">Observações</label>
+        <textarea class="control" id="nObs" placeholder="Informações adicionais para a conferência"></textarea>
+      </div>
+    </form>`,
+    foot: '<button class="btn btn-ghost" data-modal-close>Cancelar</button><button class="btn btn-primary" id="saveNew">Criar solicitação</button>' });
+  $('#nCont').focus();
+});
+
+function contHint(v) {
+  const hint = $('#nContHint'), input = $('#nCont');
+  input.classList.remove('is-invalid');
+  if (!v) { hint.className = 'hint'; hint.textContent = '4 letras + 7 dígitos (padrão ISO 6346)'; return; }
+  if (v.length < 11) { hint.className = 'hint'; hint.textContent = `${11 - v.length} caractere(s) restante(s)`; return; }
+  if (!CONT_RE.test(v)) { hint.className = 'hint err'; hint.textContent = 'Formato inválido. Use 3 letras do proprietário + U/J/Z + 7 dígitos.'; input.classList.add('is-invalid'); return; }
+  const cd = checkDigit(v.slice(0, 10));
+  if (cd === +v[10]) { hint.className = 'hint ok'; hint.textContent = '✓ Dígito verificador válido'; }
+  else { hint.className = 'hint warn'; hint.textContent = `Dígito verificador não confere (esperado ${cd}). Confira o número.`; }
+}
+$('#modal').addEventListener('input', e => {
+  if (e.target.id === 'nCont') { e.target.value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ''); contHint(e.target.value); }
+  if (e.target.id === 'nPlaca') e.target.value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+  if (e.target.id === 'motivo') { e.target.classList.remove('is-invalid'); $('#motivoErr').textContent = ''; }
+});
+$('#modal').addEventListener('click', e => {
+  if (e.target.id !== 'saveNew') return;
+  const v = $('#nCont').value;
+  if (!CONT_RE.test(v)) {
+    $('#nCont').classList.add('is-invalid');
+    $('#nContHint').className = 'hint err';
+    $('#nContHint').textContent = v ? 'Formato inválido. Use 3 letras do proprietário + U/J/Z + 7 dígitos.' : 'Informe o número do contêiner.';
+    $('#nCont').focus(); return;
+  }
+  const file = $('#nFile').files[0];
+  if (file && !isPdf(file)) { toast('O documento precisa ser um arquivo PDF.', 'error'); return; }
+  const id = nextId(), now = new Date();
+  state.rows.push({
+    id, container: v, date: now, status: 'conferencia', n4: 'nao', resp: 'Planejamento', origem: 'Cadastro manual',
+    doc: file ? file.name : '', fileUrl: file ? URL.createObjectURL(file) : null,
+    tipo: $('#nTipo').value, placa: $('#nPlaca').value, lacre: $('#nLacre').value.trim(), transp: '', obs: $('#nObs').value.trim(),
+    history: [h(now, 'Solicitação cadastrada manualmente', 'Planejamento'), h(now, 'Encaminhada para conferência', 'Sistema')],
+  });
+  pushNote(`${id} aguardando conferência`, `Contêiner ${v} · cadastro manual`, id);
+  closeModal();
+  showNewRow(id);
+  toast(`Solicitação <strong>${id}</strong> criada para o contêiner ${v}.`);
+});
+
+function showNewRow(id) {
+  resetFilters();
+  state.sort = { key: 'date', dir: 'desc' };
+  state.page = 1;
+  state.flash.add(id);
+  render();
+}
+
+/* ================= Upload de PDF ================= */
+const dz = $('#dropzone'), fileInput = $('#fileInput');
+const isPdf = f => f.type === 'application/pdf' || /\.pdf$/i.test(f.name);
+let queue = [], busy = false, lastUpload = '';
+
+function dzIdle() {
+  dz.classList.remove('is-busy');
+  dz.setAttribute('aria-busy', 'false');
+  $('#dzContent').innerHTML = `
+    <div class="dz-main">Clique para selecionar ou arraste o arquivo PDF aqui</div>
+    <div class="dz-sub" id="dzHelp">Somente arquivos PDF</div>
+    ${lastUpload ? `<div class="dz-last">${lastUpload}</div>` : ''}`;
+}
+function dzBusy(file, total) {
+  dz.classList.add('is-busy');
+  dz.setAttribute('aria-busy', 'true');
+  $('#dzContent').innerHTML = `
+    <div class="dz-file">${ICON.pdf}<span>${esc(file.name)}</span><span style="color:#9AA3AF;font-weight:400">· ${fmtSize(file.size)}</span></div>
+    <div class="dz-progress" style="margin:10px auto 6px"><div class="dz-bar" id="dzBar"></div></div>
+    <div class="dz-step" id="dzStep">Preparando…</div>
+    ${total > 1 ? `<div class="dz-sub">+${total - 1} arquivo(s) na fila</div>` : ''}`;
+}
+function enqueue(files) {
+  files = [...files];
+  if (!files.length) return;
+  const pdfs = files.filter(isPdf);
+  if (pdfs.length < files.length) toast('Somente arquivos PDF são aceitos.', 'error');
+  queue.push(...pdfs);
+  if (!busy) processNext();
+}
+async function processNext() {
+  const file = queue.shift();
+  if (!file) { busy = false; dzIdle(); return; }
+  busy = true;
+  dzBusy(file, queue.length + 1);
+  const steps = [[28, 'Enviando arquivo…'], [62, 'Lendo documento PDF…'], [88, 'Extraindo dados do contêiner…'], [100, 'Criando solicitação…']];
+  for (const [pct, label] of steps) {
+    await sleep(60);
+    $('#dzBar').style.width = pct + '%';
+    $('#dzStep').textContent = label;
+    await sleep(480);
+  }
+  const owner = pick(OWNERS), body = owner + digits(6), container = body + checkDigit(body);
+  const id = nextId(), now = new Date();
+  state.rows.push({
+    id, container, date: now, status: 'conferencia', n4: 'nao', resp: 'Planejamento', origem: 'Upload de PDF',
+    doc: file.name, fileUrl: URL.createObjectURL(file),
+    tipo: pick(TIPOS), placa: pick(['RQX', 'PPK', 'MTZ', 'QRB', 'RBA']) + digits(1) + pick(['A', 'C', 'F', 'H', 'J']) + digits(2),
+    lacre: 'TVV' + digits(7), transp: pick(TRANSP),
+    history: [h(now, `Solicitação criada a partir do documento ${file.name}`, 'Planejamento'),
+              h(now, 'Dados do contêiner extraídos do PDF', 'Sistema'),
+              h(now, 'Encaminhada para conferência', 'Sistema')],
+  });
+  pushNote(`${id} aguardando conferência`, `Novo PDF: ${file.name}`, id);
+  lastUpload = `✓ Último envio: ${esc(file.name)} → ${id} (contêiner ${container})`;
+  showNewRow(id);
+  toast(`PDF processado. Solicitação <strong>${id}</strong> criada para o contêiner ${container}.`);
+  processNext();
+}
+
+fileInput.addEventListener('click', e => e.stopPropagation());
+dz.addEventListener('click', () => { if (!busy) fileInput.click(); });
+dz.addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === ' ') && !busy) { e.preventDefault(); fileInput.click(); } });
+fileInput.addEventListener('change', () => { enqueue(fileInput.files); fileInput.value = ''; });
+['dragenter', 'dragover'].forEach(t => dz.addEventListener(t, e => { e.preventDefault(); dz.classList.add('is-drag'); }));
+['dragleave', 'dragend'].forEach(t => dz.addEventListener(t, () => dz.classList.remove('is-drag')));
+dz.addEventListener('drop', e => { e.preventDefault(); dz.classList.remove('is-drag'); enqueue(e.dataTransfer.files); });
+// Evita que o navegador abra o PDF se ele for solto fora da área
+window.addEventListener('dragover', e => e.preventDefault());
+window.addEventListener('drop', e => e.preventDefault());
+
+/* ================= Início ================= */
+syncSelectColors();
+renderCols();
+renderNotes();
+dzIdle();
+render();
+})();
+</script>
+</body>
+</html>
