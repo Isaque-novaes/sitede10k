@@ -2,14 +2,17 @@
 
 ## Demo — Intercâmbios (log·aí Interno)
 
-Protótipo navegável da tela de **Intercâmbios** para apresentação à gerência.
+Protótipo navegável da tela de **Intercâmbios** (devolução de contêineres vazios pós-desova) para apresentação à gerência.
 Arquivo único, sem instalação: abra `demo-intercambios/index.html` no navegador (Chrome ou Edge).
 Funciona offline; os dados são fictícios e voltam ao estado inicial ao recarregar a página
 (ou em **Conta ▸ Restaurar dados da demonstração**).
 
+Fluxo demonstrado (sem conferência manual): o PDF entra no Loga-AI → os dados são extraídos →
+o Navis N4 puxa o intercâmbio automaticamente → **Recebido → Aguardando N4 → Cadastrado no N4**.
+
 Roteiro sugerido para a apresentação:
 
-1. Arraste um PDF qualquer para **Enviar PDF do intercâmbio**: o sistema "lê" o documento e cria a solicitação `INT-2026-0457`.
-2. Clique em **Ver detalhes** e depois em **Aprovar solicitação** e **Cadastrar no Navis N4**.
-3. Use os **Filtros de consulta**, ordene as colunas e clique em **Exportar Excel** (gera um `.xlsx`).
-4. Mostre **+ Novo intercâmbio** (valida o número do contêiner pelo dígito verificador ISO 6346) e o sino de notificações.
+1. Arraste um PDF qualquer para **Enviar PDF do intercâmbio**: o sistema lê o documento e cria o intercâmbio `INT-2026-0457`.
+2. Acompanhe o status mudar sozinho de **Recebido** para **Aguardando N4** e **Cadastrado no N4** (com aviso no sino).
+3. Clique em **Ver detalhes** para mostrar o histórico de cada etapa.
+4. Use os **Filtros de consulta**, ordene as colunas e clique em **Exportar Excel** (gera um `.xlsx`).

@@ -130,7 +130,7 @@ svg{flex:none}
 .dz-step{font-size:12px;color:var(--muted)}
 
 /* Filters */
-.filters{display:grid;grid-template-columns:repeat(5,minmax(0,1fr)) auto;gap:16px;align-items:end}
+.filters{display:grid;grid-template-columns:repeat(4,minmax(0,1fr)) auto;gap:16px;align-items:end}
 .field label{display:block;font-size:13px;font-weight:600;color:var(--ink);margin-bottom:7px}
 .control{width:100%;height:38px;border:1px solid var(--field-line);border-radius:3px;background:#fff;padding:0 11px;font-size:13px;color:var(--text)}
 .control::placeholder{color:#9AA3AF}
@@ -146,7 +146,7 @@ textarea.control{height:auto;min-height:84px;padding:9px 11px;resize:vertical;li
 .icon-btn.primary{background:var(--primary);border-color:var(--primary);color:#fff}
 .icon-btn.primary:hover{background:var(--primary-hover)}
 .icon-btn[aria-pressed="true"]{background:#EEF3FA;border-color:#9FB4D3;color:var(--primary)}
-.filters-more{display:none;grid-template-columns:repeat(5,minmax(0,1fr));gap:16px;margin-top:16px;padding-top:16px;border-top:1px dashed var(--line)}
+.filters-more{display:none;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;margin-top:16px;padding-top:16px;border-top:1px dashed var(--line)}
 .filters-more.is-open{display:grid}
 
 /* Table */
@@ -170,6 +170,9 @@ table.grid{width:100%;border-collapse:collapse;min-width:1040px}
 .b-ok{background:var(--ok-bg);color:var(--ok-fg)}
 .b-mut{background:var(--mut-bg);color:var(--mut-fg)}
 .b-bad{background:var(--bad-bg);color:var(--bad-fg)}
+.b-wait{background:#FDF1D8;color:#8A5300}
+.b-wait::before{content:"";display:inline-block;width:6px;height:6px;border-radius:50%;background:currentColor;margin-right:6px;vertical-align:1px;animation:blink 1s ease-in-out infinite}
+@keyframes blink{50%{opacity:.25}}
 
 .table-foot{display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:16px 22px;padding:14px 16px;font-size:13px;color:#4B5563}
 .cols-wrap{position:relative}
@@ -223,6 +226,7 @@ table.grid{width:100%;border-collapse:collapse;min-width:1040px}
 .reject-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:10px}
 .callout{padding:10px 12px;border-radius:4px;font-size:13px}
 .callout.bad{background:var(--bad-bg);color:#7A271A}
+.callout.info{background:var(--info-bg);color:#1E4E86;display:flex;align-items:center;gap:8px}
 
 .form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 18px}
 .form-grid .span2{grid-column:1/-1}
@@ -468,20 +472,12 @@ table.grid{width:100%;border-collapse:collapse;min-width:1040px}
             </select>
           </div>
           <div class="field">
-            <label for="fStatus">Status da solicitação</label>
+            <label for="fStatus">Status</label>
             <select class="control" id="fStatus" name="status">
               <option value="">Selecione</option>
-              <option value="conferencia">Em conferência</option>
-              <option value="aprovada">Aprovada</option>
-              <option value="reprovada">Reprovada</option>
-            </select>
-          </div>
-          <div class="field">
-            <label for="fN4">Status no Navis N4</label>
-            <select class="control" id="fN4" name="n4">
-              <option value="">Selecione</option>
-              <option value="cadastrado">Cadastrado</option>
-              <option value="nao">Não cadastrado</option>
+              <option value="recebido">Recebido</option>
+              <option value="aguardando">Aguardando N4</option>
+              <option value="cadastrado">Cadastrado no N4</option>
             </select>
           </div>
           <div class="filter-actions">
@@ -601,14 +597,11 @@ const checkDigit = base => { let s = 0; for (let i = 0; i < 10; i++) s += (i < 4
 const CONT_RE = /^[A-Z]{3}[UJZ]\d{7}$/;
 
 /* ================= Domínio ================= */
+/* Sem conferência manual: o PDF entra no Loga-AI e o N4 puxa o intercâmbio automaticamente */
 const STATUS = {
-  conferencia: { label: 'Em conferência', cls: 'b-info' },
-  aprovada:    { label: 'Aprovada',       cls: 'b-ok' },
-  reprovada:   { label: 'Reprovada',      cls: 'b-bad' },
-};
-const N4 = {
-  nao:        { label: 'Não cadastrado', cls: 'b-mut' },
-  cadastrado: { label: 'Cadastrado',     cls: 'b-ok' },
+  recebido:   { label: 'Recebido',         cls: 'b-info' },
+  aguardando: { label: 'Aguardando N4',    cls: 'b-wait' },
+  cadastrado: { label: 'Cadastrado no N4', cls: 'b-ok' },
 };
 const TIPOS = ["20' DC (22G1)", "40' DC (42G1)", "40' HC (45G1)", "40' RF (45R1)", "20' RF (22R1)"];
 const TRANSP = ['Rodoviário Litoral Ltda.', 'Carga Leste Transportes', 'Translog Serra Ltda.', 'Via Porto Cargas'];
@@ -618,8 +611,7 @@ const COLS = [
   { key: 'container', label: 'Contêiner',             sort: true },
   { key: 'date',      label: 'Data da solicitação',   sort: true },
   { key: 'doc',       label: 'Documento' },
-  { key: 'status',    label: 'Status da solicitação', sort: true },
-  { key: 'n4',        label: 'Status no Navis N4',    sort: true },
+  { key: 'status',    label: 'Status',                sort: true },
   { key: 'resp',      label: 'Responsável' },
   { key: 'actions',   label: 'Ações', lock: true, noExport: true },
 ];
@@ -628,39 +620,34 @@ const h = (at, text, who) => ({ at: new Date(at), text, who });
 function seedRows() {
   const base = { doc: 'intercambio.pdf', resp: 'Planejamento', origem: 'Upload de PDF' };
   return [
-    { ...base, id: 'INT-2026-0456', container: 'CAAU7416961', date: new Date('2026-11-10T09:31'), status: 'conferencia', n4: 'nao',
-      tipo: "40' HC (45G1)", placa: 'RQX4F21', lacre: 'TVV1182034', transp: TRANSP[0],
-      history: [h('2026-11-10T09:31', 'Solicitação criada a partir do documento intercambio.pdf', 'Planejamento'),
-                h('2026-11-10T09:31', 'Dados do contêiner extraídos do PDF', 'Sistema'),
-                h('2026-11-10T09:32', 'Encaminhada para conferência', 'Sistema')] },
-    { ...base, id: 'INT-2026-0455', container: 'MSCU3920147', date: new Date('2026-11-10T08:12'), status: 'aprovada', n4: 'cadastrado',
-      tipo: "40' DC (42G1)", placa: 'PPK2B87', lacre: 'TVV1181977', transp: TRANSP[1],
-      history: [h('2026-11-10T08:12', 'Solicitação criada a partir do documento intercambio.pdf', 'Planejamento'),
-                h('2026-11-10T08:12', 'Dados do contêiner extraídos do PDF', 'Sistema'),
-                h('2026-11-10T08:37', 'Conferência concluída — solicitação aprovada', 'Planejamento'),
-                h('2026-11-10T08:38', 'Unidade cadastrada no Navis N4', 'Integração Navis N4')] },
-    { ...base, id: 'INT-2026-0454', container: 'TGHU8451203', date: new Date('2026-11-09T17:48'), status: 'conferencia', n4: 'nao',
-      tipo: "20' DC (22G1)", placa: 'MTZ7C14', lacre: 'TVV1181902', transp: TRANSP[2],
-      history: [h('2026-11-09T17:48', 'Solicitação criada a partir do documento intercambio.pdf', 'Planejamento'),
-                h('2026-11-09T17:48', 'Dados do contêiner extraídos do PDF', 'Sistema'),
-                h('2026-11-09T17:49', 'Encaminhada para conferência', 'Sistema')] },
-    { ...base, id: 'INT-2026-0453', container: 'CMAU5063788', date: new Date('2026-11-09T15:22'), status: 'aprovada', n4: 'cadastrado',
-      tipo: "40' RF (45R1)", placa: 'QRB3H09', lacre: 'TVV1181855', transp: TRANSP[3],
-      history: [h('2026-11-09T15:22', 'Solicitação criada a partir do documento intercambio.pdf', 'Planejamento'),
-                h('2026-11-09T15:22', 'Dados do contêiner extraídos do PDF', 'Sistema'),
-                h('2026-11-09T15:46', 'Conferência concluída — solicitação aprovada', 'Planejamento'),
-                h('2026-11-09T15:47', 'Unidade cadastrada no Navis N4', 'Integração Navis N4')] },
+    { ...base, id: 'INT-2026-0456', container: 'CAAU7416961', date: new Date('2026-11-10T09:31'), status: 'cadastrado',
+      tipo: "40' HC (45G1)", placa: 'RQX4F21', lacre: 'TVV1182034', transp: TRANSP[0], history: autoHistory('2026-11-10T09:31') },
+    { ...base, id: 'INT-2026-0455', container: 'MSCU3920147', date: new Date('2026-11-10T08:12'), status: 'cadastrado',
+      tipo: "40' DC (42G1)", placa: 'PPK2B87', lacre: 'TVV1181977', transp: TRANSP[1], history: autoHistory('2026-11-10T08:12') },
+    { ...base, id: 'INT-2026-0454', container: 'TGHU8451203', date: new Date('2026-11-09T17:48'), status: 'cadastrado',
+      tipo: "20' DC (22G1)", placa: 'MTZ7C14', lacre: 'TVV1181902', transp: TRANSP[2], history: autoHistory('2026-11-09T17:48') },
+    { ...base, id: 'INT-2026-0453', container: 'CMAU5063788', date: new Date('2026-11-09T15:22'), status: 'cadastrado',
+      tipo: "40' RF (45R1)", placa: 'QRB3H09', lacre: 'TVV1181855', transp: TRANSP[3], history: autoHistory('2026-11-09T15:22') },
   ];
+}
+/* Histórico de um intercâmbio que entrou pelo PDF e foi puxado pelo N4 em seguida */
+function autoHistory(iso) {
+  const t = new Date(iso), at = s => new Date(t.getTime() + s * 1000);
+  return [h(at(0), 'Intercâmbio recebido pelo Loga-AI — documento intercambio.pdf', 'Planejamento'),
+          h(at(5), 'Dados do contêiner extraídos do PDF', 'Sistema'),
+          h(at(20), 'Intercâmbio disponibilizado para o Navis N4', 'Sistema'),
+          h(at(55), 'Intercâmbio cadastrado automaticamente no Navis N4 (confirmação recebida)', 'Integração Navis N4')];
 }
 function seedNotes() {
+  const n = (id, cont, iso) => ({ title: `${id} cadastrado no Navis N4`, sub: `Contêiner ${cont} · automático`, at: new Date(new Date(iso).getTime() + 55000), read: false, rowId: id });
   return [
-    { title: 'INT-2026-0456 aguardando conferência', sub: 'Contêiner CAAU7416961', at: new Date('2026-11-10T09:32'), read: false, rowId: 'INT-2026-0456' },
-    { title: 'INT-2026-0455 cadastrado no Navis N4', sub: 'Contêiner MSCU3920147', at: new Date('2026-11-10T08:38'), read: false, rowId: 'INT-2026-0455' },
-    { title: 'INT-2026-0454 aguardando conferência', sub: 'Contêiner TGHU8451203', at: new Date('2026-11-09T17:49'), read: false, rowId: 'INT-2026-0454' },
-    { title: 'INT-2026-0453 cadastrado no Navis N4', sub: 'Contêiner CMAU5063788', at: new Date('2026-11-09T15:47'), read: false, rowId: 'INT-2026-0453' },
+    n('INT-2026-0456', 'CAAU7416961', '2026-11-10T09:31'),
+    n('INT-2026-0455', 'MSCU3920147', '2026-11-10T08:12'),
+    n('INT-2026-0454', 'TGHU8451203', '2026-11-09T17:48'),
+    n('INT-2026-0453', 'CMAU5063788', '2026-11-09T15:22'),
   ];
 }
-const emptyFilters = () => ({ num: '', cont: '', periodo: '', status: '', n4: '', resp: '', tipo: '' });
+const emptyFilters = () => ({ num: '', cont: '', periodo: '', status: '', resp: '', tipo: '' });
 
 const state = {
   rows: seedRows(),
@@ -696,7 +683,6 @@ function getList() {
     if (f.num && !r.id.toLowerCase().includes(f.num.trim().toLowerCase())) return false;
     if (f.cont && !r.container.toLowerCase().includes(f.cont.replace(/\s/g, '').toLowerCase())) return false;
     if (f.status && r.status !== f.status) return false;
-    if (f.n4 && r.n4 !== f.n4) return false;
     if (f.resp && r.resp !== f.resp) return false;
     if (f.tipo && r.tipo !== f.tipo) return false;
     if (f.periodo) {
@@ -708,7 +694,7 @@ function getList() {
     return true;
   });
   const { key, dir } = state.sort, m = dir === 'asc' ? 1 : -1;
-  const val = r => key === 'date' ? r.date.getTime() : key === 'status' ? STATUS[r.status].label : key === 'n4' ? N4[r.n4].label : String(r[key]);
+  const val = r => key === 'date' ? r.date.getTime() : key === 'status' ? STATUS[r.status].label : String(r[key]);
   return list.sort((a, b) => {
     const x = val(a), y = val(b);
     const c = typeof x === 'number' ? x - y : x.localeCompare(y, 'pt-BR');
@@ -727,7 +713,6 @@ function cell(r, key) {
       ? `<button class="link doc-cell" data-act="doc" data-id="${r.id}" title="${esc(r.doc)}">${esc(r.doc)}</button>`
       : '<span style="color:#9AA3AF">—</span>';
     case 'status': return badge(STATUS, r.status);
-    case 'n4': return badge(N4, r.n4);
     case 'actions': return `<button class="link" data-act="details" data-id="${r.id}">Ver detalhes</button>`;
     default: return esc(r[key]);
   }
@@ -929,7 +914,7 @@ $('#btnExport').addEventListener('click', () => {
   const list = getList();
   if (!list.length) { toast('Não há registros para exportar.', 'error'); return; }
   const cols = visibleCols().filter(c => !c.noExport);
-  const plain = (r, k) => k === 'date' ? fmtDate(r.date) : k === 'status' ? STATUS[r.status].label : k === 'n4' ? N4[r.n4].label : (r[k] ?? '');
+  const plain = (r, k) => k === 'date' ? fmtDate(r.date) : k === 'status' ? STATUS[r.status].label : (r[k] ?? '');
   const d = new Date(), stamp = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
   const data = list.map(r => cols.map(c => plain(r, c.key)));
   const widths = cols.map((c, i) => Math.max(c.label.length, ...data.map(d => String(d[i]).length)) + 3);
@@ -971,14 +956,15 @@ document.addEventListener('keydown', e => {
 });
 
 /* ---------- Detalhes ---------- */
-function showDetails(id, opts = {}) {
+function showDetails(id) {
   const r = findRow(id); if (!r) return;
   const dd = (label, val, cls = '') => `<div class="${cls}"><dt>${label}</dt><dd>${val}</dd></div>`;
   const body = `
     <div class="det-top">
       <div><div class="det-kicker">Contêiner</div><div class="det-big">${esc(r.container)}</div></div>
-      <div class="det-badges">${badge(STATUS, r.status)}${badge(N4, r.n4)}</div>
+      <div class="det-badges">${badge(STATUS, r.status)}</div>
     </div>
+    ${r.status !== 'cadastrado' ? `<div class="callout info" style="margin-bottom:14px">${ICON.info}<span>O Navis N4 está puxando este intercâmbio automaticamente. Não é preciso fazer nada.</span></div>` : ''}
     <dl class="det-grid">
       ${dd('Nº do intercâmbio', esc(r.id))}
       ${dd('Tipo do contêiner', esc(r.tipo || '—'))}
@@ -991,67 +977,38 @@ function showDetails(id, opts = {}) {
       ${dd('Documento', r.doc ? `<button class="link" data-det-doc>${esc(r.doc)}</button>` : '—', 'span2')}
       ${r.obs ? dd('Observações', esc(r.obs), 'span2') : ''}
     </dl>
-    ${r.status === 'reprovada' && r.motivo ? `<div class="callout bad" style="margin-top:14px"><strong>Motivo da reprovação:</strong> ${esc(r.motivo)}</div>` : ''}
     <h4 class="det-sec">Histórico</h4>
-    <ol class="timeline">${r.history.map(ev => `<li><div class="tl-text">${esc(ev.text)}</div><div class="tl-meta">${fmtDate(ev.at)} · ${esc(ev.who)}</div></li>`).join('')}</ol>
-    ${opts.rejecting ? `<div class="reject-box">
-        <label for="motivo">Motivo da reprovação <span class="req">*</span></label>
-        <textarea class="control" id="motivo" autofocus placeholder="Ex.: divergência no número do lacre informado no documento."></textarea>
-        <div class="hint err" id="motivoErr"></div>
-        <div class="reject-actions">
-          <button class="btn btn-ghost" data-det="cancel-reject">Cancelar</button>
-          <button class="btn btn-danger" data-det="confirm-reject">Confirmar reprovação</button>
-        </div>
-      </div>` : ''}`;
+    <ol class="timeline">${r.history.map(ev => `<li><div class="tl-text">${esc(ev.text)}</div><div class="tl-meta">${fmtDate(ev.at)} · ${esc(ev.who)}</div></li>`).join('')}</ol>`;
 
-  let foot = '<button class="btn btn-ghost" data-modal-close>Fechar</button>';
-  if (!opts.rejecting) {
-    if (r.status === 'conferencia') foot += '<button class="btn btn-danger" data-det="reject">Reprovar</button><button class="btn btn-success" data-det="approve">Aprovar solicitação</button>';
-    else if (r.status === 'aprovada' && r.n4 === 'nao') foot += '<button class="btn btn-primary" data-det="n4">Cadastrar no Navis N4</button>';
-    else if (r.status === 'reprovada') foot += '<button class="btn btn-primary" data-det="reopen">Reabrir conferência</button>';
-  } else foot = '';
-
-  openModal({ title: `Intercâmbio ${r.id}`, body, foot });
+  openModal({ title: `Intercâmbio ${r.id}`, body, foot: '<button class="btn btn-ghost" data-modal-close>Fechar</button>' });
   $('#modal').dataset.row = id;
 }
 
-$('#modal').addEventListener('click', async e => {
-  if (e.target.closest('[data-det-doc]')) { showDoc($('#modal').dataset.row); return; }
-  const b = e.target.closest('[data-det]'); if (!b) return;
-  const r = findRow($('#modal').dataset.row); if (!r) return;
-  const act = b.dataset.det;
-  if (act === 'approve') {
-    r.status = 'aprovada';
-    r.history.push(h(new Date(), 'Conferência concluída — solicitação aprovada', 'Planejamento'));
-    toast(`Solicitação <strong>${r.id}</strong> aprovada.`);
-    state.flash.add(r.id); render(); showDetails(r.id);
-  }
-  if (act === 'reject') showDetails(r.id, { rejecting: true });
-  if (act === 'cancel-reject') showDetails(r.id);
-  if (act === 'confirm-reject') {
-    const motivo = $('#motivo').value.trim();
-    if (!motivo) { $('#motivoErr').textContent = 'Informe o motivo para reprovar a solicitação.'; $('#motivo').classList.add('is-invalid'); $('#motivo').focus(); return; }
-    r.status = 'reprovada'; r.motivo = motivo;
-    r.history.push(h(new Date(), 'Solicitação reprovada na conferência', 'Planejamento'));
-    toast(`Solicitação <strong>${r.id}</strong> reprovada.`, 'info');
-    state.flash.add(r.id); render(); showDetails(r.id);
-  }
-  if (act === 'reopen') {
-    r.status = 'conferencia'; delete r.motivo;
-    r.history.push(h(new Date(), 'Solicitação reaberta para conferência', 'Planejamento'));
-    state.flash.add(r.id); render(); showDetails(r.id);
-  }
-  if (act === 'n4') {
-    b.disabled = true; b.innerHTML = '<span class="spinner"></span> Enviando ao Navis N4…';
-    await sleep(1400);
-    r.n4 = 'cadastrado';
-    r.history.push(h(new Date(), 'Unidade cadastrada no Navis N4', 'Integração Navis N4'));
-    pushNote(`${r.id} cadastrado no Navis N4`, `Contêiner ${r.container}`, r.id);
-    toast(`Unidade <strong>${r.container}</strong> cadastrada no Navis N4.`);
-    state.flash.add(r.id); render();
-    if (!$('#modal').hidden && $('#modal').dataset.row === r.id) showDetails(r.id);
-  }
+$('#modal').addEventListener('click', e => {
+  if (e.target.closest('[data-det-doc]')) showDoc($('#modal').dataset.row);
 });
+
+/* Integração simulada: o N4 puxa o intercâmbio recebido e confirma o cadastro, sem ação manual */
+function refreshRow(id) {
+  state.flash.add(id);
+  render();
+  const m = $('#modal');
+  if (!m.hidden && m.dataset.row === id && $('#modalTitle').textContent === `Intercâmbio ${id}`) showDetails(id);
+}
+async function autoN4(id) {
+  await sleep(1300);
+  let r = findRow(id); if (!r) return;
+  r.status = 'aguardando';
+  r.history.push(h(new Date(), 'Intercâmbio disponibilizado para o Navis N4', 'Sistema'));
+  refreshRow(id);
+  await sleep(2600);
+  r = findRow(id); if (!r) return;
+  r.status = 'cadastrado';
+  r.history.push(h(new Date(), 'Intercâmbio cadastrado automaticamente no Navis N4 (confirmação recebida)', 'Integração Navis N4'));
+  pushNote(`${id} cadastrado no Navis N4`, `Contêiner ${r.container} · automático`, id);
+  toast(`Intercâmbio <strong>${id}</strong> cadastrado automaticamente no Navis N4.`);
+  refreshRow(id);
+}
 
 /* ---------- Documento ---------- */
 function showDoc(id) {
@@ -1135,7 +1092,6 @@ function contHint(v) {
 $('#modal').addEventListener('input', e => {
   if (e.target.id === 'nCont') { e.target.value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ''); contHint(e.target.value); }
   if (e.target.id === 'nPlaca') e.target.value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
-  if (e.target.id === 'motivo') { e.target.classList.remove('is-invalid'); $('#motivoErr').textContent = ''; }
 });
 $('#modal').addEventListener('change', e => {
   if (e.target.id !== 'nFile') return;
@@ -1156,15 +1112,15 @@ $('#modal').addEventListener('click', e => {
   if (file && !isPdf(file)) { toast('O documento precisa ser um arquivo PDF.', 'error'); return; }
   const id = nextId(), now = new Date();
   state.rows.push({
-    id, container: v, date: now, status: 'conferencia', n4: 'nao', resp: 'Planejamento', origem: 'Cadastro manual',
+    id, container: v, date: now, status: 'recebido', resp: 'Planejamento', origem: 'Cadastro manual',
     doc: file ? file.name : '', fileUrl: file ? URL.createObjectURL(file) : null,
     tipo: $('#nTipo').value, placa: $('#nPlaca').value, lacre: $('#nLacre').value.trim(), transp: '', obs: $('#nObs').value.trim(),
-    history: [h(now, 'Solicitação cadastrada manualmente', 'Planejamento'), h(now, 'Encaminhada para conferência', 'Sistema')],
+    history: [h(now, 'Intercâmbio registrado no Loga-AI', 'Planejamento')],
   });
-  pushNote(`${id} aguardando conferência`, `Contêiner ${v} · cadastro manual`, id);
   closeModal();
   showNewRow(id);
-  toast(`Solicitação <strong>${id}</strong> criada para o contêiner ${v}.`);
+  toast(`Intercâmbio <strong>${id}</strong> registrado. O Navis N4 vai puxá-lo automaticamente.`, 'info');
+  autoN4(id);
 });
 
 function showNewRow(id) {
@@ -1210,7 +1166,7 @@ async function processNext() {
   if (!file) { busy = false; dzIdle(); return; }
   busy = true;
   dzBusy(file, queue.length + 1);
-  const steps = [[28, 'Enviando arquivo…'], [62, 'Lendo documento PDF…'], [88, 'Extraindo dados do contêiner…'], [100, 'Criando solicitação…']];
+  const steps = [[28, 'Enviando arquivo…'], [62, 'Lendo documento PDF…'], [88, 'Extraindo dados do contêiner…'], [100, 'Registrando no Loga-AI…']];
   for (const [pct, label] of steps) {
     await sleep(60);
     $('#dzBar').style.width = pct + '%';
@@ -1220,18 +1176,17 @@ async function processNext() {
   const owner = pick(OWNERS), body = owner + digits(6), container = body + checkDigit(body);
   const id = nextId(), now = new Date();
   state.rows.push({
-    id, container, date: now, status: 'conferencia', n4: 'nao', resp: 'Planejamento', origem: 'Upload de PDF',
+    id, container, date: now, status: 'recebido', resp: 'Planejamento', origem: 'Upload de PDF',
     doc: file.name, fileUrl: URL.createObjectURL(file),
     tipo: pick(TIPOS), placa: pick(['RQX', 'PPK', 'MTZ', 'QRB', 'RBA']) + digits(1) + pick(['A', 'C', 'F', 'H', 'J']) + digits(2),
     lacre: 'TVV' + digits(7), transp: pick(TRANSP),
-    history: [h(now, `Solicitação criada a partir do documento ${file.name}`, 'Planejamento'),
-              h(now, 'Dados do contêiner extraídos do PDF', 'Sistema'),
-              h(now, 'Encaminhada para conferência', 'Sistema')],
+    history: [h(now, `Intercâmbio recebido pelo Loga-AI — documento ${file.name}`, 'Planejamento'),
+              h(now, 'Dados do contêiner extraídos do PDF', 'Sistema')],
   });
-  pushNote(`${id} aguardando conferência`, `Novo PDF: ${file.name}`, id);
   lastUpload = `✓ Último envio: ${esc(file.name)} → ${id} (contêiner ${container})`;
   showNewRow(id);
-  toast(`PDF processado. Solicitação <strong>${id}</strong> criada para o contêiner ${container}.`);
+  toast(`PDF recebido. Intercâmbio <strong>${id}</strong> registrado para o contêiner ${container}.`, 'info');
+  autoN4(id);
   processNext();
 }
 
