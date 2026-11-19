@@ -23,7 +23,9 @@ Roteiro sugerido para a apresentação:
 Conteúdo: cadastro da SDA no PTVV e no Loga-AI (antes e depois das planilhas) e o projeto Intercâmbios (Loga-AI + Navis N4).
 Os slides são gerados por `apresentacao/gerar-slides.js` (pptxgenjs).
 
-## Guia — envio dos resumos ao Faturamento
+## Passo a passo — envio dos resumos ao Faturamento
 
-`guias/resumos-faturamento/passo-a-passo-resumos-faturamento.pdf` — passo a passo em A4 (1 página) da automação
-`EnviarScansPorEmail`, para o setor de Planejamento. Gerado a partir de `guia.html` (Chromium → PDF).
+`guias/resumos-faturamento/passo-a-passo-resumos-faturamento.pptx` (7 slides, com notas) e a versão em PDF.
+Passo a passo do botão **Faturamento** para o setor de Planejamento: salvar e conferir os arquivos na pasta,
+apertar o botão, informar quantidade e navio, revisar o e-mail pronto e enviar.
+Os slides são gerados por `guias/resumos-faturamento/gerar-passo-a-passo.js` (pptxgenjs).
