@@ -3,6 +3,7 @@ import { buscarLugares, detalharLugar, baixarFotoLugar } from './google-places.j
 import { testarSite } from './pagespeed.js';
 import { gerarJson } from './gemini.js';
 import { descobrirPerfil, baixarMidiasInstagram } from './instagram.js';
+import { completarComPexels } from './pexels.js';
 
 /**
  * Monta os serviços externos com a configuração e o fetch já aplicados.
@@ -40,7 +41,10 @@ export function criarServicos(config, { fetch = globalThis.fetch, registrar } = 
         baixarMidias: (perfil, pasta, opcoes = {}) => baixarMidiasInstagram(perfil, pasta, { ...c, ...opcoes }),
       };
     })() : null,
-    pexels: comChave(chaves.pexels, () => ({ ...base, chave: chaves.pexels })),
+    pexels: comChave(chaves.pexels, () => {
+      const c = { ...base, chave: chaves.pexels };
+      return { ...c, completar: (midias, nicho, pasta, opcoes = {}) => completarComPexels(midias, nicho, pasta, { ...c, ...opcoes }) };
+    }),
     github: chaves.github && config.githubRepo ? { ...base, token: chaves.github, repo: config.githubRepo } : null,
     baixar: (url, destino, servico = 'download') => baixarArquivo(url, destino, { servico, fetch, registrar }),
   };
