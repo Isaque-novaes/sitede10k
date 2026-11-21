@@ -72,3 +72,12 @@ test('ajustarContraste alcança o mínimo pedido mantendo o tom', () => {
   const [r, g, b] = hexParaRgb(ajustada);
   assert.ok(b > r && b > g);
 });
+
+test('derivarPaleta pode forçar fundo claro ou escuro', () => {
+  const claro = derivarPaleta(['#101010', '#c0392b'], [], 'claro');
+  assert.ok(contraste(claro.fundo, '#ffffff') < 1.25);
+  assert.ok(contraste(claro.texto, claro.fundo) >= 7);
+  const escuro = derivarPaleta(['#f5e6c8', '#c97b2a'], ['acolhedor'], 'escuro');
+  assert.ok(contraste(escuro.fundo, '#000000') < 2);
+  assert.ok(contraste(escuro.destaque, escuro.fundo) >= 3);
+});

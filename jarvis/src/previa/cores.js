@@ -186,13 +186,16 @@ function fundoComLuminancia(h, s, escuro) {
  * Paleta da prévia a partir das cores das fotos e do clima do negócio.
  * @param {string[]} cores da mais presente para a menos
  * @param {string[]} clima
+ * @param {'claro'|'escuro'} [forcar] ignora o clima e a cor dominante para decidir o fundo
  * @returns {import('./tipos.js').Paleta}
  */
-export function derivarPaleta(cores, clima) {
+export function derivarPaleta(cores, clima, forcar) {
   const lista = [...new Set((cores?.length ? cores : CORES_PADRAO).map((c) => c.toLowerCase()))];
   const dominante = lista[0];
   const [hDom, sDom] = hexParaHsl(dominante);
-  const escuro = (clima ?? []).some((c) => CLIMAS_ESCUROS.includes(c)) || luminancia(dominante) < 0.2;
+  const escuro = forcar
+    ? forcar === 'escuro'
+    : (clima ?? []).some((c) => CLIMAS_ESCUROS.includes(c)) || luminancia(dominante) < 0.2;
 
   const sFundo = Math.min(sDom, 0.25);
   const fundo = fundoComLuminancia(hDom, sFundo, escuro);
