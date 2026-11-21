@@ -78,3 +78,57 @@ export const videoFalso = {
 export const contextoCompleto = {
   fotos: fotosFalsas(8), video: videoFalso, negocio: negocioCompleto, textos: textosCompletos,
 };
+
+// ---------- Fotos reais (arquivos) para testes de montagem ----------
+import sharp from 'sharp';
+import { join } from 'node:path';
+import { mkdir } from 'node:fs/promises';
+import { tratarFoto } from '../src/previa/midia.js';
+import { derivarPaleta } from '../src/previa/cores.js';
+
+const DEGRADES = [
+  ['#2b1d14', '#b5713a'], ['#1d2b3a', '#6fa3c7'], ['#3a1d1d', '#d0574b'],
+  ['#1f2a1d', '#8fbf6a'], ['#2a2a2a', '#c9c9c9'], ['#33261a', '#e0b070'],
+  ['#1d1d33', '#8f7fd9'], ['#2e1f2a', '#d48fb7'],
+];
+
+/** Cria uma foto JPG com degradê e formas, para parecer uma foto de verdade nas capturas. */
+export async function criarFotoArquivo(arquivo, largura, altura, i = 0) {
+  const [a, b] = DEGRADES[i % DEGRADES.length];
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${largura}" height="${altura}">
+    <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${a}"/><stop offset="1" stop-color="${b}"/></linearGradient></defs>
+    <rect width="100%" height="100%" fill="url(#g)"/>
+    <circle cx="${largura * 0.7}" cy="${altura * 0.35}" r="${Math.min(largura, altura) * 0.22}" fill="${b}" opacity="0.55"/>
+    <rect x="${largura * 0.1}" y="${altura * 0.6}" width="${largura * 0.35}" height="${altura * 0.25}" fill="${a}" opacity="0.6"/>
+  </svg>`;
+  await sharp(Buffer.from(svg)).jpeg({ quality: 85 }).toFile(arquivo);
+  return arquivo;
+}
+
+/** Gera e trata `n` fotos numa pasta. */
+export async function criarFotosTratadas(pasta, n, { largura = 2000, altura = 1333, credito = '@barbeariadoze', origem = 'instagram' } = {}) {
+  await mkdir(join(pasta, 'originais'), { recursive: true });
+  const fotos = [];
+  for (let i = 0; i < n; i++) {
+    const arq = await criarFotoArquivo(join(pasta, 'originais', `f${i}.jpg`), largura, altura, i);
+    fotos.push(await tratarFoto({ arquivo: arq, tipo: 'foto', origem, credito }, join(pasta, 'tratadas'), `foto-${i + 1}`));
+  }
+  return fotos;
+}
+
+export const TODAS_AS_SECOES_A = ['servicos', 'sobre', 'galeria', 'avaliacoes', 'numeros', 'localizacao', 'perguntas', 'chamada-final']
+  .map((tipo) => ({ tipo, variante: 'a' }));
+
+/** Montagem completa da Barbearia do Zé com 6 fotos tratadas de verdade. */
+export async function prepararMontagemExemplo(pasta) {
+  const fotos = await criarFotosTratadas(pasta, 6);
+  const paleta = derivarPaleta(fotos.flatMap((f) => f.cores.slice(0, 3)), negocioCompleto.clima);
+  return {
+    negocio: negocioCompleto,
+    textos: textosCompletos,
+    assinatura: { topo: 'foto-cheia', fontes: 'playfair-dmsans', movimento: 'suave', secoes: TODAS_AS_SECOES_A, paleta },
+    fotos,
+    video: null,
+    opcoes: {},
+  };
+}
