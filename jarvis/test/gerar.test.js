@@ -89,3 +89,11 @@ test('a pasta da prévia só leva as mídias usadas na página', async () => {
   const html = await readFile(join(r.pasta, 'index.html'), 'utf8');
   for (const arquivo of await readdir(join(r.pasta, 'midias'))) assert.ok(html.includes(`midias/${arquivo}`), arquivo);
 });
+
+test('assinatura sugerida sem paleta usa a paleta das fotos', async () => {
+  const semPaleta = { topo: 'titulo-gigante', fontes: 'syne-karla', movimento: 'suave', secoes: [{ tipo: 'servicos', variante: 'c' }, { tipo: 'chamada-final', variante: 'a' }] };
+  const r = await gerarPrevia(barbeariaB, op({ assinatura: semPaleta, conferir: false }));
+  assert.equal(r.assinatura.topo, 'titulo-gigante'); assert.equal(r.assinatura.fontes, 'syne-karla');
+  assert.match(r.assinatura.paleta.fundo, /^#[0-9a-f]{6}$/);
+  assert.ok(!r.avisos.some((a) => a.includes('assinatura')));
+});

@@ -97,3 +97,9 @@ test('servicos.instagram só existe com token e id da conta', () => {
   const s = criarServicos({ chaves: { meta: 'T', metaIgUserId: '178' }, metaVersao: 'v23.0' }, {});
   assert.equal(typeof s.instagram.descobrir, 'function'); assert.equal(typeof s.instagram.baixarMidias, 'function');
 });
+
+test('encontrarInstagram devolve o @ testado, mesmo que a resposta traga outro', async () => {
+  const descobrir = async (u) => (u === 'navalhaouro' ? { usuario: 'OutroNome', nome: 'Navalha de Ouro', bio: 'Campinas', midias: [] } : null);
+  const r = await encontrarInstagram({ nome: 'Barbearia Navalha de Ouro', nicho: 'barbearia', cidade: 'Campinas' }, { descobrir });
+  assert.equal(r[0].usuario, 'navalhaouro');
+});

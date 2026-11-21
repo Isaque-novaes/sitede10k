@@ -41,9 +41,10 @@ async function limparMidiasNaoUsadas(pasta, montagem) {
  */
 export async function gerarPrevia(negocio, opcoes) {
   const {
-    pastaSaida, usadas = [], textos, assinatura, estudio, aleatorio = Math.random,
+    pastaSaida, usadas = [], textos, estudio, aleatorio = Math.random,
     conferir = true, navegador, bloquearRede = false, ficticio = false,
   } = opcoes;
+  let { assinatura } = opcoes;
   const avisos = [];
   const slug = criarSlug(negocio.nome, aleatorio);
   const pasta = join(pastaSaida, slug);
@@ -61,6 +62,8 @@ export async function gerarPrevia(negocio, opcoes) {
 
   let sugerida = null;
   if (assinatura) {
+    // Sugestão sem paleta (vinda da IA, que não escolhe cores) usa a paleta das fotos.
+    if (!assinatura.paleta) assinatura = { ...assinatura, paleta: paletaBase };
     const { ok, motivos } = validarAssinatura(assinatura, contexto);
     if (!ok) avisos.push(`A assinatura sugerida não serve (${motivos.join('; ')}). Escolhi outra pelas regras.`);
     else if (!ehUnica(assinatura, usadas, alvo)) avisos.push('A assinatura sugerida já foi usada neste nicho e cidade. Escolhi outra pelas regras.');

@@ -84,7 +84,7 @@ export function perfilComMidias(fotos, videos) {
 }
 
 // ---------- IA: dublês e dados ----------
-import { mkdtempSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, writeFileSync, readFileSync as readFileSyncFs } from 'node:fs';
 
 const JPEG_PEQUENO = Buffer.from('/9j/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAwAEADASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAb/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCbARF8AAAAAAAAAAAAAAAAAAAAAB//2Q==', 'base64');
 
@@ -130,15 +130,21 @@ export const contexto = {
 // ---------- GitHub falso ----------
 import { mkdir as mkdirP, writeFile as writeFileP } from 'node:fs/promises';
 
-/** Rotas da Git Data API. `arvore` = caminhos que já existem no repositório. */
+/** Rotas da Git Data API, com memória: o que é publicado aparece na próxima leitura da árvore. */
 export function rotasGitHub({ arvore = [], status = 200 } = {}) {
   let blobs = 0;
+  const caminhos = new Set(arvore);
   return [
     { metodo: 'GET', contem: '/git/ref/heads/', status, json: { ref: 'refs/heads/main', object: { sha: 'commit-atual', type: 'commit' } } },
     { metodo: 'GET', contem: '/git/commits/commit-atual', json: { sha: 'commit-atual', tree: { sha: 'arvore-base' } } },
-    { metodo: 'GET', contem: '/git/trees/arvore-base', json: { sha: 'arvore-base', truncated: false, tree: arvore.map((path) => ({ path, mode: '100644', type: 'blob', sha: `s-${path}` })) } },
+    { metodo: 'GET', contem: '/git/trees/arvore-base', responder: () => Response.json({ sha: 'arvore-base', truncated: false, tree: [...caminhos].map((path) => ({ path, mode: '100644', type: 'blob', sha: `s-${path}` })) }) },
     { metodo: 'POST', contem: '/git/blobs', responder: () => Response.json({ sha: `blob-${++blobs}` }, { status: 201 }) },
-    { metodo: 'POST', contem: '/git/trees', json: { sha: 'arvore-nova' } },
+    {
+      metodo: 'POST', contem: '/git/trees', responder: ({ corpo }) => {
+        for (const e of JSON.parse(corpo).tree) { if (e.sha === null) caminhos.delete(e.path); else caminhos.add(e.path); }
+        return Response.json({ sha: 'arvore-nova' }, { status: 201 });
+      },
+    },
     { metodo: 'POST', contem: '/git/commits', json: { sha: 'commit-novo' } },
     { metodo: 'PATCH', contem: '/git/refs/heads/', json: { ref: 'refs/heads/main', object: { sha: 'commit-novo' } } },
   ];
@@ -175,4 +181,73 @@ export async function ambienteFunil(registros, { github = true } = {}) {
   const f = fetchGitHubFalso({ arvore: ['x-1a2b/index.html', 'x-1a2b/midias/a.webp'] });
   const config = github ? { chaves: { github: 'T' }, githubRepo: 'isaque/previas', baseUrlPrevias: 'https://isaque.github.io/previas' } : { chaves: {} };
   return { pasta, loja, servicos: criarServicos(config, { fetch: f }), f };
+}
+
+// ---------- Ambiente de preparo de ponta a ponta ----------
+import { execFileSync } from 'node:child_process';
+import sharpLib from 'sharp';
+
+let bytesPadrao = null;
+async function bytesDeMidia() {
+  if (bytesPadrao) return bytesPadrao;
+  const jpeg = await sharpLib({ create: { width: 2000, height: 1333, channels: 3, background: '#6b4a2f' } })
+    .composite([{ input: await sharpLib({ create: { width: 600, height: 600, channels: 3, background: '#d9a35b' } }).png().toBuffer(), left: 1200, top: 200 }])
+    .jpeg({ quality: 80 }).toBuffer();
+  const pasta = mkdtempSync(join(tmpdir(), 'jarvis-video-'));
+  const video = join(pasta, 'v.mp4');
+  execFileSync('ffmpeg', ['-y', '-v', 'error', '-f', 'lavfi', '-i', 'testsrc=size=720x1280:rate=24:duration=2', video]);
+  bytesPadrao = { jpeg, mp4: readFileSyncFs(video) };
+  return bytesPadrao;
+}
+
+/** Gemini falso por HTTP: responde conforme o esquema pedido. */
+function respostaGemini(corpo) {
+  const pedido = JSON.parse(corpo);
+  const props = Object.keys(pedido.generationConfig.responseSchema.properties ?? {});
+  const prompt = pedido.contents[0].parts[0].text;
+  let valor;
+  if (props.includes('clima')) valor = { clima: ['urbano', 'classico'] };
+  else if (props.includes('indices')) valor = { indices: [0, 1, 2, 3, 4] };
+  else if (props.includes('topo')) {
+    const topos = pedido.generationConfig.responseSchema.properties.topo.enum;
+    valor = { topo: topos[0], fontes: 'bebas-manrope', movimento: 'suave', secoes: [{ tipo: 'servicos', variante: 'a' }, { tipo: 'sobre', variante: 'b' }, { tipo: 'chamada-final', variante: 'b' }] };
+  } else if (props.includes('titulo')) valor = textosIA;
+  else if (props.includes('primeira')) {
+    const url = prompt.match(/eles: (\S+)/)[1];
+    valor = { ...abordagemIA, primeira: abordagemIA.primeira.replace(URL_PREVIA, url), acompanhamento1: abordagemIA.acompanhamento1.replace(URL_PREVIA, url), acompanhamento2: abordagemIA.acompanhamento2.replace(URL_PREVIA, url) };
+  }
+  return Response.json({ candidates: [{ content: { role: 'model', parts: [{ text: JSON.stringify(valor) }] } }] });
+}
+
+/**
+ * Loja com um negócio sem site e Instagram confirmado, config real e todos os serviços falsos.
+ * Opções: sem (chaves a tirar), geminiStatus, instagram ('pessoal'), registro (campos extras), githubStatus, navegador.
+ */
+export async function ambientePreparo({ sem = [], geminiStatus = 200, instagram, registro: extra = {}, githubStatus = 200, navegador } = {}) {
+  const pasta = await mkdtemp(join(tmpdir(), 'jarvis-preparo-'));
+  const { jpeg, mp4 } = await bytesDeMidia();
+  const chaves = { google: 'G', gemini: 'GM', meta: 'T', metaIgUserId: '178', pexels: 'P', github: 'GT' };
+  for (const s of sem) delete chaves[s];
+  const config = {
+    pastaDados: join(pasta, 'dados'), nomeUsuario: 'Isaque', estudio: 'Estúdio Dez', githubRepo: 'isaque/previas', githubRamo: 'main',
+    baseUrlPrevias: 'https://isaque.github.io/previas', geminiModelo: 'gemini-flash-latest', geminiReserva: 'gemini-flash-lite-latest',
+    metaVersao: 'v23.0', precos: {}, chaves,
+  };
+  const loja = criarLoja(config.pastaDados);
+  await loja.gravar('negocios', [{ ...registroSemSite, instagram: { usuario: 'navalhadeouro', confirmado: true }, ...extra }]);
+  const f = criarFetchFalso([
+    { contem: '/v1/places/sem-site-1', arquivo: 'places-detalhes' },
+    { contem: '/media?maxWidthPx', bytes: jpeg },
+    { metodo: 'POST', contem: 'places:searchText', arquivo: 'places-concorrentes' },
+    instagram === 'pessoal'
+      ? { contem: 'graph.facebook.com', status: 400, arquivo: 'instagram-erro-110' }
+      : { contem: 'graph.facebook.com', arquivo: 'instagram-perfil' },
+    { contem: '.mp4', bytes: mp4 },
+    { contem: 'cdninstagram', bytes: jpeg },
+    { metodo: 'POST', contem: 'generateContent', responder: ({ corpo }) => (geminiStatus === 200 ? respostaGemini(corpo) : new Response('{}', { status: geminiStatus })) },
+    { contem: 'api.pexels.com', arquivo: 'pexels-busca' },
+    { contem: 'images.pexels.com', bytes: jpeg },
+    ...rotasGitHub({ status: githubStatus }),
+  ]);
+  return { pasta, config, loja, servicos: criarServicos(config, { fetch: f }), f, navegador, bloquearRede: true };
 }

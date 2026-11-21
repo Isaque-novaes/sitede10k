@@ -98,7 +98,7 @@ export async function encontrarInstagram(registro, { descobrir }) {
     const perfil = await descobrir(usuario);
     if (!perfil) continue;
     const confianca = confiancaDoPerfil(registro, perfil, usuario === doSite);
-    achados.push({ usuario: perfil.usuario ?? usuario, confianca, perfil });
+    achados.push({ usuario, confianca, perfil });
     if (confianca >= 0.8) break;
   }
   return achados.sort((a, b) => b.confianca - a.confianca);
