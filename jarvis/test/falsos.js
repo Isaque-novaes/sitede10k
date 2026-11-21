@@ -74,3 +74,11 @@ export async function ambienteDiagnostico({ concorrentes } = {}) {
   ];
   return ambienteBusca({ rotasExtras: rotas });
 }
+
+/** Perfil do Instagram com `fotos` fotos e `videos` vídeos (curtidas e datas diferentes). */
+export function perfilComMidias(fotos, videos) {
+  const midias = [];
+  for (let i = 0; i < fotos; i++) midias.push({ tipo: 'foto', url: `https://scontent.cdninstagram.com/v/f${i}.jpg`, legenda: `Foto ${i}`, data: new Date(Date.UTC(2026, 10, 1 + i)).toISOString(), curtidas: i * 10, link: `https://www.instagram.com/p/F${i}/` });
+  for (let i = 0; i < videos; i++) midias.push({ tipo: 'video', url: `https://scontent.cdninstagram.com/v/v${i}.mp4`, legenda: `Vídeo ${i}`, data: new Date(Date.UTC(2026, 9, 1 + i)).toISOString(), curtidas: 5, link: `https://www.instagram.com/reel/V${i}/` });
+  return { usuario: 'navalhadeouro', nome: 'Navalha de Ouro', bio: 'Barbearia em Campinas', seguidores: 4200, totalPosts: fotos + videos, midias };
+}

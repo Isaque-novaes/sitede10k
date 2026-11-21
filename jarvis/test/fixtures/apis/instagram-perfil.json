@@ -1,0 +1,21 @@
+{
+  "business_discovery": {
+    "username": "navalhadeouro",
+    "name": "Navalha de Ouro Barbearia",
+    "biography": "Barbearia clássica no Cambuí, Campinas. Agende pelo WhatsApp.",
+    "followers_count": 4200,
+    "media_count": 310,
+    "profile_picture_url": "https://scontent.cdninstagram.com/v/perfil.jpg",
+    "media": {
+      "data": [
+        { "id": "1", "media_type": "IMAGE", "media_url": "https://scontent.cdninstagram.com/v/foto1.jpg", "caption": "Degradê na régua", "permalink": "https://www.instagram.com/p/A1/", "timestamp": "2026-11-18T15:00:00+0000", "like_count": 85 },
+        { "id": "2", "media_type": "VIDEO", "media_url": "https://scontent.cdninstagram.com/v/reel1.mp4", "thumbnail_url": "https://scontent.cdninstagram.com/v/reel1.jpg", "caption": "Bastidores", "permalink": "https://www.instagram.com/reel/A2/", "timestamp": "2026-11-15T15:00:00+0000", "like_count": 210 },
+        { "id": "3", "media_type": "CAROUSEL_ALBUM", "media_url": "https://scontent.cdninstagram.com/v/carrossel1.jpg", "caption": "Antes e depois", "permalink": "https://www.instagram.com/p/A3/", "timestamp": "2026-11-02T15:00:00+0000", "like_count": 140 },
+        { "id": "4", "media_type": "VIDEO", "thumbnail_url": "https://scontent.cdninstagram.com/v/reel2.jpg", "caption": "Reel com download bloqueado", "permalink": "https://www.instagram.com/reel/A4/", "timestamp": "2026-10-20T15:00:00+0000", "like_count": 300 },
+        { "id": "5", "media_type": "IMAGE", "media_url": "https://scontent.cdninstagram.com/v/foto2.jpg", "caption": "Ambiente", "permalink": "https://www.instagram.com/p/A5/", "timestamp": "2026-09-10T15:00:00+0000", "like_count": 40 }
+      ]
+    },
+    "id": "17841400000000001"
+  },
+  "id": "178"
+}
