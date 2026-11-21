@@ -1,0 +1,349 @@
+{
+ "places": [
+  {
+   "id": "sem-site-1",
+   "displayName": {
+    "text": "Barbearia Navalha de Ouro",
+    "languageCode": "pt-BR"
+   },
+   "formattedAddress": "R. Maria Monteiro, 820 - Cambuí, Campinas - SP, 13025-151, Brasil",
+   "addressComponents": [
+    {
+     "longText": "820",
+     "types": [
+      "street_number"
+     ]
+    },
+    {
+     "longText": "Cambuí",
+     "types": [
+      "sublocality_level_1",
+      "sublocality",
+      "political"
+     ]
+    },
+    {
+     "longText": "Campinas",
+     "types": [
+      "administrative_area_level_2",
+      "political"
+     ]
+    },
+    {
+     "longText": "São Paulo",
+     "shortText": "SP",
+     "types": [
+      "administrative_area_level_1",
+      "political"
+     ]
+    }
+   ],
+   "location": {
+    "latitude": -22.8953,
+    "longitude": -47.0523
+   },
+   "types": [
+    "barber_shop",
+    "point_of_interest",
+    "establishment"
+   ],
+   "primaryTypeDisplayName": {
+    "text": "Barbearia",
+    "languageCode": "pt-BR"
+   },
+   "businessStatus": "OPERATIONAL",
+   "googleMapsUri": "https://maps.google.com/?cid=sem-site-1",
+   "nationalPhoneNumber": "(19) 99876-5432",
+   "internationalPhoneNumber": "+55 19 99876-5432",
+   "rating": 4.8,
+   "userRatingCount": 230
+  },
+  {
+   "id": "insta-2",
+   "displayName": {
+    "text": "Corte Fino Studio",
+    "languageCode": "pt-BR"
+   },
+   "formattedAddress": "R. Maria Monteiro, 820 - Cambuí, Campinas - SP, 13025-151, Brasil",
+   "addressComponents": [
+    {
+     "longText": "820",
+     "types": [
+      "street_number"
+     ]
+    },
+    {
+     "longText": "Taquaral",
+     "types": [
+      "sublocality_level_1",
+      "sublocality",
+      "political"
+     ]
+    },
+    {
+     "longText": "Campinas",
+     "types": [
+      "administrative_area_level_2",
+      "political"
+     ]
+    },
+    {
+     "longText": "São Paulo",
+     "shortText": "SP",
+     "types": [
+      "administrative_area_level_1",
+      "political"
+     ]
+    }
+   ],
+   "location": {
+    "latitude": -22.8953,
+    "longitude": -47.0523
+   },
+   "types": [
+    "barber_shop",
+    "point_of_interest",
+    "establishment"
+   ],
+   "primaryTypeDisplayName": {
+    "text": "Barbearia",
+    "languageCode": "pt-BR"
+   },
+   "businessStatus": "OPERATIONAL",
+   "googleMapsUri": "https://maps.google.com/?cid=insta-2",
+   "websiteUri": "https://www.instagram.com/cortefino.studio/",
+   "nationalPhoneNumber": "(19) 98765-4321",
+   "internationalPhoneNumber": "+55 19 98765-4321",
+   "rating": 4.6,
+   "userRatingCount": 120
+  },
+  {
+   "id": "linktree-3",
+   "displayName": {
+    "text": "Barbearia do Bairro",
+    "languageCode": "pt-BR"
+   },
+   "formattedAddress": "R. Maria Monteiro, 820 - Cambuí, Campinas - SP, 13025-151, Brasil",
+   "addressComponents": [
+    {
+     "longText": "820",
+     "types": [
+      "street_number"
+     ]
+    },
+    {
+     "longText": "Cambuí",
+     "types": [
+      "sublocality_level_1",
+      "sublocality",
+      "political"
+     ]
+    },
+    {
+     "longText": "Campinas",
+     "types": [
+      "administrative_area_level_2",
+      "political"
+     ]
+    },
+    {
+     "longText": "São Paulo",
+     "shortText": "SP",
+     "types": [
+      "administrative_area_level_1",
+      "political"
+     ]
+    }
+   ],
+   "location": {
+    "latitude": -22.8953,
+    "longitude": -47.0523
+   },
+   "types": [
+    "barber_shop",
+    "point_of_interest",
+    "establishment"
+   ],
+   "primaryTypeDisplayName": {
+    "text": "Barbearia",
+    "languageCode": "pt-BR"
+   },
+   "businessStatus": "OPERATIONAL",
+   "googleMapsUri": "https://maps.google.com/?cid=linktree-3",
+   "websiteUri": "https://linktr.ee/barbeariadobairro",
+   "nationalPhoneNumber": "(19) 3232-1010",
+   "internationalPhoneNumber": "+55 19 3232-1010",
+   "rating": 4.3,
+   "userRatingCount": 45
+  },
+  {
+   "id": "site-4",
+   "displayName": {
+    "text": "Barbearia Prop",
+    "languageCode": "pt-BR"
+   },
+   "formattedAddress": "R. Maria Monteiro, 820 - Cambuí, Campinas - SP, 13025-151, Brasil",
+   "addressComponents": [
+    {
+     "longText": "820",
+     "types": [
+      "street_number"
+     ]
+    },
+    {
+     "longText": "Cambuí",
+     "types": [
+      "sublocality_level_1",
+      "sublocality",
+      "political"
+     ]
+    },
+    {
+     "longText": "Campinas",
+     "types": [
+      "administrative_area_level_2",
+      "political"
+     ]
+    },
+    {
+     "longText": "São Paulo",
+     "shortText": "SP",
+     "types": [
+      "administrative_area_level_1",
+      "political"
+     ]
+    }
+   ],
+   "location": {
+    "latitude": -22.8953,
+    "longitude": -47.0523
+   },
+   "types": [
+    "barber_shop",
+    "point_of_interest",
+    "establishment"
+   ],
+   "primaryTypeDisplayName": {
+    "text": "Barbearia",
+    "languageCode": "pt-BR"
+   },
+   "businessStatus": "OPERATIONAL",
+   "googleMapsUri": "https://maps.google.com/?cid=site-4",
+   "websiteUri": "https://barbeariaprop.com.br",
+   "nationalPhoneNumber": "(19) 99111-2222",
+   "internationalPhoneNumber": "+55 19 99111-2222",
+   "rating": 4.9,
+   "userRatingCount": 500
+  },
+  {
+   "id": "fechada-5",
+   "displayName": {
+    "text": "Barbearia Fechada",
+    "languageCode": "pt-BR"
+   },
+   "formattedAddress": "R. Maria Monteiro, 820 - Cambuí, Campinas - SP, 13025-151, Brasil",
+   "addressComponents": [
+    {
+     "longText": "820",
+     "types": [
+      "street_number"
+     ]
+    },
+    {
+     "longText": "Cambuí",
+     "types": [
+      "sublocality_level_1",
+      "sublocality",
+      "political"
+     ]
+    },
+    {
+     "longText": "Campinas",
+     "types": [
+      "administrative_area_level_2",
+      "political"
+     ]
+    },
+    {
+     "longText": "São Paulo",
+     "shortText": "SP",
+     "types": [
+      "administrative_area_level_1",
+      "political"
+     ]
+    }
+   ],
+   "location": {
+    "latitude": -22.8953,
+    "longitude": -47.0523
+   },
+   "types": [
+    "barber_shop",
+    "point_of_interest",
+    "establishment"
+   ],
+   "primaryTypeDisplayName": {
+    "text": "Barbearia",
+    "languageCode": "pt-BR"
+   },
+   "businessStatus": "CLOSED_TEMPORARILY",
+   "googleMapsUri": "https://maps.google.com/?cid=fechada-5",
+   "rating": 4,
+   "userRatingCount": 10
+  },
+  {
+   "id": "sem-nota-6",
+   "displayName": {
+    "text": "Barbearia Nova",
+    "languageCode": "pt-BR"
+   },
+   "formattedAddress": "R. Maria Monteiro, 820 - Cambuí, Campinas - SP, 13025-151, Brasil",
+   "addressComponents": [
+    {
+     "longText": "820",
+     "types": [
+      "street_number"
+     ]
+    },
+    {
+     "longText": "Cambuí",
+     "types": [
+      "sublocality_level_1",
+      "sublocality",
+      "political"
+     ]
+    },
+    {
+     "longText": "Campinas",
+     "types": [
+      "administrative_area_level_2",
+      "political"
+     ]
+    },
+    {
+     "longText": "São Paulo",
+     "shortText": "SP",
+     "types": [
+      "administrative_area_level_1",
+      "political"
+     ]
+    }
+   ],
+   "location": {
+    "latitude": -22.8953,
+    "longitude": -47.0523
+   },
+   "types": [
+    "barber_shop",
+    "point_of_interest",
+    "establishment"
+   ],
+   "primaryTypeDisplayName": {
+    "text": "Barbearia",
+    "languageCode": "pt-BR"
+   },
+   "businessStatus": "OPERATIONAL",
+   "googleMapsUri": "https://maps.google.com/?cid=sem-nota-6"
+  }
+ ]
+}

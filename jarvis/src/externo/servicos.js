@@ -1,4 +1,5 @@
 import { baixarArquivo } from './baixar.js';
+import { buscarLugares } from './google-places.js';
 
 /**
  * Monta os serviços externos com a configuração e o fetch já aplicados.
@@ -11,7 +12,10 @@ export function criarServicos(config, { fetch = globalThis.fetch, registrar } = 
   const base = { fetch, registrar };
   const comChave = (chave, criar) => (chave ? criar() : null);
   return {
-    places: comChave(chaves.google, () => ({ ...base, chave: chaves.google })),
+    places: comChave(chaves.google, () => {
+      const c = { ...base, chave: chaves.google };
+      return { ...c, buscar: (texto, opcoes = {}) => buscarLugares(texto, { ...c, ...opcoes }) };
+    }),
     pagespeed: comChave(chaves.google, () => ({ ...base, chave: chaves.google })),
     gemini: comChave(chaves.gemini, () => ({ ...base, chave: chaves.gemini })),
     instagram: chaves.meta && chaves.metaIgUserId ? { ...base, token: chaves.meta, igUserId: chaves.metaIgUserId } : null,
