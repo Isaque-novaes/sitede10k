@@ -1,6 +1,7 @@
 import { baixarArquivo } from './baixar.js';
 import { buscarLugares, detalharLugar, baixarFotoLugar } from './google-places.js';
 import { testarSite } from './pagespeed.js';
+import { gerarJson } from './gemini.js';
 
 /**
  * Monta os serviços externos com a configuração e o fetch já aplicados.
@@ -26,7 +27,10 @@ export function criarServicos(config, { fetch = globalThis.fetch, registrar } = 
       const c = { ...base, chave: chaves.google };
       return { ...c, testar: (url) => testarSite(url, c) };
     }),
-    gemini: comChave(chaves.gemini, () => ({ ...base, chave: chaves.gemini })),
+    gemini: comChave(chaves.gemini, () => {
+      const c = { ...base, chave: chaves.gemini, modelo: config.geminiModelo ?? 'gemini-flash-latest', reserva: config.geminiReserva ?? 'gemini-flash-lite-latest' };
+      return { ...c, gerarJson: (pedido) => gerarJson(pedido, c) };
+    }),
     instagram: chaves.meta && chaves.metaIgUserId ? { ...base, token: chaves.meta, igUserId: chaves.metaIgUserId } : null,
     pexels: comChave(chaves.pexels, () => ({ ...base, chave: chaves.pexels })),
     github: chaves.github && config.githubRepo ? { ...base, token: chaves.github, repo: config.githubRepo } : null,

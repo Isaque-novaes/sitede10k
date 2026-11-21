@@ -1,0 +1,6 @@
+{
+  "candidates": [
+    { "content": { "role": "model", "parts": [ { "text": "{\"titulo\":\"Seu estilo\",\"notas\":[4.8]}" } ] }, "finishReason": "STOP" }
+  ],
+  "usageMetadata": { "promptTokenCount": 12, "candidatesTokenCount": 9 }
+}
