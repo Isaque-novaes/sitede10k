@@ -105,7 +105,7 @@ Todos os caminhos em `FotoTratada` e `VideoTratado` são absolutos no disco. Den
 
 ---
 
-### Tarefa 1: Projeto, tipos e utilidades
+### Task 1: Projeto, tipos e utilidades
 
 **Files:**
 - Create: `jarvis/package.json`, `jarvis/.gitignore`, `jarvis/src/previa/tipos.js`, `jarvis/src/util/slug.js`, `jarvis/src/util/html.js`, `jarvis/src/util/whatsapp.js`, `jarvis/src/util/aleatorio.js`
@@ -169,7 +169,7 @@ test('criarAleatorio é determinístico', () => {
 
 ---
 
-### Tarefa 2: Cores e paleta
+### Task 2: Cores e paleta
 
 **Files:**
 - Create: `jarvis/src/previa/cores.js`
@@ -230,7 +230,7 @@ test('clima moderno gera fundo escuro', () => {
 
 ---
 
-### Tarefa 3: Tratamento de mídia
+### Task 3: Tratamento de mídia
 
 **Files:**
 - Create: `jarvis/src/previa/midia.js`
@@ -287,7 +287,7 @@ test('tratarMidias pula arquivo corrompido com aviso', async () => {
 
 ---
 
-### Tarefa 4: Catálogo do kit e assinatura única
+### Task 4: Catálogo do kit e assinatura única
 
 **Files:**
 - Create: `jarvis/kit/catalogo.js`, `jarvis/src/previa/assinatura.js`
@@ -392,7 +392,7 @@ test('dez assinaturas seguidas no mesmo nicho e cidade são todas únicas', () =
 
 ---
 
-### Tarefa 5: Montador, base, movimentos, fontes e as primeiras peças
+### Task 5: Montador, base, movimentos, fontes e as primeiras peças
 
 **Files:**
 - Create: `jarvis/src/previa/montar.js`, `jarvis/kit/base.css`, `jarvis/kit/movimento.css`, `jarvis/kit/movimento.js`, `jarvis/kit/topos/foto-cheia.js`, e a variante `a` das 8 seções: `jarvis/kit/secoes/{servicos,sobre,galeria,avaliacoes,numeros,localizacao,perguntas,chamada-final}-a.js`
@@ -465,7 +465,7 @@ test('respeita reduzir movimento', () => {
 
 ---
 
-### Tarefa 6: Os outros 7 topos
+### Task 6: Os outros 7 topos
 
 **Files:**
 - Create: `jarvis/kit/topos/{video-fundo,colagem,tela-dividida,titulo-gigante,carrossel,moldura,mosaico-movel}.js`
@@ -508,7 +508,7 @@ test('video-fundo tem os atributos de vídeo leve', async () => {
 
 ---
 
-### Tarefa 7: Variantes b e c das 8 seções
+### Task 7: Variantes b e c das 8 seções
 
 **Files:**
 - Create: `jarvis/kit/secoes/{servicos,sobre,galeria,avaliacoes,numeros,localizacao,perguntas,chamada-final}-{b,c}.js` (16 arquivos)
@@ -555,7 +555,7 @@ test('variantes de avaliações e números usam faixa e contador', async () => {
 
 ---
 
-### Tarefa 8: Textos base por nicho
+### Task 8: Textos base por nicho
 
 **Files:**
 - Create: `jarvis/src/previa/textos-base.js`
@@ -609,7 +609,7 @@ test('sem bairro usa a cidade', () => {
 
 ---
 
-### Tarefa 9: Conferência automática
+### Task 9: Conferência automática
 
 **Files:**
 - Create: `jarvis/src/util/navegador.js`, `jarvis/src/previa/conferir.js`
@@ -656,7 +656,7 @@ test('página quebrada é reprovada com os motivos', async () => {
 
 ---
 
-### Tarefa 10: Pipeline completo e demonstração
+### Task 10: Pipeline completo e demonstração
 
 **Files:**
 - Create: `jarvis/src/previa/gerar.js`, `jarvis/fixtures/negocios-demo.json`, `jarvis/scripts/baixar-midias-demo.mjs`, `jarvis/scripts/demo-previas.mjs`
