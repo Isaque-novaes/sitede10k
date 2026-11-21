@@ -37,3 +37,22 @@ export function criarFetchFalso(rotas) {
   falso.chamadas = chamadas;
   return falso;
 }
+
+// ---------- Ambientes de teste do plano 2 ----------
+import { mkdtemp } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { criarLoja } from '../src/dados/loja.js';
+import { criarServicos } from '../src/externo/servicos.js';
+
+/** Loja temporária + serviços com o Google respondendo as fixtures de busca e PageSpeed. */
+export async function ambienteBusca({ pagespeedStatus = 200, chaves = { google: 'K' }, rotasExtras = [] } = {}) {
+  const pasta = await mkdtemp(join(tmpdir(), 'jarvis-amb-'));
+  const loja = criarLoja(join(pasta, 'dados'));
+  const f = criarFetchFalso([
+    ...rotasExtras,
+    { metodo: 'POST', contem: 'places:searchText', arquivo: 'places-busca' },
+    { contem: 'runPagespeed', status: pagespeedStatus, arquivo: 'pagespeed-lento' },
+  ]);
+  const servicos = criarServicos({ chaves }, { fetch: f });
+  return { pasta, loja, servicos, f };
+}

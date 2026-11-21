@@ -1,0 +1,8 @@
+{
+  "id": "https://rapido.com.br/",
+  "lighthouseResult": {
+    "finalUrl": "https://rapido.com.br/",
+    "categories": { "performance": { "id": "performance", "score": 0.92 } },
+    "audits": { "largest-contentful-paint": { "id": "largest-contentful-paint", "numericValue": 1200, "displayValue": "1,2 s" } }
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "id": "https://barbeariaprop.com.br/",
+  "lighthouseResult": {
+    "finalUrl": "https://barbeariaprop.com.br/",
+    "categories": { "performance": { "id": "performance", "score": 0.31 } },
+    "audits": { "largest-contentful-paint": { "id": "largest-contentful-paint", "numericValue": 8400.4, "displayValue": "8,4 s" } }
+  }
+}
