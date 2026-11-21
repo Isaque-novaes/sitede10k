@@ -721,3 +721,61 @@ test('vídeo do negócio vira topo possível', async () => {
 ## Entrega deste plano
 
 Ao final: `npm test` passa e `npm run demo` gera 5 prévias únicas e conferidas. As prévias de demonstração são mostradas ao usuário num link que abre no celular e no PC, para ele aprovar o visual do kit antes do plano 2.
+
+---
+
+## Registro da execução (2026-11-21)
+
+Plano executado por inteiro, com revisão final de um revisor separado ("pronto com correções": 0 crítico, 8 importantes, 11 menores). As 8 importantes e mais uma que subi de menor foram corrigidas com teste. Suíte final: 170 de 170.
+
+### Decisões tomadas durante a construção (com o custo se estiverem erradas)
+
+1. T2: sem cor nas fotos (cinza, preto, branco), o destaque cai para dourado #c8962e. Custo: negócio monocromático ganha dourado.
+2. T2: `extrairCores` repete cores para sempre devolver 5. Custo: cores duplicadas na lista.
+3. T2: fundo escuro com luminância até 0,035 (o design dizia 0,05), senão o teste do plano era impossível. Custo: nenhum.
+4. T4: `derivarPaleta` aceita forçar fundo claro ou escuro, para alternar paletas. Custo: um parâmetro a mais.
+5. T4: paleta ausente nunca conta como igual (usado para saber se a falha foi só de paleta). Custo: nenhum.
+6. T4: depois de uma falha que não é de paleta, a nova tentativa volta às cores do negócio. Custo: algumas tentativas a mais.
+7. T5: peças registradas em `kit/pecas.js` porque o montador é síncrono. Custo: um registro a manter (coberto por teste).
+8. T5: cada peça gera o próprio elemento raiz. Custo: nenhum.
+9. T5: `util` ganhou numero, cortar, estrelas, caminho e ancora, e `ctx.secoes`. Custo: nenhum.
+10. T5: celular do Google vira o WhatsApp quando não há WhatsApp. Custo: link de WhatsApp para um celular que não usa WhatsApp.
+11. T5: títulos de seção são frases curtas fixas. Custo: títulos genéricos.
+12. T6: partes repetidas dos topos em `_comum.js`; reel vertical no PC fica numa moldura alta. Custo: reel menor no PC.
+13. T6: testes dos topos usam vídeo de verdade (precisam de ffmpeg). Custo: testes exigem ffmpeg.
+14. T7: testes além do plano para as variantes. Custo: nenhum.
+15. T7: grades de uma coluna usam `minmax(0,1fr)`. Custo: nenhum.
+16. T8: o teste do plano `!includes('{')` nunca passaria (JSON começa com `{`); virou "nenhum {nome} ou {lugar} sobrando". Custo: nenhum.
+17. T8: respostas das perguntas não inventam fatos; no máximo 5 perguntas. Custo: textos menos específicos.
+18. T8: trecho de avaliação entre aspas retas. Custo: nenhum.
+19. T9: opção `bloquearRede` para os testes não usarem internet. Custo: nenhum.
+20. T9: falhas de fonte filtradas pela URL do erro. Custo: nenhum.
+21. T10: nova tentativa apaga só a página e as capturas, não as mídias. Custo: nenhum.
+22. T10: opção `ficticio` para a demonstração avisar que nome, avaliações e números são inventados. Custo: nenhum.
+23. T10: demonstração sem telefone nem Instagram, para não apontar para pessoas reais. Custo: a demo não mostra o botão de WhatsApp.
+24. T10: o vídeo da pizzaria da demo é montado com fotos (vídeos do Pexels bloqueados neste ambiente). Custo: é uma montagem, não filmagem.
+25. T10: pesos da direção por regras 8:1 para o clima e 30 para o reel no topo, mais etiquetas nas fontes. Custo: menos variedade dentro de um clima.
+26. T10: nome de 60 caracteres do teste ajustado (tinha 59). Custo: nenhum.
+27. Revisão: "nicho por pedaço de palavra" subiu de menor para importante e foi corrigido.
+28. Revisão: visual profissional conferido por capturas de todos os topos, variantes e da demo. Custo: o usuário pode não gostar de alguma peça.
+29. Revisão: corte com fontes reais resolvido no CSS e medido na conferência. Custo: nenhum.
+30. Revisão: nota de velocidade 80+ medida no plano 2, depois de publicar. Custo: prévia lenta até lá.
+31. Revisão: créditos do Google, publicação, remoção em 45 dias e "não contatar" ficam nos planos 2 e 3.
+32. Revisão: travessão em fala de cliente também é limpo. Custo: vírgula no lugar do travessão.
+33. Revisão: texto do botão pode ter contraste de 3,35:1 no pior caso; mantido. Custo: botão pouco legível em caso raro.
+34. Revisão: risco de esgotar combinações únicas mantido. Custo: erro depois de muitos meses no mesmo nicho e cidade.
+35. Revisão: comportamento real no Windows conferido na instalação do plano 3. Custo: o problema aparece lá primeiro.
+36. Revisão: pesos 8:1 mantidos.
+
+### Pontos menores deixados para depois
+
+- `mapsUrl` não é restrito a https (vem do Google hoje).
+- Faixa de avaliações deixa espaço vazio no PC com 2 ou 3 avaliações.
+- ffmpeg falha com vídeo de altura ímpar menor que 720 (o vídeo é descartado com aviso).
+- Avisos trazem texto técnico cru; traduzir antes do plano 3 mostrar ao usuário.
+- Cores quase brancas passam como coloridas no limite de saturação.
+- Telefones estrangeiros aceitos como brasileiros.
+- Testes que usam ffmpeg falham, em vez de pular, num PC sem ffmpeg.
+- `gerarPrevia` com erro deixa a pasta de mídias para trás.
+- "0 avaliações" aparece com contagem zero; nota ausente mostra 5 estrelas; "Fotos:" também lista o crédito do vídeo.
+- Detalhes de código (duplicação no foto-cheia, `aria-hidden="false"`, prefixos de classe).
