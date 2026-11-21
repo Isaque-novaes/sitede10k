@@ -10,7 +10,8 @@
   "scripts": {
     "test": "node --test",
     "demo": "node scripts/demo-previas.mjs",
-    "demo:midias": "node scripts/baixar-midias-demo.mjs"
+    "demo:midias": "node scripts/baixar-midias-demo.mjs",
+    "jarvis": "node src/cli.js"
   },
   "dependencies": {
     "playwright-core": "1.63.0",

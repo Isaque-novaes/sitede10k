@@ -43,6 +43,7 @@ import { mkdtemp } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { criarLoja } from '../src/dados/loja.js';
 import { criarServicos } from '../src/externo/servicos.js';
+import { registrarUso as registrarUsoTeste } from '../src/dados/uso.js';
 
 /** Loja temporária + serviços com o Google respondendo as fixtures de busca e PageSpeed. */
 export async function ambienteBusca({ pagespeedStatus = 200, chaves = { google: 'K' }, rotasExtras = [] } = {}) {
@@ -250,4 +251,26 @@ export async function ambientePreparo({ sem = [], geminiStatus = 200, instagram,
     ...rotasGitHub({ status: githubStatus }),
   ]);
   return { pasta, config, loja, servicos: criarServicos(config, { fetch: f }), f, navegador, bloquearRede: true };
+}
+
+// ---------- Linha de comando ----------
+
+/** Registro abordado há `dias` dias, com mensagens prontas. */
+export function registroAbordadoHa(dias, agora = new Date()) {
+  const quando = new Date(agora.getTime() - dias * 86400000).toISOString();
+  return {
+    ...registroSemSite, etapa: 'abordado', datas: { ...registroSemSite.datas, abordado: quando },
+    previa: { slug: 'x-1a2b', url: URL_PREVIA, publicadaEm: quando, versao: 1, podeMostrar: false, assinatura: {} },
+    abordagem: { primeira: 'Oi', acompanhamento1: `Oi! Conseguiu ver a amostra? ${URL_PREVIA} Isaque`, acompanhamento2: 'Oi de novo', objecoes: {} },
+  };
+}
+
+/** Ambiente da linha de comando com saída capturada. */
+export async function ambienteCli({ cidadePadrao = 'Campinas', registros, cotaEsgotada = false } = {}) {
+  const { loja, servicos, pasta } = await ambienteBusca();
+  if (registros) await loja.gravar('negocios', registros);
+  if (cotaEsgotada) await registrarUsoTeste(loja, 'places_busca', 800);
+  const linhas = [];
+  const config = { pastaDados: join(pasta, 'dados'), cidadePadrao, nomeUsuario: 'Isaque', estudio: 'Estúdio Dez', metaSemanal: 10, diasAcompanhamento: [3, 7], precos: {}, chaves: { google: 'K' } };
+  return { amb: { config, loja, servicos, saida: (l) => linhas.push(String(l)) }, linhas, pasta };
 }
