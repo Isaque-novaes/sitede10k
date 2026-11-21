@@ -154,3 +154,15 @@ export async function escreverPrevia(pasta) {
   await writeFileP(join(pasta, 'midias', 'b.webp'), Buffer.from([3, 4]));
   await writeFileP(join(pasta, 'conferencia', 'pc.png'), Buffer.from([5]));
 }
+
+export const URL_PREVIA = 'https://isaque.github.io/previas/x-1a2b/';
+export const abordagemIA = {
+  primeira: `Oi, tudo bem? Sou o Isaque, do Estúdio Dez. Vi que a Barber Club, aqui perto, já tem site. Montei uma amostra de como poderia ficar o de vocês: ${URL_PREVIA} Posso te mostrar como funciona? Isaque`,
+  acompanhamento1: `Oi! Conseguiu ver a amostra do site? ${URL_PREVIA} Isaque`,
+  acompanhamento2: `Oi! Não quero incomodar. Se um dia quiserem o site, a amostra continua aqui: ${URL_PREVIA} Isaque`,
+  objecoes: {
+    caro: 'Entendo. O site se paga com poucos clientes novos por mês.', tenho_instagram: 'O Instagram é ótimo, e o site ajuda quem procura no Google.',
+    vou_pensar: 'Claro, fique à vontade.', sem_tempo: 'Eu cuido de tudo, você só aprova.', sobrinho_faz: 'Que bom ter ajuda em casa.',
+    ja_tenho_site: 'Posso mostrar o que dá para melhorar.', ja_tenho_clientes: 'Ótimo, o site ajuda a manter a agenda cheia.',
+  },
+};
