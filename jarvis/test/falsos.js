@@ -82,3 +82,47 @@ export function perfilComMidias(fotos, videos) {
   for (let i = 0; i < videos; i++) midias.push({ tipo: 'video', url: `https://scontent.cdninstagram.com/v/v${i}.mp4`, legenda: `Vídeo ${i}`, data: new Date(Date.UTC(2026, 9, 1 + i)).toISOString(), curtidas: 5, link: `https://www.instagram.com/reel/V${i}/` });
   return { usuario: 'navalhadeouro', nome: 'Navalha de Ouro', bio: 'Barbearia em Campinas', seguidores: 4200, totalPosts: fotos + videos, midias };
 }
+
+// ---------- IA: dublês e dados ----------
+import { mkdtempSync, writeFileSync } from 'node:fs';
+
+const JPEG_PEQUENO = Buffer.from('/9j/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAwAEADASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAb/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCbARF8AAAAAAAAAAAAAAAAAAAAAB//2Q==', 'base64');
+
+/** Gemini falso que sempre devolve o objeto. */
+export const geminiQueDevolve = (obj) => ({ chamadas: [], async gerarJson(pedido) { this.chamadas.push(pedido); return structuredClone(obj); } });
+/** Gemini falso que sempre lança o erro. */
+export const geminiQueLanca = (erro) => ({ async gerarJson() { throw erro; } });
+
+/** n mídias de foto com arquivos JPEG reais (pequenos). */
+export function fotosFalsasMidia(n, origem) {
+  const pasta = mkdtempSync(join(tmpdir(), 'jarvis-midia-'));
+  return Array.from({ length: n }, (_, i) => {
+    const arquivo = join(pasta, `${origem}-${i}.jpg`);
+    writeFileSync(arquivo, JPEG_PEQUENO);
+    return { arquivo, tipo: 'foto', origem, credito: origem === 'instagram' ? '@navalhadeouro' : 'Foto: Google Maps' };
+  });
+}
+export const videoMidia = { arquivo: join(tmpdir(), 'reel-falso.mp4'), tipo: 'video', origem: 'instagram', credito: '@navalhadeouro' };
+
+export const registro = {
+  ...registroSemSite,
+  horarios: ['segunda-feira: 09:00–19:00'],
+  avaliacoes: [{ autor: 'Rafael M.', nota: 5, texto: 'Corte impecável e atendimento sem pressa.' }, { autor: 'Lucas A.', nota: 5, texto: 'Melhor barba de Campinas.' }],
+};
+export const diagnostico = {
+  data: '2026-11-21T12:00:00.000Z', temSite: false, nota: 4.8, totalAvaliacoes: 230,
+  concorrentes: { total: 4, comSite: 2, melhorComSite: 'Barber Club' },
+  achadoPrincipal: 'Barber Club, aqui perto, já tem site e aparece melhor no Google.',
+  resumo: 'Barber Club, aqui perto, já tem site e aparece melhor no Google. Com nota 4,8 e 230 avaliações, vocês já têm o que mostrar.',
+};
+export const textosIA = {
+  titulo: 'Seu corte, do seu jeito', subtitulo: 'Barbearia no Cambuí com hora marcada',
+  servicos: [{ nome: 'Corte', descricao: 'Tesoura e máquina.' }, { nome: 'Barba', descricao: 'Toalha quente.' }, { nome: 'Combo', descricao: 'Corte e barba.' }],
+  sobre: 'Atendimento sem pressa no Cambuí.',
+  perguntas: [{ pergunta: 'Precisa agendar?', resposta: 'Sim, pelo WhatsApp.' }, { pergunta: 'Atendem crianças?', resposta: 'Sim.' }],
+  chamada: 'Agende seu horário',
+};
+export const contexto = {
+  fotos: Array.from({ length: 6 }, () => ({ largura: 2000, altura: 1333 })), video: null,
+  negocio: { ...registro, clima: ['urbano', 'classico'], midias: [] }, textos: textosIA,
+};
