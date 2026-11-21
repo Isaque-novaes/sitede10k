@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1080"><defs>
+  <radialGradient id="ceu" cx="50%" cy="42%" r="70%"><stop offset="0" stop-color="#1E2570"/><stop offset=".6" stop-color="#121646"/><stop offset="1" stop-color="#0A0C26"/></radialGradient>
+  <linearGradient id="anel" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#6FF0FF"/><stop offset="1" stop-color="#3A6BFF"/></linearGradient>
+  <filter id="brilho" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="18" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  <filter id="brilhoForte" x="-80%" y="-80%" width="260%" height="260%"><feGaussianBlur stdDeviation="30" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+</defs><rect width="1080" height="1080" fill="url(#ceu)"/>
+  <rect x="215" y="290" width="650" height="500" rx="44" fill="#141A55" stroke="#F2F5FF" stroke-width="16"/>
+  <line x1="223" y1="380" x2="857" y2="380" stroke="#F2F5FF" stroke-opacity=".35" stroke-width="6"/>
+  <circle cx="280" cy="335" r="14" fill="#FFC94A"/><circle cx="325" cy="335" r="14" fill="#6FF0FF"/><circle cx="370" cy="335" r="14" fill="#F2F5FF" fill-opacity=".6"/>
+  <text x="515" y="680" text-anchor="middle" font-family="Unbounded" font-weight="800" font-size="250" fill="#F2F5FF" letter-spacing="-12">10</text>
+  <rect x="805" y="410" width="14" height="345" rx="7" fill="#F2F5FF" fill-opacity=".15"/>
+  <rect x="805" y="410" width="14" height="120" rx="7" fill="#6FF0FF" filter="url(#brilho)"/>
+</svg>

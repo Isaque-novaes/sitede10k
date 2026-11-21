@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1080"><defs>
+  <radialGradient id="ceu" cx="50%" cy="42%" r="70%"><stop offset="0" stop-color="#1E2570"/><stop offset=".6" stop-color="#121646"/><stop offset="1" stop-color="#0A0C26"/></radialGradient>
+  <linearGradient id="anel" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#6FF0FF"/><stop offset="1" stop-color="#3A6BFF"/></linearGradient>
+  <filter id="brilho" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="18" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  <filter id="brilhoForte" x="-80%" y="-80%" width="260%" height="260%"><feGaussianBlur stdDeviation="30" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+</defs><rect width="1080" height="1080" fill="url(#ceu)"/><rect x="300" y="320" width="480" height="440" rx="36" fill="none" stroke="#F2F5FF" stroke-width="26" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M 540 320 L 540 760" stroke="#6FF0FF" stroke-width="18" filter="url(#brilho)"/>
+    <rect x="340" y="380" width="160" height="22" rx="11" fill="#F2F5FF" fill-opacity=".35"/>
+    <rect x="340" y="430" width="120" height="22" rx="11" fill="#F2F5FF" fill-opacity=".35"/>
+    <rect x="580" y="380" width="160" height="150" rx="16" fill="#6FF0FF" fill-opacity=".85"/>
+    <rect x="580" y="560" width="160" height="26" rx="13" fill="#FFC94A"/></svg>

@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1080"><defs>
+  <radialGradient id="ceu" cx="50%" cy="42%" r="70%"><stop offset="0" stop-color="#1E2570"/><stop offset=".6" stop-color="#121646"/><stop offset="1" stop-color="#0A0C26"/></radialGradient>
+  <linearGradient id="anel" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#6FF0FF"/><stop offset="1" stop-color="#3A6BFF"/></linearGradient>
+  <filter id="brilho" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="18" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  <filter id="brilhoForte" x="-80%" y="-80%" width="260%" height="260%"><feGaussianBlur stdDeviation="30" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+</defs><rect width="1080" height="1080" fill="url(#ceu)"/>
+  <text x="500" y="610" text-anchor="middle" font-family="Unbounded" font-weight="800" font-size="230" fill="#F2F5FF" letter-spacing="-10">dez</text>
+  <circle cx="842" cy="578" r="40" fill="#6FF0FF" filter="url(#brilhoForte)"/>
+  <text x="540" y="740" text-anchor="middle" font-family="Unbounded" font-weight="600" font-size="54" fill="#6FF0FF" fill-opacity=".85" letter-spacing="14">ESTÚDIO</text>
+</svg>
