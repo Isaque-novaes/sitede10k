@@ -98,3 +98,30 @@ test('quando não há combinação única, lança SEM_COMBINACAO_UNICA', () => {
     }
   }, (erro) => erro.code === 'SEM_COMBINACAO_UNICA');
 });
+
+test('o clima puxa fontes e movimento compatíveis na maioria das vezes', () => {
+  const ctx = { ...contextoCompleto, video: null, negocio: { ...contextoCompleto.negocio, clima: ['sofisticado', 'premium', 'discreto'] } };
+  const fontes = new Map(FONTES.map((f) => [f.id, f.etiquetas]));
+  const movimentos = new Map(MOVIMENTOS.map((m) => [m.id, m.etiquetas]));
+  const combina = (etiquetas) => etiquetas.some((e) => ctx.negocio.clima.includes(e));
+  const rnd = criarAleatorio(5); let f = 0; let m = 0; const n = 300;
+  for (let i = 0; i < n; i++) {
+    const a = escolherAssinaturaPorRegras(ctx, P, [], [], rnd);
+    if (combina(fontes.get(a.fontes))) f++;
+    if (combina(movimentos.get(a.movimento))) m++;
+  }
+  assert.ok(f / n >= 0.7, `fontes compatíveis: ${f}/${n}`);
+  assert.ok(m / n >= 0.7, `movimentos compatíveis: ${m}/${n}`);
+});
+
+test('quando o negócio tem reel, o topo de vídeo é o preferido', () => {
+  const rnd = criarAleatorio(9); let v = 0; const n = 200;
+  for (let i = 0; i < n; i++) if (escolherAssinaturaPorRegras(contextoCompleto, P, [], [], rnd).topo === 'video-fundo') v++;
+  assert.ok(v / n >= 0.6, `video-fundo: ${v}/${n}`);
+});
+
+test('todo clima usado nos exemplos combina com pelo menos duas fontes', () => {
+  for (const clima of ['classico', 'elegante', 'premium', 'moderno', 'jovem', 'urbano', 'gastronomia', 'acolhedor', 'familiar', 'sofisticado', 'discreto', 'divertido']) {
+    assert.ok(FONTES.filter((f) => f.etiquetas.includes(clima)).length >= 2, clima);
+  }
+});

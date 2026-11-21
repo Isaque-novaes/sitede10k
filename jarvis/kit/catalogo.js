@@ -46,14 +46,14 @@ export const MOVIMENTOS = [
 
 /** Pares de fontes do Google Fonts. Nunca Inter ou Roboto como título. */
 export const FONTES = [
-  { id: 'playfair-dmsans', titulo: 'Playfair Display', texto: 'DM Sans', pesosTitulo: '500;700', pesosTexto: '400;500;700', etiquetas: ['elegante', 'classico'] },
-  { id: 'bebas-manrope', titulo: 'Bebas Neue', texto: 'Manrope', pesosTitulo: '400', pesosTexto: '400;600;800', etiquetas: ['forte', 'urbano'] },
-  { id: 'fraunces-worksans', titulo: 'Fraunces', texto: 'Work Sans', pesosTitulo: '500;700', pesosTexto: '400;500;600', etiquetas: ['acolhedor', 'artesanal'] },
-  { id: 'syne-karla', titulo: 'Syne', texto: 'Karla', pesosTitulo: '600;800', pesosTexto: '400;500;700', etiquetas: ['moderno', 'criativo'] },
-  { id: 'cormorant-montserrat', titulo: 'Cormorant Garamond', texto: 'Montserrat', pesosTitulo: '500;700', pesosTexto: '400;500;600', etiquetas: ['sofisticado', 'premium'] },
-  { id: 'archivoblack-archivo', titulo: 'Archivo Black', texto: 'Archivo', pesosTitulo: '400', pesosTexto: '400;500;700', etiquetas: ['forte', 'esportivo'] },
-  { id: 'dmserif-outfit', titulo: 'DM Serif Display', texto: 'Outfit', pesosTitulo: '400', pesosTexto: '400;500;600', etiquetas: ['classico', 'acolhedor'] },
-  { id: 'anton-nunitosans', titulo: 'Anton', texto: 'Nunito Sans', pesosTitulo: '400', pesosTexto: '400;600;800', etiquetas: ['energico', 'jovem'] },
-  { id: 'spacegrotesk-ibmplexsans', titulo: 'Space Grotesk', texto: 'IBM Plex Sans', pesosTitulo: '500;700', pesosTexto: '400;500;600', etiquetas: ['profissional', 'clinico'] },
-  { id: 'abrilfatface-lato', titulo: 'Abril Fatface', texto: 'Lato', pesosTitulo: '400', pesosTexto: '400;700', etiquetas: ['divertido', 'gastronomia'] },
+  { id: 'playfair-dmsans', titulo: 'Playfair Display', texto: 'DM Sans', pesosTitulo: '500;700', pesosTexto: '400;500;700', etiquetas: ['elegante', 'classico', 'sofisticado', 'premium'] },
+  { id: 'bebas-manrope', titulo: 'Bebas Neue', texto: 'Manrope', pesosTitulo: '400', pesosTexto: '400;600;800', etiquetas: ['forte', 'urbano', 'moderno', 'jovem'] },
+  { id: 'fraunces-worksans', titulo: 'Fraunces', texto: 'Work Sans', pesosTitulo: '500;700', pesosTexto: '400;500;600', etiquetas: ['acolhedor', 'artesanal', 'familiar', 'gastronomia'] },
+  { id: 'syne-karla', titulo: 'Syne', texto: 'Karla', pesosTitulo: '600;800', pesosTexto: '400;500;700', etiquetas: ['moderno', 'criativo', 'jovem', 'divertido'] },
+  { id: 'cormorant-montserrat', titulo: 'Cormorant Garamond', texto: 'Montserrat', pesosTitulo: '500;700', pesosTexto: '400;500;600', etiquetas: ['sofisticado', 'premium', 'elegante', 'discreto'] },
+  { id: 'archivoblack-archivo', titulo: 'Archivo Black', texto: 'Archivo', pesosTitulo: '400', pesosTexto: '400;500;700', etiquetas: ['forte', 'esportivo', 'urbano'] },
+  { id: 'dmserif-outfit', titulo: 'DM Serif Display', texto: 'Outfit', pesosTitulo: '400', pesosTexto: '400;500;600', etiquetas: ['classico', 'acolhedor', 'elegante', 'familiar'] },
+  { id: 'anton-nunitosans', titulo: 'Anton', texto: 'Nunito Sans', pesosTitulo: '400', pesosTexto: '400;600;800', etiquetas: ['energico', 'jovem', 'esportivo', 'divertido'] },
+  { id: 'spacegrotesk-ibmplexsans', titulo: 'Space Grotesk', texto: 'IBM Plex Sans', pesosTitulo: '500;700', pesosTexto: '400;500;600', etiquetas: ['profissional', 'clinico', 'discreto', 'moderno'] },
+  { id: 'abrilfatface-lato', titulo: 'Abril Fatface', texto: 'Lato', pesosTitulo: '400', pesosTexto: '400;700', etiquetas: ['divertido', 'gastronomia', 'classico'] },
 ];

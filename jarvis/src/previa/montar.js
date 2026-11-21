@@ -172,7 +172,9 @@ ${css}
 ${partes.map((p) => p.html).join('\n')}
 </main>
 ${rodape}
-<p class="faixa-demo" role="note">Demonstração criada pelo ${esc(estudio)}. Este não é o site oficial de ${esc(negocio.nome)}.</p>
+<p class="faixa-demo" role="note">${opcoes.ficticio
+    ? `Exemplo criado pelo ${esc(estudio)} com um negócio fictício. Nome, avaliações e números são inventados.`
+    : `Demonstração criada pelo ${esc(estudio)}. Este não é o site oficial de ${esc(negocio.nome)}.`}</p>
 <script>
 ${MOVIMENTO_JS}
 </script>

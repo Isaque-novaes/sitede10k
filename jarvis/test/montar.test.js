@@ -103,3 +103,9 @@ test('criarContextoPeca entrega util para as peças', () => {
   assert.equal(ctx.fontes.id, 'playfair-dmsans');
   assert.equal(ctx.movimento, 'suave');
 });
+
+test('negócio fictício avisa que nome, avaliações e números são inventados', () => {
+  const { html } = montarPrevia({ ...montagemExemplo, opcoes: { ficticio: true } });
+  assert.match(html, /Exemplo criado pelo Estúdio Dez com um negócio fictício\. Nome, avaliações e números são inventados\./);
+  assert.ok(!html.includes('Este não é o site oficial'));
+});

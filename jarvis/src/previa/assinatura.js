@@ -63,8 +63,11 @@ export function opcoesPossiveis(contexto) {
   return { topos, secoes };
 }
 
-function sortearComPeso(itens, clima, aleatorio) {
-  const pesos = itens.map((i) => (i.etiquetas.some((e) => clima.includes(e)) ? 3 : 1));
+const PESO_COMPATIVEL = 8;
+const PESO_REEL_NO_TOPO = 30;
+
+function sortearComPeso(itens, clima, aleatorio, pesoExtra = () => 0) {
+  const pesos = itens.map((i) => pesoExtra(i) || (i.etiquetas.some((e) => clima.includes(e)) ? PESO_COMPATIVEL : 1));
   let r = aleatorio() * pesos.reduce((a, b) => a + b, 0);
   for (let i = 0; i < itens.length; i++) {
     r -= pesos[i];
@@ -121,8 +124,10 @@ export function escolherAssinaturaPorRegras(contexto, paletaBase, coresExtras, u
   const { topos, secoes } = opcoesPossiveis(contexto);
   const paletas = variantesDePaleta(paletaBase, coresExtras ?? [], clima);
 
+  const toposPossiveis = TOPOS.filter((t) => topos.includes(t.id));
+  const reelNoTopo = (t) => (t.id === 'video-fundo' && contexto.video ? PESO_REEL_NO_TOPO : 0);
   const nova = () => ({
-    topo: sortear(topos, aleatorio),
+    topo: sortearComPeso(toposPossiveis, clima, aleatorio, reelNoTopo).id,
     fontes: sortearComPeso(FONTES, clima, aleatorio).id,
     movimento: sortearComPeso(MOVIMENTOS, clima, aleatorio).id,
     secoes: montarSecoes(secoes, aleatorio),

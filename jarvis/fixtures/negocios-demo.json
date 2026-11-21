@@ -1,0 +1,100 @@
+{
+  "aviso": "Negócios fictícios para demonstrar o kit de prévias. Sem telefone nem Instagram para não apontar para pessoas reais. Fotos do Pexels (licença livre).",
+  "negocios": [
+    {
+      "id": "navalha-de-ouro", "nome": "Barbearia Navalha de Ouro", "nicho": "barbearia", "bairro": "Cambuí", "cidade": "Campinas",
+      "endereco": "Rua das Palmeiras, 120, Cambuí, Campinas",
+      "mapsUrl": "https://www.google.com/maps/search/?api=1&query=Cambu%C3%AD%2C+Campinas",
+      "horarios": ["Ter a Sex: 9h às 20h", "Sáb: 8h às 18h", "Dom e Seg: fechado"],
+      "nota": 4.9, "totalAvaliacoes": 312, "clima": ["classico", "elegante", "premium"],
+      "avaliacoes": [
+        { "autor": "Rafael M.", "nota": 5, "texto": "Corte impecável e atendimento sem pressa. O café enquanto espera é um toque a mais." },
+        { "autor": "Lucas A.", "nota": 5, "texto": "Melhor barba que já fiz em Campinas. Toalha quente, navalha e muito capricho." },
+        { "autor": "Bruno S.", "nota": 5, "texto": "Ambiente bonito e profissionais que entendem o que você pede." },
+        { "autor": "Thiago R.", "nota": 4, "texto": "Ótimo corte. Só vale agendar antes, porque enche aos sábados." }
+      ],
+      "midias": [
+        { "pexels": 8218487, "credito": "Foto: Stacey Koenitz (Pexels)" },
+        { "pexels": 3105409, "credito": "Foto: Tim Mossholder (Pexels)" },
+        { "pexels": 7518731, "credito": "Foto: Pexels" },
+        { "pexels": 4625648, "credito": "Foto: Antoni Shkraba (Pexels)" },
+        { "pexels": 13138476, "credito": "Foto: Pexels" }
+      ]
+    },
+    {
+      "id": "corte-fino", "nome": "Studio Corte Fino", "nicho": "barbearia", "bairro": "Taquaral", "cidade": "Campinas",
+      "endereco": "Avenida dos Ipês, 455, Taquaral, Campinas",
+      "mapsUrl": "https://www.google.com/maps/search/?api=1&query=Taquaral%2C+Campinas",
+      "horarios": ["Seg a Sex: 10h às 21h", "Sáb: 9h às 17h"],
+      "nota": 4.7, "totalAvaliacoes": 128, "clima": ["moderno", "jovem", "urbano"],
+      "avaliacoes": [
+        { "autor": "Gabriel T.", "nota": 5, "texto": "Degradê perfeito, do jeito que eu mostrei na foto." },
+        { "autor": "Matheus L.", "nota": 5, "texto": "Lugar com som bom, gente boa e corte rápido sem perder qualidade." },
+        { "autor": "Vinícius P.", "nota": 4, "texto": "Preço justo e atendimento simpático. Voltarei." }
+      ],
+      "midias": [
+        { "pexels": 2076930, "credito": "Foto: Th2city Santana (Pexels)" },
+        { "pexels": 1836983, "credito": "Foto: Th2city Santana (Pexels)" },
+        { "pexels": 2076932, "credito": "Foto: Th2city Santana (Pexels)" },
+        { "pexels": 19028071, "credito": "Foto: Pexels" }
+      ]
+    },
+    {
+      "id": "forno-da-nonna", "nome": "Forno da Nonna", "nicho": "pizzaria", "bairro": "Barão Geraldo", "cidade": "Campinas",
+      "endereco": "Rua do Trigo, 77, Barão Geraldo, Campinas",
+      "mapsUrl": "https://www.google.com/maps/search/?api=1&query=Bar%C3%A3o+Geraldo%2C+Campinas",
+      "horarios": ["Ter a Dom: 18h às 23h30", "Seg: fechado"],
+      "nota": 4.8, "totalAvaliacoes": 846, "clima": ["gastronomia", "acolhedor", "familiar"],
+      "avaliacoes": [
+        { "autor": "Mariana C.", "nota": 5, "texto": "Massa leve, borda crocante e forno a lenha de verdade. A de calabresa é imperdível." },
+        { "autor": "Paulo H.", "nota": 5, "texto": "Lembra a pizza da casa da minha avó. Ambiente familiar e atendimento rápido." },
+        { "autor": "Fernanda O.", "nota": 5, "texto": "Pedimos delivery e chegou quentinha. Virou tradição de sexta." },
+        { "autor": "Ricardo N.", "nota": 4, "texto": "Excelente pizza, só a espera no sábado que é um pouco longa." }
+      ],
+      "video": { "gerarDasFotos": 3, "credito": "Vídeo montado com fotos do Pexels" },
+      "midias": [
+        { "pexels": 18126715, "credito": "Foto: Joshua Plattner (Pexels)" },
+        { "pexels": 1878346, "credito": "Foto: Pexels" },
+        { "pexels": 29021747, "credito": "Foto: Nano Erdozain (Pexels)" },
+        { "pexels": 3343627, "credito": "Foto: Pexels" },
+        { "pexels": 31708264, "credito": "Foto: damla selen demir (Pexels)" },
+        { "pexels": 5056621, "credito": "Foto: Pexels" },
+        { "pexels": 19737928, "credito": "Foto: Manav Chahal (Pexels)" }
+      ]
+    },
+    {
+      "id": "essenza", "nome": "Essenza Estética", "nicho": "estetica", "bairro": "Anhangabaú", "cidade": "Jundiaí",
+      "endereco": "Rua das Camélias, 300, Anhangabaú, Jundiaí",
+      "mapsUrl": "https://www.google.com/maps/search/?api=1&query=Anhangaba%C3%BA%2C+Jundia%C3%AD",
+      "horarios": ["Seg a Sex: 9h às 19h", "Sáb: 9h às 14h"],
+      "nota": 5.0, "totalAvaliacoes": 97, "clima": ["sofisticado", "premium", "discreto"],
+      "avaliacoes": [
+        { "autor": "Camila F.", "nota": 5, "texto": "Minha pele nunca esteve tão bonita. Atendimento cuidadoso e ambiente muito tranquilo." },
+        { "autor": "Patrícia V.", "nota": 5, "texto": "A drenagem é maravilhosa. Saio leve e relaxada toda vez." },
+        { "autor": "Juliana K.", "nota": 5, "texto": "Profissionais atenciosas, explicam tudo antes de começar." }
+      ],
+      "midias": [
+        { "pexels": 6899549, "credito": "Foto: Pexels" },
+        { "pexels": 3985329, "credito": "Foto: Pexels" },
+        { "pexels": 7446671, "credito": "Foto: Pexels" },
+        { "pexels": 5069612, "credito": "Foto: Pexels" },
+        { "pexels": 13899862, "credito": "Foto: Pexels" },
+        { "pexels": 6899550, "credito": "Foto: Pexels" }
+      ]
+    },
+    {
+      "id": "patas-e-cia", "nome": "Patas & Cia", "nicho": "petshop", "bairro": "Centro", "cidade": "Valinhos",
+      "endereco": "Rua dos Girassóis, 58, Centro, Valinhos",
+      "mapsUrl": "https://www.google.com/maps/search/?api=1&query=Centro%2C+Valinhos",
+      "horarios": ["Seg a Sáb: 8h às 18h"],
+      "nota": 4.8, "totalAvaliacoes": 64, "clima": ["divertido", "familiar", "acolhedor"],
+      "avaliacoes": [
+        { "autor": "Aline B.", "nota": 5, "texto": "Minha cachorrinha volta cheirosa e feliz. Cuidam com muito carinho." },
+        { "autor": "Diego M.", "nota": 5, "texto": "O leva e traz salva minha semana. Pontuais e atenciosos." }
+      ],
+      "midias": [
+        { "pexels": 4587959, "credito": "Foto: Pexels" }
+      ]
+    }
+  ]
+}

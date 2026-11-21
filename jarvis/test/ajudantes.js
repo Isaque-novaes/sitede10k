@@ -157,3 +157,22 @@ export async function prepararCtxCompleto(pasta) {
   };
   return { montagem, ctx: criarContextoPeca(montagem) };
 }
+
+/** Cria `n` fotos originais (sem tratar) e devolve as Mídias que apontam para elas. */
+export async function criarMidiasArquivo(pasta, n, { largura = 2000, altura = 1333, credito = '@negocio', origem = 'instagram', inicio = 0 } = {}) {
+  await mkdir(pasta, { recursive: true });
+  const midias = [];
+  for (let i = 0; i < n; i++) {
+    const arquivo = await criarFotoArquivo(join(pasta, `m${inicio + i}.jpg`), largura, altura, inicio + i);
+    midias.push({ arquivo, tipo: 'foto', origem, credito });
+  }
+  return midias;
+}
+
+/** Cria um vídeo original (sem tratar) e devolve a Mídia. */
+export async function criarVideoArquivo(pasta, { largura = 1080, altura = 1920, duracao = 4, credito = '@negocio' } = {}) {
+  await mkdir(pasta, { recursive: true });
+  const arquivo = join(pasta, 'reel.mp4');
+  execFileSync('ffmpeg', ['-y', '-v', 'error', '-f', 'lavfi', '-i', `testsrc=size=${largura}x${altura}:rate=24:duration=${duracao}`, arquivo]);
+  return { arquivo, tipo: 'video', origem: 'instagram', credito };
+}
