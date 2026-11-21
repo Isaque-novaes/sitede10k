@@ -1,8 +1,8 @@
 // Sobre em faixa de foto inteira com paralaxe, e o texto numa caixa sobreposta.
 export function render(ctx) {
-  const { negocio, textos, fotos, util } = ctx;
+  const { negocio, textos, util } = ctx;
   const { esc } = util;
-  const foto = fotos[3] ?? fotos[1] ?? fotos[0];
+  const foto = util.reservarFoto({ larguraMin: 1200 });
   const html = `<section class="secao s-sobre s-sobre-c${foto ? '' : ' s-sobre-c--sem-foto'}" id="sobre">
   ${foto ? `<div class="s-sobre-c__fundo"><div class="s-sobre-c__camada" data-anim="paralaxe" data-fator="0.1">${util.img(foto, { classe: 's-sobre-c__foto', alt: '', sizes: '100vw' })}</div></div>` : ''}
   <div class="container">

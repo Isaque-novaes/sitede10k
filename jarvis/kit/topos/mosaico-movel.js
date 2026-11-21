@@ -2,7 +2,8 @@ import { acoes, nota, CSS_COMUM } from './_comum.js';
 
 // Topo de mosaico: o título no centro e cinco fotos ao redor, cada uma rolando numa velocidade.
 export function render(ctx) {
-  const { negocio, textos, fotos, util } = ctx;
+  const { negocio, textos, util } = ctx;
+  const fotos = ctx.fotosTopo;
   const { esc } = util;
   const fatores = ['0.08', '0.16', '0.05', '0.14', '0.1'];
   const pecas = fotos.slice(0, 5).map((f, i) => `<figure class="t-mosaico-movel__foto t-mosaico-movel__foto--${i + 1}" data-anim="paralaxe" data-fator="${fatores[i]}">${util.img(f, { prioridade: i === 0, alt: `Foto ${i + 1} de ${negocio.nome}`, sizes: '(min-width: 900px) 22vw, 45vw' })}</figure>`).join('\n    ');

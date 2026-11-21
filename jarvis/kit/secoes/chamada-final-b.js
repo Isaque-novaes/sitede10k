@@ -1,9 +1,9 @@
 // Chamada final sobre foto: a última foto do negócio com véu, frase centralizada e o botão.
 export function render(ctx) {
-  const { negocio, textos, fotos, util } = ctx;
+  const { negocio, textos, util } = ctx;
   const { esc } = util;
   const contato = util.linkContato();
-  const foto = fotos.at(-1);
+  const foto = util.reservarFoto({ larguraMin: 1200, doFim: true });
   const html = `<section class="secao s-chamada-final s-chamada-final-b${foto ? '' : ' s-chamada-final-b--sem-foto'}" id="contato">
   ${foto ? `<div class="s-chamada-final-b__fundo" data-anim="zoom-lento">${util.img(foto, { classe: 's-chamada-final-b__foto', alt: '', sizes: '100vw' })}</div>` : ''}
   <div class="container s-chamada-final-b__caixa">

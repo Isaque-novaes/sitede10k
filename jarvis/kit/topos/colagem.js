@@ -2,7 +2,8 @@ import { acoes, nota, CSS_COMUM } from './_comum.js';
 
 // Topo de colagem: título à esquerda e três fotos em alturas diferentes, sobrepostas de leve.
 export function render(ctx) {
-  const { negocio, textos, fotos, util } = ctx;
+  const { negocio, textos, util } = ctx;
+  const fotos = ctx.fotosTopo;
   const { esc } = util;
   const [a, b, c] = fotos;
   const foto = (f, classe, i, prioridade = false) => f

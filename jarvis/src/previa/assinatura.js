@@ -1,5 +1,5 @@
 import { TOPOS, SECOES, VARIANTES, MOVIMENTOS, FONTES } from '../../kit/catalogo.js';
-import { distanciaRgb, derivarPaleta, ajustarContraste, luminancia } from './cores.js';
+import { distanciaRgb, derivarPaleta, ajustarContraste, luminancia, contraste } from './cores.js';
 import { normalizar } from '../util/slug.js';
 
 const LIMITE_PALETA_IGUAL = 40;
@@ -150,4 +150,42 @@ export function escolherAssinaturaPorRegras(contexto, paletaBase, coresExtras, u
   const erro = new Error('Não encontrei uma combinação de design que ainda não tenha sido usada.');
   erro.code = 'SEM_COMBINACAO_UNICA';
   throw erro;
+}
+
+const HEX = /^#[0-9a-f]{6}$/i;
+const CHAVES_PALETA = ['fundo', 'superficie', 'texto', 'textoSuave', 'destaque', 'destaque2'];
+const CONTRASTE_MINIMO = { texto: 7, textoSuave: 4.5, destaque: 3, destaque2: 3 };
+
+/**
+ * Confere uma assinatura vinda de fora (por exemplo, sugerida pela IA) contra o catálogo e as regras do kit.
+ * @returns {{ok:boolean, motivos:string[]}}
+ */
+export function validarAssinatura(a, contexto) {
+  const motivos = [];
+  if (!a || typeof a !== 'object') return { ok: false, motivos: ['assinatura vazia'] };
+  const possiveis = opcoesPossiveis(contexto);
+  if (!possiveis.topos.includes(a.topo)) motivos.push(`topo "${a.topo}" não serve para este material`);
+  if (!FONTES.some((f) => f.id === a.fontes)) motivos.push(`fontes "${a.fontes}" não existem no kit`);
+  if (!MOVIMENTOS.some((m) => m.id === a.movimento)) motivos.push(`movimento "${a.movimento}" não existe no kit`);
+
+  const secoes = Array.isArray(a.secoes) ? a.secoes : [];
+  if (!secoes.length) motivos.push('sem seções');
+  for (const s of secoes) {
+    if (!SECOES.some((d) => d.tipo === s?.tipo) || !VARIANTES.includes(s?.variante)) motivos.push(`seção "${s?.tipo}-${s?.variante}" não existe no kit`);
+  }
+  const tipos = secoes.map((s) => s?.tipo);
+  if (new Set(tipos).size !== tipos.length) motivos.push('seção repetida');
+  if (tipos.length && tipos.at(-1) !== 'chamada-final') motivos.push('a última seção precisa ser a chamada final');
+  const iniciais = tipos.filter((t) => (t === 'servicos' || t === 'sobre') && possiveis.secoes.includes(t));
+  if (iniciais.length && !['servicos', 'sobre'].includes(tipos[0])) motivos.push('a primeira seção precisa ser serviços ou sobre');
+
+  const p = a.paleta ?? {};
+  const coresValidas = CHAVES_PALETA.every((k) => typeof p[k] === 'string' && HEX.test(p[k]));
+  if (!coresValidas) motivos.push('paleta com cor inválida');
+  else {
+    for (const [k, minimo] of Object.entries(CONTRASTE_MINIMO)) {
+      if (contraste(p[k], p.fundo) < minimo) motivos.push(`contraste de ${k} abaixo de ${minimo}:1`);
+    }
+  }
+  return { ok: motivos.length === 0, motivos };
 }

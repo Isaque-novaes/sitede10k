@@ -23,12 +23,12 @@ export function render(ctx) {
 </section>`;
   const css = `.s-avaliacoes-a__destaque{position:relative;margin:3rem 0 2.5rem;padding-top:3.5rem;max-width:58rem}
 .s-avaliacoes-a__aspas{position:absolute;top:-1.5rem;left:-.4rem;font-family:var(--fonte-titulo);font-size:9rem;line-height:1;color:var(--cor-destaque)}
-.s-avaliacoes-a__frase{font-family:var(--fonte-titulo);font-size:clamp(1.5rem,1.15rem + 1.6vw,2.6rem);line-height:1.25;overflow-wrap:break-word}
+.s-avaliacoes-a__frase{font-family:var(--fonte-titulo);font-size:clamp(1.5rem,1.15rem + 1.6vw,2.6rem);line-height:1.25;overflow-wrap:anywhere}
 .s-avaliacoes-a__autor{margin-top:1.25rem;color:var(--cor-texto-suave);font-size:.95rem}
 .s-avaliacoes-a__fileira{display:grid;grid-auto-flow:column;grid-auto-columns:min(82%,22rem);gap:1rem;overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:1rem;scrollbar-width:thin}
 .s-avaliacoes-a__cartao{scroll-snap-align:start;background:var(--cor-superficie);padding:1.5rem;border-radius:10px;display:grid;gap:1rem;align-content:space-between}
-.s-avaliacoes-a__texto{overflow-wrap:break-word}
+.s-avaliacoes-a__texto{overflow-wrap:anywhere}
 .s-avaliacoes-a__cartao .s-avaliacoes-a__autor{margin-top:0}
-@media (min-width:900px){.s-avaliacoes-a__fileira{grid-auto-flow:row;grid-template-columns:repeat(auto-fit,minmax(16rem,1fr));overflow:visible}}`;
+@media (min-width:900px){.s-avaliacoes-a__fileira{grid-auto-flow:row;grid-template-columns:repeat(auto-fit,minmax(min(16rem,100%),1fr));overflow:visible}}`;
   return { html, css };
 }

@@ -2,7 +2,8 @@ import { acoes, nota, CSS_COMUM } from './_comum.js';
 
 // Topo dividido: texto num painel de cor de um lado, foto inteira do outro.
 export function render(ctx) {
-  const { negocio, textos, fotos, util } = ctx;
+  const { negocio, textos, util } = ctx;
+  const fotos = ctx.fotosTopo;
   const { esc } = util;
   const foto = fotos[0];
   const html = `<header class="topo t-tela-dividida">

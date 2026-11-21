@@ -25,7 +25,7 @@ export function render(ctx) {
 .s-avaliacoes-b__faixa{mask-image:linear-gradient(90deg,transparent,#000 6%,#000 94%,transparent);-webkit-mask-image:linear-gradient(90deg,transparent,#000 6%,#000 94%,transparent)}
 .s-avaliacoes-b__faixa .faixa__trilho{gap:1rem;padding-inline:.5rem}
 .s-avaliacoes-b__cartao{width:min(80vw,23rem);flex:none;display:grid;gap:.9rem;align-content:start;padding:1.6rem;border-radius:16px;background:var(--cor-superficie);border:1px solid color-mix(in srgb,var(--cor-texto) 10%,transparent);margin-right:1rem}
-.s-avaliacoes-b__texto{font-size:1.02rem;overflow-wrap:break-word}
+.s-avaliacoes-b__texto{font-size:1.02rem;overflow-wrap:anywhere}
 .s-avaliacoes-b__autor{font-weight:600;color:var(--cor-texto-suave)}`;
   return { html, css };
 }

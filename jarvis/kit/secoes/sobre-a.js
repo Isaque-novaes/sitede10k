@@ -1,8 +1,8 @@
 // Sobre: foto com um bloco de cor deslocado atrás e o texto ao lado.
 export function render(ctx) {
-  const { negocio, textos, fotos, util } = ctx;
+  const { negocio, textos, util } = ctx;
   const { esc } = util;
-  const foto = fotos[1] ?? fotos[0];
+  const foto = util.reservarFoto();
   const bio = negocio.instagram?.bio ? `<p class="s-sobre-a__bio" data-anim="subir" style="--ordem:2">${esc(negocio.instagram.bio)}</p>` : '';
   const html = `<section class="secao s-sobre s-sobre-a" id="sobre">
   <div class="container s-sobre-a__grade${foto ? '' : ' s-sobre-a__grade--sem-foto'}">

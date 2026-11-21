@@ -1,6 +1,7 @@
 // Topo: foto do negócio em tela cheia, título grande ancorado embaixo, a foto se funde com a cor da página.
 export function render(ctx) {
-  const { negocio, textos, fotos, util } = ctx;
+  const { negocio, textos, util } = ctx;
+  const fotos = ctx.fotosTopo;
   const { esc } = util;
   const foto = fotos[0];
   const contato = util.linkContato();
@@ -24,7 +25,7 @@ export function render(ctx) {
   const css = `.t-foto-cheia{position:relative;min-height:100vh;min-height:100svh;display:flex;align-items:flex-end;overflow:clip;isolation:isolate;padding-block:7.5rem calc(2.5rem + var(--altura-faixa,3.6rem))}
 .t-foto-cheia__midia{position:absolute;inset:0;z-index:-2;transform-origin:60% 40%}
 .t-foto-cheia__foto{width:100%;height:100%;object-fit:cover}
-.t-foto-cheia__veu{position:absolute;inset:0;z-index:-1;background:linear-gradient(to top,var(--cor-fundo) 2%,color-mix(in srgb,var(--cor-fundo) 82%,transparent) 34%,color-mix(in srgb,var(--cor-fundo) 25%,transparent) 72%,color-mix(in srgb,var(--cor-fundo) 50%,transparent) 100%)}
+.t-foto-cheia__veu{position:absolute;inset:0;z-index:-1;background:linear-gradient(to top,var(--cor-fundo) 0%,color-mix(in srgb,var(--cor-fundo) 92%,transparent) 30%,color-mix(in srgb,var(--cor-fundo) 82%,transparent) 54%,color-mix(in srgb,var(--cor-fundo) 45%,transparent) 76%,color-mix(in srgb,var(--cor-fundo) 25%,transparent) 88%,color-mix(in srgb,var(--cor-fundo) 55%,transparent) 100%)}
 .t-foto-cheia__conteudo{display:grid;gap:1.25rem}
 .t-foto-cheia__titulo{font-size:clamp(2.8rem,1.6rem + 6.4vw,7.25rem);line-height:.97;max-width:13ch}
 .t-foto-cheia__sub{font-size:clamp(1.1rem,1rem + .45vw,1.4rem);max-width:38ch;color:var(--cor-texto-suave)}

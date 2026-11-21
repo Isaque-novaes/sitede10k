@@ -1,12 +1,13 @@
 import { normalizar } from '../util/slug.js';
+import { normalizarTelefoneBR, provavelCelular } from '../util/whatsapp.js';
 
 export const NICHOS = ['barbearia', 'salao', 'estetica', 'restaurante', 'pizzaria', 'hamburgueria', 'cafeteria', 'padaria', 'clinica', 'odontologia', 'academia', 'petshop', 'oficina', 'imobiliaria', 'generico'];
 
 /** Ordem importa: o primeiro que bater vence ("clínica de estética" é estética, não clínica). */
 const PALAVRAS = [
-  ['odontologia', ['odonto', 'dentist', 'dental', 'sorriso']],
+  ['odontologia', ['odonto', 'dentist', 'dental']],
   ['estetica', ['estetic', 'depilac', 'sobrancelha', 'spa', 'micropigment', 'harmonizac']],
-  ['petshop', ['pet', 'veterinar', 'banho e tosa', 'banho tosa']],
+  ['petshop', ['pet', 'petshop', 'veterinar', 'banho e tosa', 'banho tosa']],
   ['barbearia', ['barbear', 'barber', 'barbeir']],
   ['salao', ['salao', 'cabeleir', 'beleza', 'hair', 'manicure', 'esmalteria']],
   ['pizzaria', ['pizza']],
@@ -20,20 +21,27 @@ const PALAVRAS = [
   ['clinica', ['clinica', 'medic', 'fisioterap', 'consultorio', 'saude', 'psicolog', 'nutricion']],
 ];
 
+/**
+ * Chaves curtas (até 4 letras) precisam ser a palavra inteira; as outras, o começo de uma palavra.
+ * Assim "espetinhos" não vira pet shop e "Espaço" não vira spa.
+ */
+const bate = (t, chave) => (chave.length <= 4 ? t.includes(` ${chave} `) : t.includes(` ${chave}`));
+
 /** @param {string} texto */
 export function identificarNicho(texto) {
   const t = ` ${normalizar(texto).replace(/-/g, ' ')} `;
   if (NICHOS.includes(t.trim())) return t.trim();
-  for (const [nicho, chaves] of PALAVRAS) if (chaves.some((c) => t.includes(c))) return nicho;
+  for (const [nicho, chaves] of PALAVRAS) if (chaves.some((c) => bate(t, c))) return nicho;
   return 'generico';
 }
 
-const P = (pergunta, resposta) => ({ pergunta, resposta });
+/** `requer` lista o que o negócio precisa ter para a pergunta fazer sentido: contato, endereco, horarios. */
+const P = (pergunta, resposta, requer = []) => ({ pergunta, resposta, requer });
 const S = (nome, descricao) => ({ nome, descricao });
 
 const PERGUNTAS_COMUNS = [
-  P('Como faço para falar com vocês?', 'O jeito mais rápido é pelo WhatsApp. Respondemos assim que possível durante o horário de atendimento.'),
-  P('Onde vocês ficam?', 'Estamos em {lugar}. O endereço completo e o link do mapa estão aqui no site.'),
+  P('Como faço para falar com vocês?', 'O jeito mais rápido é pelo WhatsApp. Respondemos assim que possível durante o horário de atendimento.', ['contato']),
+  P('Onde vocês ficam?', 'Estamos em {lugar}. O endereço completo e o link do mapa estão aqui no site.', ['endereco']),
   P('Quais formas de pagamento vocês aceitam?', 'Trabalhamos com as formas de pagamento mais usadas. Se tiver dúvida, pergunte pelo WhatsApp antes de vir.'),
 ];
 
@@ -123,7 +131,7 @@ const BANCO = {
     subtitulos: ['{nome}: estrutura e acompanhamento em {lugar}', 'Musculação, funcional e aulas para todos os níveis', 'Resultado com orientação de verdade'],
     servicos: [S('Musculação', 'Equipamentos para treinar cada grupo muscular.'), S('Treino funcional', 'Força, mobilidade e condicionamento.'), S('Aulas coletivas', 'Treinar junto é mais motivador.'), S('Avaliação física', 'Ponto de partida para o seu plano.'), S('Acompanhamento', 'Professores atentos à sua evolução.')],
     sobre: ['{nome} é para quem quer evoluir com segurança, do primeiro treino ao objetivo mais ousado.', 'Em {lugar}, {nome} reúne estrutura, professores presentes e um ambiente que dá vontade de voltar.'],
-    perguntas: [P('Nunca treinei. Posso começar?', 'Pode sim. Montamos um treino de acordo com o seu nível.'), P('Tem aula experimental?', 'Pergunte pelo WhatsApp como funciona a primeira visita.'), P('Quais os horários?', 'Os horários estão aqui no site. Na dúvida, chame no WhatsApp.')],
+    perguntas: [P('Nunca treinei. Posso começar?', 'Pode sim. Montamos um treino de acordo com o seu nível.'), P('Tem aula experimental?', 'Pergunte pelo WhatsApp como funciona a primeira visita.'), P('Quais os horários?', 'Os horários estão aqui no site. Na dúvida, chame no WhatsApp.', ['horarios'])],
     chamadas: ['Comece a treinar', 'Agende sua visita', 'Venha conhecer'],
   },
   petshop: {
@@ -162,6 +170,20 @@ const BANCO = {
 
 const sortear = (lista, aleatorio) => lista[Math.floor(aleatorio() * lista.length)];
 
+/** Por onde o visitante fala com o negócio, igual ao botão da prévia: whatsapp, telefone ou nenhum. */
+function canalDeContato(negocio) {
+  if (negocio.whatsapp || provavelCelular(negocio.telefone)) return 'whatsapp';
+  if (normalizarTelefoneBR(negocio.telefone)) return 'telefone';
+  return null;
+}
+
+/** Os textos do banco falam em WhatsApp. Sem WhatsApp, troca pelo canal que o negócio tem. */
+function ajustarCanal(texto, canal) {
+  if (canal === 'whatsapp') return texto;
+  if (canal === 'telefone') return texto.replace(/(pelo|no) WhatsApp/g, 'por telefone').replace(/WhatsApp/g, 'telefone');
+  return texto.replace(/com a gente (pelo|no) WhatsApp/g, 'com a gente').replace(/(pelo|no) WhatsApp/g, 'direto com a gente').replace(/WhatsApp/g, 'atendimento');
+}
+
 function trechoDeAvaliacao(avaliacoes) {
   const boa = (avaliacoes ?? []).find((a) => a.nota >= 5 && a.texto?.trim());
   if (!boa) return null;
@@ -182,20 +204,29 @@ export function textosBase(negocio, aleatorio = Math.random) {
   const nicho = identificarNicho(negocio.nicho ?? '');
   const banco = BANCO[nicho];
   const lugar = negocio.bairro || negocio.cidade;
-  const preencher = (texto) => texto.replaceAll('{nome}', negocio.nome).replaceAll('{lugar}', lugar);
+  const canal = canalDeContato(negocio);
+  const temos = {
+    contato: canal !== null,
+    endereco: !!(negocio.endereco || negocio.mapsUrl),
+    horarios: (negocio.horarios?.length ?? 0) > 0,
+  };
+  const preencher = (texto) => ajustarCanal(texto.replaceAll('{nome}', negocio.nome).replaceAll('{lugar}', lugar), canal);
 
   let sobre = preencher(sortear(banco.sobre, aleatorio));
   const trecho = trechoDeAvaliacao(negocio.avaliacoes);
   if (trecho) sobre += ` "${trecho.texto}", conta ${trecho.autor}.`;
 
-  const perguntas = [...banco.perguntas, ...PERGUNTAS_COMUNS].map((p) => ({ pergunta: preencher(p.pergunta), resposta: preencher(p.resposta) }));
+  const perguntas = [...banco.perguntas, ...PERGUNTAS_COMUNS]
+    .filter((p) => p.requer.every((r) => temos[r]))
+    .map((p) => ({ pergunta: preencher(p.pergunta), resposta: preencher(p.resposta) }));
+  const chamadas = canal === 'whatsapp' ? banco.chamadas : banco.chamadas.filter((c) => !c.includes('WhatsApp'));
 
   return {
     titulo: preencher(sortear(banco.titulos, aleatorio)),
     subtitulo: preencher(sortear(banco.subtitulos, aleatorio)),
-    servicos: banco.servicos.map((s) => ({ ...s })),
+    servicos: banco.servicos.map((s) => ({ nome: preencher(s.nome), descricao: preencher(s.descricao) })),
     sobre,
     perguntas: perguntas.slice(0, 5),
-    chamada: preencher(sortear(banco.chamadas, aleatorio)),
+    chamada: preencher(sortear(chamadas, aleatorio)),
   };
 }

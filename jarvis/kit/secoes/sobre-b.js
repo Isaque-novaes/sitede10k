@@ -1,8 +1,8 @@
 // Sobre como manifesto: o texto vira a peça principal, em fonte de título grande, com uma foto redonda pequena.
 export function render(ctx) {
-  const { negocio, textos, fotos, util } = ctx;
+  const { negocio, textos, util } = ctx;
   const { esc } = util;
-  const foto = fotos[2] ?? fotos[0];
+  const foto = util.reservarFoto();
   const html = `<section class="secao s-sobre s-sobre-b" id="sobre">
   <div class="container s-sobre-b__caixa">
     <h2 class="s-sobre-b__rotulo" data-anim="subir">Quem somos</h2>

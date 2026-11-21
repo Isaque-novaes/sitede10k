@@ -2,7 +2,8 @@ import { acoes, nota, CSS_COMUM } from './_comum.js';
 
 // Topo tipográfico: o título ocupa a largura da tela. Se houver foto, ela entra num arco recortado.
 export function render(ctx) {
-  const { negocio, textos, fotos, util } = ctx;
+  const { negocio, textos, util } = ctx;
+  const fotos = ctx.fotosTopo;
   const { esc } = util;
   const foto = fotos[0];
   const html = `<header class="topo t-titulo-gigante${foto ? '' : ' t-titulo-gigante--sem-foto'}">

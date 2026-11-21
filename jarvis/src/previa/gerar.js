@@ -4,7 +4,7 @@ import { criarSlug } from '../util/slug.js';
 import { tratarMidias } from './midia.js';
 import { derivarPaleta, distanciaRgb, hexParaHsl } from './cores.js';
 import { textosBase } from './textos-base.js';
-import { ehUnica, escolherAssinaturaPorRegras, opcoesPossiveis } from './assinatura.js';
+import { ehUnica, escolherAssinaturaPorRegras, validarAssinatura } from './assinatura.js';
 import { montarPrevia, gravarPrevia } from './montar.js';
 import { conferirPrevia } from './conferir.js';
 
@@ -61,9 +61,10 @@ export async function gerarPrevia(negocio, opcoes) {
 
   let sugerida = null;
   if (assinatura) {
-    const servem = opcoesPossiveis(contexto).topos.includes(assinatura.topo);
-    if (servem && ehUnica(assinatura, usadas, alvo)) sugerida = assinatura;
-    else avisos.push('A assinatura sugerida já foi usada ou não combina com o material deste negócio. Escolhi outra.');
+    const { ok, motivos } = validarAssinatura(assinatura, contexto);
+    if (!ok) avisos.push(`A assinatura sugerida não serve (${motivos.join('; ')}). Escolhi outra pelas regras.`);
+    else if (!ehUnica(assinatura, usadas, alvo)) avisos.push('A assinatura sugerida já foi usada neste nicho e cidade. Escolhi outra pelas regras.');
+    else sugerida = assinatura;
   }
 
   const usadasNestaChamada = [...usadas];

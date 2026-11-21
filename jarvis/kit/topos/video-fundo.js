@@ -26,7 +26,7 @@ export function render(ctx) {
 .t-video-fundo__ambiente{display:none}
 .t-video-fundo__moldura{position:absolute;inset:0;z-index:-2}
 .t-video-fundo__video{width:100%;height:100%;object-fit:cover}
-.t-video-fundo__veu{position:absolute;inset:0;z-index:-1;background:linear-gradient(to top,var(--cor-fundo) 4%,color-mix(in srgb,var(--cor-fundo) 80%,transparent) 36%,color-mix(in srgb,var(--cor-fundo) 15%,transparent) 70%,color-mix(in srgb,var(--cor-fundo) 55%,transparent) 100%)}
+.t-video-fundo__veu{position:absolute;inset:0;z-index:-1;background:linear-gradient(to top,var(--cor-fundo) 0%,color-mix(in srgb,var(--cor-fundo) 92%,transparent) 30%,color-mix(in srgb,var(--cor-fundo) 82%,transparent) 54%,color-mix(in srgb,var(--cor-fundo) 45%,transparent) 76%,color-mix(in srgb,var(--cor-fundo) 25%,transparent) 88%,color-mix(in srgb,var(--cor-fundo) 55%,transparent) 100%)}
 .t-video-fundo__conteudo{display:grid;gap:1.2rem}
 .t-video-fundo__titulo{font-size:clamp(2.8rem,1.6rem + 6vw,6.5rem);line-height:.98;max-width:12ch}
 .t-video-fundo__sub{font-size:clamp(1.1rem,1rem + .45vw,1.35rem);color:var(--cor-texto-suave);max-width:36ch}

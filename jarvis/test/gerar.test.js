@@ -28,7 +28,7 @@ before(async () => {
     midias: await criarMidiasArquivo(join(tmp, 'orig-b'), 5, { credito: '@cortefino', inicio: 3 }) };
   negocioDificil = {
     id: 'd', nome: 'Espaço de Beleza & Estética Maria Antônia D\'Ávila Conceição!', nicho: 'estetica', cidade: 'São José dos Campos', clima: [],
-    avaliacoes: [{ autor: 'Cliente', nota: 5, texto: 'Excelente atendimento '.repeat(45) }],
+    avaliacoes: [{ autor: 'Cliente', nota: 5, texto: 'Excelente atendimento '.repeat(45) }, { autor: 'Outra cliente', nota: 5, texto: 'k'.repeat(60) }],
     midias: await criarMidiasArquivo(join(tmp, 'orig-d'), 1, { largura: 640, altura: 1136 }),
   };
   pizzariaComVideo = { id: 'p', nome: 'Forno da Nonna', nicho: 'pizzaria', cidade: 'Campinas', clima: ['gastronomia'], avaliacoes: [], whatsapp: '(19) 98888-7777',

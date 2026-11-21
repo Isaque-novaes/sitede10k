@@ -2,7 +2,7 @@
 export function render(ctx) {
   const { negocio, fotos, util } = ctx;
   const lista = (fotos.length > 5 ? fotos.slice(1) : fotos).slice(0, 7);
-  const itens = lista.map((f, i) => `<figure class="s-galeria-c__item${i === 0 ? ' s-galeria-c__item--grande' : ''}" data-anim="revelar">${util.img(f, { classe: 's-galeria-c__foto', alt: `Foto ${i + 1} de ${negocio.nome}`, sizes: i === 0 ? '(min-width: 900px) 50vw, 100vw' : '(min-width: 900px) 25vw, 50vw' })}</figure>`).join('\n    ');
+  const itens = lista.map((f, i) => `<figure class="s-galeria-c__item${i === 0 ? ' s-galeria-c__item--grande' : ''}" data-anim="revelar">${util.img(f, { reservar: false, classe: 's-galeria-c__foto', alt: `Foto ${i + 1} de ${negocio.nome}`, sizes: i === 0 ? '(min-width: 900px) 50vw, 100vw' : '(min-width: 900px) 25vw, 50vw' })}</figure>`).join('\n    ');
   const html = `<section class="secao s-galeria s-galeria-c" id="galeria">
   <div class="container">
     <h2 class="titulo-secao s-galeria-c__titulo" data-anim="subir">Veja com os próprios olhos</h2>

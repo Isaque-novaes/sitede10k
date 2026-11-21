@@ -2,11 +2,12 @@ import { readFileSync } from 'node:fs';
 import { copyFile, mkdir, writeFile } from 'node:fs/promises';
 import { basename, dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { SECOES, FONTES } from '../../kit/catalogo.js';
+import { SECOES, FONTES, TOPOS } from '../../kit/catalogo.js';
 import { PECAS_TOPO, PECAS_SECAO } from '../../kit/pecas.js';
 import { esc } from '../util/html.js';
 import { linkWhatsApp, normalizarTelefoneBR, provavelCelular } from '../util/whatsapp.js';
 import { contraste } from './cores.js';
+import { limparTextos } from '../util/texto.js';
 
 const KIT = join(dirname(fileURLToPath(import.meta.url)), '..', '..', 'kit');
 const lerKit = (arquivo) => readFileSync(join(KIT, arquivo), 'utf8');
@@ -34,8 +35,14 @@ const estrelas = (nota) => '★'.repeat(Math.max(0, Math.min(5, Math.round(nota 
  * O contexto que cada peça do kit recebe.
  * @param {{negocio:any, textos:any, fotos:any[], video:any, assinatura:any, opcoes?:any}} entrada
  */
-export function criarContextoPeca({ negocio, textos, fotos = [], video = null, assinatura, opcoes = {} }) {
+export function criarContextoPeca({ negocio: negocioBruto, textos: textosBrutos, fotos = [], video = null, assinatura, opcoes = {} }) {
+  const negocio = limparTextos(negocioBruto);
+  const textos = limparTextos(textosBrutos);
   const registro = new Map();
+  const larguraMinTopo = TOPOS.find((t) => t.id === assinatura.topo)?.requisitos.larguraMin ?? 0;
+  const fotosTopo = fotos.filter((f) => f.largura >= larguraMinTopo);
+  const reservadas = new Set();
+  const livres = (larguraMin = 0) => fotos.filter((f) => !reservadas.has(f.pc) && f.largura >= larguraMin);
   const creditos = new Set();
   const fontes = FONTES.find((f) => f.id === assinatura.fontes) ?? FONTES[0];
   const reqCtx = { fotos, video, negocio, textos };
@@ -57,8 +64,18 @@ export function criarContextoPeca({ negocio, textos, fotos = [], video = null, a
     cortar,
     estrelas,
     caminho,
-    /** `<img>` responsivo. Só a primeira foto pedida com prioridade recebe prioridade. */
-    img(foto, { classe = '', prioridade = false, alt = '', sizes = '100vw', atributos = '' } = {}) {
+    /** Fotos que nenhuma peça usou ainda. */
+    fotosLivres: livres,
+    /** Pega a próxima foto livre (ou a última, com doFim) e marca como usada. `null` se não houver. */
+    reservarFoto({ larguraMin = 0, doFim = false } = {}) {
+      const lista = livres(larguraMin);
+      const foto = (doFim ? lista.at(-1) : lista[0]) ?? null;
+      if (foto) reservadas.add(foto.pc);
+      return foto;
+    },
+    /** `<img>` responsivo. Marca a foto como usada (menos na galeria). Só a primeira com prioridade recebe prioridade. */
+    img(foto, { classe = '', prioridade = false, alt = '', sizes = '100vw', atributos = '', reservar = true } = {}) {
+      if (reservar) reservadas.add(foto.pc);
       const comPrioridade = prioridade && !prioridadeUsada;
       if (comPrioridade) prioridadeUsada = true;
       const wCel = Math.min(800, foto.largura);
@@ -89,7 +106,7 @@ export function criarContextoPeca({ negocio, textos, fotos = [], video = null, a
   };
 
   return {
-    negocio, textos, fotos, video, paleta: assinatura.paleta, fontes, movimento: assinatura.movimento,
+    negocio, textos, fotos, fotosTopo, video, paleta: assinatura.paleta, fontes, movimento: assinatura.movimento,
     secoes, opcoes, util, _registro: registro, _creditos: creditos,
   };
 }
@@ -113,10 +130,10 @@ function variaveis(paleta, fontes) {
  * Monta a página da prévia.
  * @returns {{html:string, arquivos:{destino:string, origem:string}[]}}
  */
-export function montarPrevia({ negocio, textos, assinatura, fotos = [], video = null, opcoes = {} }) {
+export function montarPrevia({ negocio: negocioBruto, textos: textosBrutos, assinatura, fotos = [], video = null, opcoes = {} }) {
   const estudio = opcoes.estudio ?? ESTUDIO_PADRAO;
-  const ctx = criarContextoPeca({ negocio, textos, fotos, video, assinatura, opcoes });
-  const { util } = ctx;
+  const ctx = criarContextoPeca({ negocio: negocioBruto, textos: textosBrutos, fotos, video, assinatura, opcoes });
+  const { util, negocio, textos } = ctx;
 
   const topo = PECAS_TOPO[assinatura.topo];
   if (!topo) throw new Error(`Peça do kit não encontrada: topo ${assinatura.topo}`);

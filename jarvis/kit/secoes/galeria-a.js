@@ -2,7 +2,7 @@
 export function render(ctx) {
   const { negocio, fotos, util } = ctx;
   const lista = fotos.length > 4 ? fotos.slice(1, 9) : fotos.slice(0, 8);
-  const itens = lista.map((f, i) => `<figure class="s-galeria-a__item" data-anim="subir" style="--ordem:${i % 3}">${util.img(f, { classe: 's-galeria-a__foto', alt: `Foto ${i + 1} de ${negocio.nome}`, sizes: '(min-width: 900px) 33vw, 50vw' })}</figure>`).join('\n    ');
+  const itens = lista.map((f, i) => `<figure class="s-galeria-a__item" data-anim="subir" style="--ordem:${i % 3}">${util.img(f, { reservar: false, classe: 's-galeria-a__foto', alt: `Foto ${i + 1} de ${negocio.nome}`, sizes: '(min-width: 900px) 33vw, 50vw' })}</figure>`).join('\n    ');
   const html = `<section class="secao s-galeria s-galeria-a" id="galeria">
   <div class="container">
     <h2 class="titulo-secao s-galeria-a__titulo" data-anim="subir">Um pouco do nosso dia a dia</h2>

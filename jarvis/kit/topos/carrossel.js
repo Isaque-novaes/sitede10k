@@ -2,7 +2,8 @@ import { acoes, nota, CSS_COMUM } from './_comum.js';
 
 // Topo com fotos trocando sozinhas (a cada 5 s), com botões para voltar e avançar.
 export function render(ctx) {
-  const { negocio, textos, fotos, util } = ctx;
+  const { negocio, textos, util } = ctx;
+  const fotos = ctx.fotosTopo;
   const { esc } = util;
   const lista = fotos.slice(0, 5);
   const slides = lista.map((f, i) => `<div class="t-carrossel__slide${i === 0 ? ' ativo' : ''}" data-slide>${util.img(f, { prioridade: i === 0, alt: `Foto ${i + 1} de ${negocio.nome}` })}</div>`).join('\n    ');
@@ -31,7 +32,7 @@ export function render(ctx) {
 .t-carrossel__slide img{width:100%;height:100%;object-fit:cover;transform:scale(1.06);transition:transform 6s ease-out}
 .t-carrossel__slide.ativo{opacity:1}
 .t-carrossel__slide.ativo img{transform:scale(1)}
-.t-carrossel__veu{position:absolute;inset:0;z-index:-1;background:linear-gradient(to top,var(--cor-fundo) 3%,color-mix(in srgb,var(--cor-fundo) 75%,transparent) 35%,color-mix(in srgb,var(--cor-fundo) 20%,transparent) 70%,color-mix(in srgb,var(--cor-fundo) 50%,transparent) 100%)}
+.t-carrossel__veu{position:absolute;inset:0;z-index:-1;background:linear-gradient(to top,var(--cor-fundo) 0%,color-mix(in srgb,var(--cor-fundo) 92%,transparent) 30%,color-mix(in srgb,var(--cor-fundo) 82%,transparent) 54%,color-mix(in srgb,var(--cor-fundo) 45%,transparent) 76%,color-mix(in srgb,var(--cor-fundo) 25%,transparent) 88%,color-mix(in srgb,var(--cor-fundo) 55%,transparent) 100%)}
 .t-carrossel__conteudo{display:grid;gap:1.2rem}
 .t-carrossel__titulo{font-size:clamp(2.7rem,1.6rem + 5.8vw,6.6rem);line-height:.98;max-width:13ch}
 .t-carrossel__sub{font-size:clamp(1.05rem,1rem + .4vw,1.3rem);color:var(--cor-texto-suave);max-width:38ch}
