@@ -126,3 +126,31 @@ export const contexto = {
   fotos: Array.from({ length: 6 }, () => ({ largura: 2000, altura: 1333 })), video: null,
   negocio: { ...registro, clima: ['urbano', 'classico'], midias: [] }, textos: textosIA,
 };
+
+// ---------- GitHub falso ----------
+import { mkdir as mkdirP, writeFile as writeFileP } from 'node:fs/promises';
+
+/** Rotas da Git Data API. `arvore` = caminhos que já existem no repositório. */
+export function rotasGitHub({ arvore = [], status = 200 } = {}) {
+  let blobs = 0;
+  return [
+    { metodo: 'GET', contem: '/git/ref/heads/', status, json: { ref: 'refs/heads/main', object: { sha: 'commit-atual', type: 'commit' } } },
+    { metodo: 'GET', contem: '/git/commits/commit-atual', json: { sha: 'commit-atual', tree: { sha: 'arvore-base' } } },
+    { metodo: 'GET', contem: '/git/trees/arvore-base', json: { sha: 'arvore-base', truncated: false, tree: arvore.map((path) => ({ path, mode: '100644', type: 'blob', sha: `s-${path}` })) } },
+    { metodo: 'POST', contem: '/git/blobs', responder: () => Response.json({ sha: `blob-${++blobs}` }, { status: 201 }) },
+    { metodo: 'POST', contem: '/git/trees', json: { sha: 'arvore-nova' } },
+    { metodo: 'POST', contem: '/git/commits', json: { sha: 'commit-novo' } },
+    { metodo: 'PATCH', contem: '/git/refs/heads/', json: { ref: 'refs/heads/main', object: { sha: 'commit-novo' } } },
+  ];
+}
+export const fetchGitHubFalso = (opcoes) => criarFetchFalso(rotasGitHub(opcoes));
+
+/** Escreve uma prévia mínima: index.html, 2 mídias e uma captura de conferência. */
+export async function escreverPrevia(pasta) {
+  await mkdirP(join(pasta, 'midias'), { recursive: true });
+  await mkdirP(join(pasta, 'conferencia'), { recursive: true });
+  await writeFileP(join(pasta, 'index.html'), '<!doctype html><title>x</title>');
+  await writeFileP(join(pasta, 'midias', 'a.webp'), Buffer.from([1, 2]));
+  await writeFileP(join(pasta, 'midias', 'b.webp'), Buffer.from([3, 4]));
+  await writeFileP(join(pasta, 'conferencia', 'pc.png'), Buffer.from([5]));
+}

@@ -4,6 +4,7 @@ import { testarSite } from './pagespeed.js';
 import { gerarJson } from './gemini.js';
 import { descobrirPerfil, baixarMidiasInstagram } from './instagram.js';
 import { completarComPexels } from './pexels.js';
+import { publicarPasta, removerPasta, urlDaPrevia } from './github.js';
 
 /**
  * Monta os serviços externos com a configuração e o fetch já aplicados.
@@ -45,7 +46,15 @@ export function criarServicos(config, { fetch = globalThis.fetch, registrar } = 
       const c = { ...base, chave: chaves.pexels };
       return { ...c, completar: (midias, nicho, pasta, opcoes = {}) => completarComPexels(midias, nicho, pasta, { ...c, ...opcoes }) };
     }),
-    github: chaves.github && config.githubRepo ? { ...base, token: chaves.github, repo: config.githubRepo } : null,
+    github: chaves.github && config.githubRepo ? (() => {
+      const c = { ...base, token: chaves.github, repo: config.githubRepo, ramo: config.githubRamo ?? 'main' };
+      return {
+        ...c,
+        publicar: (pasta, destino, mensagem) => publicarPasta(pasta, destino, { ...c, mensagem }),
+        remover: (destino, mensagem) => removerPasta(destino, { ...c, mensagem }),
+        url: (slug) => urlDaPrevia(config.baseUrlPrevias, slug),
+      };
+    })() : null,
     baixar: (url, destino, servico = 'download') => baixarArquivo(url, destino, { servico, fetch, registrar }),
   };
 }
