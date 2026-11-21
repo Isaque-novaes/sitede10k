@@ -1,6 +1,6 @@
 import { readFile, readdir } from 'node:fs/promises';
 import { join } from 'node:path';
-import { requisitarJson } from './http.js';
+import { requisitarJson, ErroExterno } from './http.js';
 
 const SERVICO = 'GitHub';
 
@@ -10,8 +10,18 @@ function cliente({ token, repo, fetch, registrar }) {
   return (caminho, opcoes = {}) => requisitarJson(`${base}${caminho}`, { servico: SERVICO, fetch, registrar, cabecalhos, ...opcoes });
 }
 
-async function estadoAtual(api, ramo) {
-  const ref = await api(`/git/ref/heads/${ramo}`);
+const repoVazio = (erro) => erro instanceof ErroExterno && erro.status === 409;
+
+async function estadoAtual(api, repo, ramo) {
+  let ref;
+  try {
+    ref = await api(`/git/ref/heads/${ramo}`);
+  } catch (erro) {
+    if (erro instanceof ErroExterno && erro.status === 404) {
+      throw new ErroExterno(SERVICO, `Não achei o repositório ${repo} (ramo ${ramo}) no GitHub. Confira o GITHUB_REPO e se o token tem acesso a ele.`, { status: 404 });
+    }
+    throw erro;
+  }
   const commit = await api(`/git/commits/${ref.object.sha}`);
   return { commitAtual: ref.object.sha, arvoreBase: commit.tree.sha };
 }
@@ -35,7 +45,15 @@ async function arquivosParaPublicar(pastaLocal) {
  */
 export async function publicarPasta(pastaLocal, destinoRemoto, { token, repo, ramo = 'main', fetch, registrar, mensagem }) {
   const api = cliente({ token, repo, fetch, registrar });
-  const estado = await estadoAtual(api, ramo);
+  let estado;
+  try {
+    estado = await estadoAtual(api, repo, ramo);
+  } catch (erro) {
+    if (!repoVazio(erro)) throw erro;
+    // Repositório criado sem README: a API de Git não funciona até existir o primeiro commit.
+    await api('/contents/README.md', { metodo: 'PUT', corpo: { message: 'Começa o repositório das prévias', content: Buffer.from('# Prévias\n').toString('base64'), branch: ramo } });
+    estado = await estadoAtual(api, repo, ramo);
+  }
   const entradas = [];
   for (const relativo of await arquivosParaPublicar(pastaLocal)) {
     const conteudo = (await readFile(join(pastaLocal, relativo))).toString('base64');
@@ -52,7 +70,13 @@ export async function publicarPasta(pastaLocal, destinoRemoto, { token, repo, ra
  */
 export async function removerPasta(destinoRemoto, { token, repo, ramo = 'main', fetch, registrar, mensagem }) {
   const api = cliente({ token, repo, fetch, registrar });
-  const estado = await estadoAtual(api, ramo);
+  let estado;
+  try {
+    estado = await estadoAtual(api, repo, ramo);
+  } catch (erro) {
+    if (repoVazio(erro)) return { commit: null, removidos: 0 };
+    throw erro;
+  }
   const arvore = await api(`/git/trees/${estado.arvoreBase}?recursive=1`);
   const prefixo = `${destinoRemoto}/`;
   const entradas = (arvore.tree ?? [])

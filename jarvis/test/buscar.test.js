@@ -63,3 +63,8 @@ test('sem chave do Google, a busca explica o que falta', async () => {
   const { loja, servicos } = await ambienteBusca({ chaves: {} });
   await assert.rejects(buscarNegocios({ nicho: 'barbearias', cidade: 'Campinas' }, { loja, servicos }), /chave do Google/);
 });
+
+test('PageSpeed sem nota (o teste não abriu o site) não vira site fraco', async () => {
+  const f = criarFetchFalso([{ contem: 'runPagespeed', json: { lighthouseResult: { runtimeError: { code: 'NO_FCP' }, categories: { performance: { score: null } }, audits: {} } } }]);
+  await assert.rejects(testarSite('https://x.com.br', { chave: 'K', fetch: f }), /não conseguiu testar o site/);
+});

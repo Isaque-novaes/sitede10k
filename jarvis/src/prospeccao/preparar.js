@@ -1,8 +1,10 @@
 import { join } from 'node:path';
+import { existsSync } from 'node:fs';
 import { rm } from 'node:fs/promises';
 import sharp from 'sharp';
 import { garantirCota, registrarUso, podeUsar, ErroCota } from '../dados/uso.js';
 import { encontrarInstagram } from '../externo/instagram.js';
+import { usuarioDoInstagramNoSite } from './classificar.js';
 import { diagnosticar } from './diagnostico.js';
 import { extrairClima } from '../ia/clima.js';
 import { escolherMaterial } from '../ia/material.js';
@@ -65,6 +67,53 @@ async function gravarRegistro(loja, registro) {
   await loja.atualizar('negocios', (atual) => atual.map((r) => (r.id === registro.id ? registro : r)), []);
 }
 
+const ETAPAS_ENCERRADAS = new Set(['perdido', 'descartado']);
+
+/** Quem pediu para não ser contatado, ou já foi dado como perdido, não ganha prévia nova. */
+function exigirContatavel(registro) {
+  if (registro.naoContatar) throw new Error('Este negócio pediu para não ser contatado.');
+  if (ETAPAS_ENCERRADAS.has(registro.etapa)) {
+    throw new Error(`Este negócio está como ${registro.etapa}. Para tentar de novo, mude a etapa para encontrado antes.`);
+  }
+}
+
+async function publicarNoGitHub(servicos, pasta, slug, nome) {
+  await servicos.github.publicar(pasta, slug, `Prévia de ${nome}`);
+  return servicos.github.url(slug);
+}
+
+/** Tira do ar uma versão antiga. Devolve false (e avisa) se o GitHub não deixou. */
+async function tirarDoAr(alvo, { servicos, pastaPrevias, nome, avisar }) {
+  try {
+    await servicos.github.remover(alvo.slug, `Remove a versão anterior da prévia de ${nome}`);
+  } catch (erro) {
+    avisar(`Não consegui tirar do ar a versão anterior: ${erro.message} Ela sai no próximo "limpar".`);
+    return false;
+  }
+  await rm(join(pastaPrevias, alvo.slug), { recursive: true, force: true });
+  return true;
+}
+
+/** Troca nas mensagens o link provisório (ou o da versão antiga) pelo link novo. */
+function trocarLink(abordagem, url, antigo) {
+  const trocar = (texto) => {
+    let novo = String(texto ?? '').split(LINK_PENDENTE).join(url);
+    if (antigo) novo = novo.split(antigo).join(url);
+    return novo;
+  };
+  return { ...abordagem, primeira: trocar(abordagem.primeira), acompanhamento1: trocar(abordagem.acompanhamento1), acompanhamento2: trocar(abordagem.acompanhamento2) };
+}
+
+const USUARIO_INSTAGRAM = /^[a-z0-9._]{1,30}$/;
+
+/** "@Fulano", "fulano" ou o endereço do perfil copiado do navegador viram "fulano". */
+function lerUsuarioInstagram(texto) {
+  const bruto = String(texto).trim();
+  const limpo = (usuarioDoInstagramNoSite(bruto) ?? bruto.replace(/^@/, '')).toLowerCase();
+  if (!USUARIO_INSTAGRAM.test(limpo)) throw new Error('Esse @ não parece um usuário do Instagram.');
+  return limpo;
+}
+
 /** Possíveis @ do Instagram do negócio, do mais provável ao menos. */
 export async function sugerirInstagram(id, { loja, servicos }) {
   const registro = await lerRegistro(loja, id);
@@ -76,7 +125,7 @@ export async function sugerirInstagram(id, { loja, servicos }) {
 /** Confirma o @ do Instagram do negócio. `null` quer dizer que o negócio não tem Instagram. */
 export async function confirmarInstagram(id, usuario, { loja }) {
   const registro = await lerRegistro(loja, id);
-  const limpo = usuario ? String(usuario).trim().replace(/^@/, '').toLowerCase() : '';
+  const limpo = usuario ? lerUsuarioInstagram(usuario) : '';
   const atualizado = { ...registro, instagram: { usuario: limpo, confirmado: true } };
   await gravarRegistro(loja, atualizado);
   return atualizado;
@@ -85,10 +134,14 @@ export async function confirmarInstagram(id, usuario, { loja }) {
 /**
  * Prepara um negócio de ponta a ponta: detalhes, Instagram, material, diagnóstico, textos, design,
  * prévia conferida e publicada, mensagens e preço. Cada passo grava o registro ao terminar.
- * @returns {Promise<{registro:any, url?:string, avisos:string[]}>}
+ * A versão que já está no ar só sai quando a nova estiver publicada.
+ * `situacao`: 'publicada' (pronta para enviar), 'sem_publicar' (salva no computador; use publicarPrevia)
+ * ou 'reprovada' (não passou na conferência; nada foi publicado nem tirado do ar).
+ * @returns {Promise<{registro:any, url?:string, avisos:string[], situacao:'publicada'|'sem_publicar'|'reprovada', problemas?:string[]}>}
  */
 export async function prepararNegocio(id, { loja, servicos, config, agora = new Date(), navegador, bloquearRede, aoProgredir }) {
   let registro = await lerRegistro(loja, id);
+  exigirContatavel(registro);
   const avisos = [];
   const avisar = (texto) => { if (texto) avisos.push(texto); };
   const progresso = (texto) => aoProgredir?.(texto);
@@ -145,6 +198,8 @@ export async function prepararNegocio(id, { loja, servicos, config, agora = new 
         avisar(erro.message);
       }
     }
+  } else if (!registro.instagram?.confirmado && servicos.instagram) {
+    avisar('O Instagram do negócio ainda não foi confirmado, então a prévia não usa as fotos dele.');
   }
 
   // 3. Material
@@ -189,31 +244,31 @@ export async function prepararNegocio(id, { loja, servicos, config, agora = new 
   const arte = await sugerirAssinatura(contexto, usadas, { gemini });
   avisar(arte.aviso);
 
-  // 6. Prévia (a anterior sai do ar)
+  // 6. Prévia (a versão no ar continua até a nova ser publicada)
   progresso('Montando e conferindo a prévia');
+  const pastaPrevias = join(config.pastaDados, 'previas');
   const anterior = registro.previa;
+  const noAr = anterior?.url ? { slug: anterior.slug, url: anterior.url, publicadaEm: anterior.publicadaEm } : anterior?.substitui;
   const previa = await gerarPrevia(negocio, {
-    pastaSaida: join(config.pastaDados, 'previas'), usadas, textos: textos.textos,
+    pastaSaida: pastaPrevias, usadas, textos: textos.textos,
     assinatura: arte.assinatura ?? undefined, estudio: config.estudio, navegador, bloquearRede,
   });
   previa.avisos.forEach(avisar);
-  if (anterior?.slug && anterior.slug !== previa.slug) {
-    if (anterior.url && servicos.github) {
-      try {
-        await servicos.github.remover(anterior.slug, `Remove a versão anterior da prévia de ${registro.nome}`);
-      } catch (erro) {
-        avisar(`Não consegui tirar do ar a versão anterior: ${erro.message}`);
-      }
-    }
-    await rm(join(config.pastaDados, 'previas', anterior.slug), { recursive: true, force: true });
-  }
+  const apagarLocal = (slug) => rm(join(pastaPrevias, slug), { recursive: true, force: true });
   const novaPrevia = { slug: previa.slug, assinatura: previa.assinatura, versao: (anterior?.versao ?? 0) + 1, podeMostrar: false };
 
-  // 7. Conferência reprovada: não publica
+  // 7. Conferência reprovada: não publica e não mexe no que está no ar
   if (!previa.conferencia.ok) {
-    await salvar({ previa: { ...novaPrevia, problemas: previa.conferencia.problemas } });
+    const { problemas } = previa.conferencia;
     avisar('A prévia não passou na conferência automática e não foi publicada.');
-    return { registro, avisos };
+    if (noAr) {
+      await apagarLocal(previa.slug);
+      avisar('A versão anterior continua no ar.');
+    } else {
+      if (anterior?.slug && anterior.slug !== previa.slug) await apagarLocal(anterior.slug);
+      await salvar({ previa: { ...novaPrevia, problemas } });
+    }
+    return { registro, avisos, situacao: 'reprovada', problemas };
   }
 
   // 8. Publicação
@@ -223,13 +278,19 @@ export async function prepararNegocio(id, { loja, servicos, config, agora = new 
   } else {
     progresso('Publicando a prévia');
     try {
-      await servicos.github.publicar(previa.pasta, previa.slug, `Prévia de ${registro.nome}`);
-      url = servicos.github.url(previa.slug);
-      novaPrevia.url = url;
-      novaPrevia.publicadaEm = agora.toISOString();
-    } catch {
-      avisar('Não consegui publicar a prévia agora. Ela ficou salva no computador.');
+      url = await publicarNoGitHub(servicos, previa.pasta, previa.slug, registro.nome);
+    } catch (erro) {
+      avisar(`Não consegui publicar a prévia: ${erro.message} Ela ficou salva no computador e pode ser publicada depois.`);
     }
+  }
+  if (url) {
+    novaPrevia.url = url;
+    novaPrevia.publicadaEm = agora.toISOString();
+    if (noAr && !(await tirarDoAr(noAr, { servicos, pastaPrevias, nome: registro.nome, avisar }))) novaPrevia.substitui = noAr;
+    if (anterior?.slug && anterior.slug !== previa.slug && anterior.slug !== noAr?.slug) await apagarLocal(anterior.slug);
+  } else {
+    if (noAr) novaPrevia.substitui = noAr;
+    if (anterior?.slug && !anterior.url && anterior.slug !== previa.slug) await apagarLocal(anterior.slug);
   }
   await salvar({ previa: novaPrevia });
 
@@ -237,11 +298,39 @@ export async function prepararNegocio(id, { loja, servicos, config, agora = new 
   progresso('Escrevendo as mensagens');
   if (!config.nomeUsuario) avisar('Configure seu nome para assinar as mensagens.');
   const { porIA: _porIA, aviso, ...abordagem } = await escreverAbordagem(registro, diagnostico, {
-    url: url ?? LINK_PENDENTE, nomeUsuario: config.nomeUsuario || config.estudio, estudio: config.estudio, gemini,
+    url: url ?? noAr?.url ?? LINK_PENDENTE, nomeUsuario: config.nomeUsuario || config.estudio, estudio: config.estudio, gemini,
   });
   avisar(aviso);
-  const etapa = registro.etapa === 'encontrado' ? mudarEtapa(registro, 'preparado', agora) : registro;
+  // Sem link no ar, o negócio ainda não está pronto para receber mensagem.
+  const etapa = url && registro.etapa === 'encontrado' ? mudarEtapa(registro, 'preparado', agora) : registro;
   await salvar({ ...etapa, abordagem, preco: sugerirPreco(registro.nicho, config.precos) });
   progresso('Pronto');
-  return { registro, ...(url ? { url } : {}), avisos };
+  return { registro, ...(url ? { url } : {}), avisos, situacao: url ? 'publicada' : 'sem_publicar' };
+}
+
+/**
+ * Publica a prévia já preparada e conferida que ficou só no computador, troca o link nas mensagens
+ * e tira do ar a versão antiga que ela substitui.
+ * @returns {Promise<{registro:any, url:string, avisos:string[]}>}
+ */
+export async function publicarPrevia(id, { loja, servicos, config, agora = new Date() }) {
+  let registro = await lerRegistro(loja, id);
+  exigirContatavel(registro);
+  const { previa } = registro;
+  if (!previa?.slug) throw new Error('Este negócio ainda não tem prévia. Prepare antes.');
+  if (previa.url) return { registro, url: previa.url, avisos: ['Esta prévia já está no ar.'] };
+  if (previa.problemas?.length) throw new Error('Esta prévia não passou na conferência. Prepare de novo.');
+  if (!servicos.github) throw new Error('Configure o GitHub para publicar as prévias.');
+  const pastaPrevias = join(config.pastaDados, 'previas');
+  const pasta = join(pastaPrevias, previa.slug);
+  if (!existsSync(join(pasta, 'index.html'))) throw new Error('Não achei a prévia no computador. Prepare de novo.');
+  const avisos = [];
+  const url = await publicarNoGitHub(servicos, pasta, previa.slug, registro.nome);
+  const { substitui, ...resto } = previa;
+  const nova = { ...resto, url, publicadaEm: agora.toISOString() };
+  if (substitui && !(await tirarDoAr(substitui, { servicos, pastaPrevias, nome: registro.nome, avisar: (t) => avisos.push(t) }))) nova.substitui = substitui;
+  registro = { ...registro, previa: nova, ...(registro.abordagem ? { abordagem: trocarLink(registro.abordagem, url, substitui?.url) } : {}) };
+  if (registro.etapa === 'encontrado') registro = mudarEtapa(registro, 'preparado', agora);
+  await gravarRegistro(loja, registro);
+  return { registro, url, avisos };
 }

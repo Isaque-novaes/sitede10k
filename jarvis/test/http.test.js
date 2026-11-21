@@ -83,3 +83,11 @@ test('criarServicos deixa nulo o serviço sem chave', () => {
   assert.ok(s.places); assert.ok(s.pagespeed); assert.equal(s.gemini, null); assert.equal(s.github, null);
   assert.equal(s.instagram, null); assert.equal(s.pexels, null); assert.equal(typeof s.baixar, 'function');
 });
+
+test('chave do Google inválida (400 API_KEY_INVALID) vira erro de chave', async () => {
+  const corpo = { error: { code: 400, message: 'API key not valid. Please pass a valid API key.', status: 'INVALID_ARGUMENT', details: [{ '@type': 'type.googleapis.com/google.rpc.ErrorInfo', reason: 'API_KEY_INVALID', domain: 'googleapis.com' }] } };
+  const f = criarFetchFalso([{ contem: '/', status: 400, json: corpo }]);
+  await assert.rejects(requisitarJson('https://x/', { servico: 'Google Maps', fetch: f }), (e) => /O Google Maps recusou a chave/.test(e.message) && e.status === 400);
+  const vencida = criarFetchFalso([{ contem: '/', status: 400, json: { error: { code: 400, message: 'API key expired. Please renew the API key.', status: 'INVALID_ARGUMENT' } } }]);
+  await assert.rejects(requisitarJson('https://x/', { servico: 'Gemini', fetch: vencida }), /O Gemini recusou a chave/);
+});

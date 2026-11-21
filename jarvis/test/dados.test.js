@@ -66,3 +66,10 @@ test('o mês é o de São Paulo, não o de Greenwich', async () => {
   await registrarUso(loja, 'places_foto', 800, new Date('2026-12-01T01:00:00Z')); // ainda 30/11 em São Paulo
   assert.equal(await podeUsar(loja, 'places_foto', 1, new Date('2026-11-30T15:00:00-03:00')), false);
 });
+
+test('GITHUB_REPO aceita o endereço copiado do navegador e recusa valor sem dono', async () => {
+  const c = await carregarConfig({ raiz: tmp, env: { GITHUB_REPO: 'https://github.com/Isaque/previas.git' } });
+  assert.equal(c.githubRepo, 'Isaque/previas'); assert.equal(c.baseUrlPrevias, 'https://isaque.github.io/previas');
+  const ruim = await carregarConfig({ raiz: tmp, env: { GITHUB_REPO: 'previas' } });
+  assert.equal(ruim.githubRepo, undefined); assert.equal(ruim.baseUrlPrevias, undefined);
+});

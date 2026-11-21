@@ -21,7 +21,11 @@ function escolherAchado(registro, temSite, concorrentes) {
   if (!temSite && concorrentes.melhorComSite) return `${concorrentes.melhorComSite}, aqui perto, já tem site e aparece melhor no Google.`;
   if (!temSite && registro.presenca === 'so_rede_social') return 'Vocês não têm site, e quem procura no Google acaba só no Instagram.';
   if (!temSite) return 'Vocês ainda não têm site, e quem procura no Google não encontra muito sobre vocês.';
-  if (site && site.desempenho < 50) return `O site de vocês leva ${numero(site.lcpMs / 1000, 1)} segundos para abrir no celular.`;
+  if (site && site.desempenho < 50) {
+    return site.lcpMs > 0
+      ? `O site de vocês leva ${numero(site.lcpMs / 1000, 1)} segundos para abrir no celular.`
+      : `O site de vocês está lento no celular (nota ${site.desempenho} de 100 no teste do Google).`;
+  }
   if (site && !site.https) return 'O site de vocês aparece como não seguro no navegador.';
   if (registro.nota != null) return `Vocês têm nota ${numero(registro.nota, 1)} no Google, e um site pode mostrar isso para quem ainda não conhece.`;
   return 'Um site próprio pode mostrar o trabalho de vocês para quem ainda não conhece.';

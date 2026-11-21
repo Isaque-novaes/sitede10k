@@ -274,3 +274,19 @@ export async function ambienteCli({ cidadePadrao = 'Campinas', registros, cotaEs
   const config = { pastaDados: join(pasta, 'dados'), cidadePadrao, nomeUsuario: 'Isaque', estudio: 'Estúdio Dez', metaSemanal: 10, diasAcompanhamento: [3, 7], precos: {}, chaves: { google: 'K' } };
   return { amb: { config, loja, servicos, saida: (l) => linhas.push(String(l)) }, linhas, pasta };
 }
+
+/** Navegador que injeta um erro de console em toda página: a conferência sempre reprova. */
+export function navegadorQuebrado(real) {
+  return {
+    newContext: async (opcoes) => {
+      const contexto = await real.newContext(opcoes);
+      const novaPagina = contexto.newPage.bind(contexto);
+      contexto.newPage = async () => {
+        const pagina = await novaPagina();
+        await pagina.addInitScript(() => console.error('falha forçada'));
+        return pagina;
+      };
+      return contexto;
+    },
+  };
+}

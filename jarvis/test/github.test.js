@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { publicarPasta, removerPasta, urlDaPrevia } from '../src/externo/github.js';
 import { criarServicos } from '../src/externo/servicos.js';
-import { fetchGitHubFalso, escreverPrevia } from './falsos.js';
+import { fetchGitHubFalso, escreverPrevia, criarFetchFalso, rotasGitHub } from './falsos.js';
 
 let tmp;
 beforeEach(async () => { tmp = await mkdtemp(join(tmpdir(), 'jarvis-gh-')); });
@@ -57,4 +57,30 @@ test('servicos.github usa repo, ramo e endereço base da config', async () => {
   await s.github.publicar(tmp, 'x-1a2b', 'msg');
   assert.ok(f.chamadas.some((c) => c.metodo === 'PATCH' && c.url.endsWith('/git/refs/heads/gh-pages')));
   assert.equal(s.github.url('x-1a2b'), 'https://isaque.github.io/previas/x-1a2b/');
+});
+
+test('repositório vazio ganha um primeiro commit e depois publica', async () => {
+  await escreverPrevia(tmp);
+  let vazio = true;
+  const f = criarFetchFalso([
+    { metodo: 'GET', contem: '/git/ref/heads/', responder: () => (vazio
+      ? Response.json({ message: 'Git Repository is empty.' }, { status: 409 })
+      : Response.json({ ref: 'refs/heads/main', object: { sha: 'commit-atual', type: 'commit' } })) },
+    { metodo: 'PUT', contem: '/contents/README.md', responder: () => { vazio = false; return Response.json({ commit: { sha: 'commit-atual' } }, { status: 201 }); } },
+    ...rotasGitHub(),
+  ]);
+  const r = await publicarPasta(tmp, 'x-1a2b', { token: 'T', repo: 'isaque/previas', fetch: f, mensagem: 'Prévia' });
+  assert.equal(r.commit, 'commit-novo');
+  const corpo = JSON.parse(f.chamadas.find((c) => c.metodo === 'PUT').corpo);
+  assert.equal(corpo.branch, 'main'); assert.ok(corpo.message && Buffer.from(corpo.content, 'base64').toString().length > 0);
+});
+
+test('remover num repositório vazio não faz nada', async () => {
+  const f = criarFetchFalso([{ metodo: 'GET', contem: '/git/ref/heads/', status: 409, json: { message: 'Git Repository is empty.' } }]);
+  assert.deepEqual(await removerPasta('x-1a2b', { token: 'T', repo: 'isaque/previas', fetch: f, mensagem: 'x' }), { commit: null, removidos: 0 });
+});
+
+test('repositório ou ramo que não existe dá erro claro', async () => {
+  const f = criarFetchFalso([{ metodo: 'GET', contem: '/git/ref/heads/', status: 404, json: { message: 'Not Found' } }]);
+  await assert.rejects(publicarPasta(tmp, 'x', { token: 'T', repo: 'isaque/previas', fetch: f, mensagem: 'm' }), /Não achei o repositório isaque\/previas/);
 });

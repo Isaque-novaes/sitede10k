@@ -80,3 +80,9 @@ test('sem chave do Google, o diagnóstico sai sem concorrentes', async () => {
   const d = await diagnosticar(registroSemSite, { loja, servicos: { places: null } });
   assert.equal(d.concorrentes.total, 0); assert.ok(d.achadoPrincipal);
 });
+
+test('site lento sem tempo medido não fala em 0 segundos', async () => {
+  const { loja, servicos } = await ambienteDiagnostico();
+  const d = await diagnosticar({ ...registroSemSite, site: 'https://x.com.br', presenca: 'site_fraco', desempenhoSite: { desempenho: 30, lcpMs: 0, https: true } }, { loja, servicos });
+  assert.ok(!/0,0 segundos/.test(d.achadoPrincipal), d.achadoPrincipal); assert.match(d.achadoPrincipal, /lento no celular/);
+});

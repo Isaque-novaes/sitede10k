@@ -7,7 +7,7 @@ import { criarLoja } from './dados/loja.js';
 import { criarServicos } from './externo/servicos.js';
 import { criarRegistroLocal } from './externo/http.js';
 import { buscarNegocios } from './prospeccao/buscar.js';
-import { prepararNegocio, sugerirInstagram, confirmarInstagram } from './prospeccao/preparar.js';
+import { prepararNegocio, publicarPrevia, sugerirInstagram, confirmarInstagram } from './prospeccao/preparar.js';
 import { limparPreviasVencidas, exportarDados, copiaSemanal } from './prospeccao/manutencao.js';
 import { mudarEtapa, registrarAcompanhamento, marcarNaoContatar, cobrarHoje, diasEntre } from './funil/funil.js';
 import { linkAbordagem } from './vendas/mensagens.js';
@@ -17,6 +17,7 @@ const AJUDA = [
   '  buscar <nicho> [cidade]            procura negócios no Google Maps',
   '  instagram <id> [@usuario|nenhum]   sugere ou confirma o Instagram do negócio',
   '  preparar <id>                      monta o diagnóstico, a prévia e as mensagens',
+  '  publicar <id>                      publica a prévia que ficou só no computador',
   '  enviei <id>                        anota que você mandou a primeira mensagem',
   '  cobrei <id>                        anota que você mandou o acompanhamento',
   '  etapa <id> <etapa>                 muda a etapa: respondeu, reuniao, proposta, fechou, perdido ou descartado',
@@ -62,6 +63,27 @@ function linhaDoNegocio(r, i) {
   return `${i + 1}. ${r.nome} (${partes.join(', ')}) id: ${r.id}`;
 }
 
+/** Prévia no ar: link, preço, primeira mensagem e como enviar. */
+function mostrarPronto(registro, url, id, saida) {
+  saida(`Prévia: ${url}`);
+  if (registro.preco?.profissional) {
+    const [min, max] = registro.preco.profissional;
+    saida(`Preço sugerido (site profissional): ${reais(min)} a ${reais(max)}`);
+  }
+  if (!registro.abordagem) return;
+  saida('Primeira mensagem:');
+  saida(registro.abordagem.primeira);
+  comoContatar(registro, registro.abordagem.primeira, saida);
+  saida(`Depois de enviar: enviei ${id}`);
+}
+
+/** Depois de encerrar um negócio, a prévia dele sai do ar na hora. */
+async function tirarPreviasDoAr({ loja, servicos, saida }) {
+  const { removidas, avisos } = await limparPreviasVencidas({ loja, servicos });
+  if (removidas.length) saida(removidas.length === 1 ? 'Tirei do ar a prévia.' : `Tirei do ar ${removidas.length} prévias.`);
+  avisos.forEach((a) => saida(`Atenção: ${a}`));
+}
+
 function comoContatar(registro, texto, saida) {
   const link = linkAbordagem(registro, texto);
   if (link) saida(`WhatsApp: ${link}`);
@@ -81,7 +103,7 @@ const COMANDOS = {
     if (r.ignorados.naoContatar) fora.push(`${r.ignorados.naoContatar} que pediu para não ser contatado`);
     if (fora.length) saida(`Deixei de fora: ${fora.join(', ')}.`);
     r.avisos.forEach((a) => saida(`Atenção: ${a}`));
-    if (r.novos.length) saida(`Próximo passo: preparar ${r.novos[0].id}`);
+    if (r.novos.length) saida(`Próximo passo: instagram ${r.novos[0].id} (para usar as fotos do Instagram deles) e depois preparar ${r.novos[0].id}`);
     return 0;
   },
 
@@ -112,23 +134,27 @@ const COMANDOS = {
 
   async preparar([id], { config, loja, servicos, saida, navegador, bloquearRede }) {
     exigirId(id);
-    const { registro, url, avisos } = await prepararNegocio(id, { loja, servicos, config, navegador, bloquearRede, aoProgredir: (t) => saida(`... ${t}`) });
-    avisos.forEach((a) => saida(`Atenção: ${a}`));
-    if (!registro.abordagem) {
-      saida('A prévia não ficou boa o bastante para mandar. Problemas encontrados:');
-      (registro.previa?.problemas ?? []).forEach((p) => saida(`- ${p}`));
+    const r = await prepararNegocio(id, { loja, servicos, config, navegador, bloquearRede, aoProgredir: (t) => saida(`... ${t}`) });
+    r.avisos.forEach((a) => saida(`Atenção: ${a}`));
+    if (r.situacao === 'reprovada') {
+      saida('A prévia nova não ficou boa o bastante para mandar. Problemas encontrados:');
+      (r.problemas ?? []).forEach((p) => saida(`- ${p}`));
       saida(`Tente de novo: preparar ${id}`);
       return 1;
     }
-    saida(url ? `Prévia: ${url}` : `A prévia ficou salva no computador, mas não foi publicada. Troque "[link da prévia]" pelo link antes de enviar.`);
-    if (registro.preco?.profissional) {
-      const [min, max] = registro.preco.profissional;
-      saida(`Preço sugerido (site profissional): ${reais(min)} a ${reais(max)}`);
+    if (r.situacao === 'sem_publicar') {
+      saida('A prévia ficou pronta no computador, mas ainda não está na internet.');
+      saida(`Quando resolver o aviso acima: publicar ${id}`);
+      return 1;
     }
-    saida('Primeira mensagem:');
-    saida(registro.abordagem.primeira);
-    comoContatar(registro, registro.abordagem.primeira, saida);
-    saida(`Depois de enviar: enviei ${id}`);
+    mostrarPronto(r.registro, r.url, id, saida);
+    return 0;
+  },
+
+  async publicar([id], { config, loja, servicos, saida }) {
+    const r = await publicarPrevia(exigirId(id), { loja, servicos, config });
+    r.avisos.forEach((a) => saida(`Atenção: ${a}`));
+    mostrarPronto(r.registro, r.url, id, saida);
     return 0;
   },
 
@@ -144,18 +170,19 @@ const COMANDOS = {
     return 0;
   },
 
-  async etapa([id, etapa], { loja, saida }) {
+  async etapa([id, etapa], { loja, servicos, saida }) {
     exigirId(id);
     exigir(etapa, 'Diga a etapa: respondeu, reuniao, proposta, fechou, perdido ou descartado.');
     const r = await alterarNegocio(loja, id, (reg) => mudarEtapa(reg, etapa));
     saida(`Anotado: ${r.nome} agora está na etapa "${etapa}".`);
-    if (etapa === 'perdido' || etapa === 'descartado') saida('A prévia sai do ar no próximo "limpar".');
+    if (etapa === 'perdido' || etapa === 'descartado') await tirarPreviasDoAr({ loja, servicos, saida });
     return 0;
   },
 
-  async 'nao-contatar'([id], { loja, saida }) {
+  async 'nao-contatar'([id], { loja, servicos, saida }) {
     const r = await alterarNegocio(loja, exigirId(id), (reg) => marcarNaoContatar(reg));
-    saida(`Anotado: ${r.nome} não vai receber mais mensagens. A prévia sai do ar no próximo "limpar".`);
+    saida(`Anotado: ${r.nome} não vai receber mais mensagens.`);
+    await tirarPreviasDoAr({ loja, servicos, saida });
     return 0;
   },
 

@@ -98,3 +98,13 @@ test('cópia semanal não repete na mesma semana e guarda 8', async () => {
   for (let semana = 1; semana <= 10; semana++) await copiaSemanal({ loja, pasta, agora: new Date(Date.UTC(2027, 0, semana * 7, 15)) });
   assert.equal((await readdir(join(pasta, 'copias'))).length, 8);
 });
+
+test('limpar também tira do ar a versão antiga que uma prévia não publicada substitui', async () => {
+  const previa = { slug: 'nova-9z9z', versao: 2, substitui: { slug: 'x-1a2b', url: 'u', publicadaEm: '2026-11-01T00:00:00Z' } };
+  assert.equal(previasParaRemover([{ ...base, etapa: 'perdido', previa }], dia('21')).length, 1);
+  const { loja, servicos, f } = await ambienteFunil([{ ...base, etapa: 'perdido', previa }]);
+  const r = await limparPreviasVencidas({ loja, servicos, agora: dia('21') });
+  assert.deepEqual(r.removidas, ['x-1a2b']); assert.ok(f.chamadas.some((c) => c.metodo === 'PATCH'));
+  const salvo = (await loja.ler('negocios'))[0];
+  assert.equal(salvo.previa.substitui, undefined); assert.equal(salvo.previa.slug, 'nova-9z9z');
+});

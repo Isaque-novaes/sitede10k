@@ -6,39 +6,58 @@ import { dataEmSaoPaulo, diasEntre } from '../funil/funil.js';
 const DIAS_PARA_EXPIRAR = 45;
 const COPIAS_GUARDADAS = 8;
 
-/** Prévias publicadas que devem sair do ar. */
+/**
+ * O que está no ar para o negócio e deve sair: a prévia publicada e/ou a versão antiga que uma prévia nova substitui.
+ * A versão antiga sai sempre que a nova já está publicada; senão, segue as mesmas regras da prévia.
+ */
+function alvosDoRegistro(r, agora) {
+  const p = r.previa;
+  if (!p) return [];
+  const encerrado = r.naoContatar || r.etapa === 'perdido' || r.etapa === 'descartado';
+  const vencida = (publicadaEm) => (r.etapa === 'preparado' || r.etapa === 'abordado') && !!publicadaEm && diasEntre(publicadaEm, agora) >= DIAS_PARA_EXPIRAR;
+  const alvos = [];
+  if (p.url && (encerrado || vencida(p.publicadaEm))) alvos.push(p.slug);
+  if (p.substitui?.url && (p.url || encerrado || vencida(p.substitui.publicadaEm))) alvos.push(p.substitui.slug);
+  return alvos;
+}
+
+/** Negócios com prévia no ar que deve sair. */
 export function previasParaRemover(registros, agora = new Date()) {
-  return registros.filter((r) => {
-    if (!r.previa?.url) return false;
-    if (r.naoContatar || r.etapa === 'perdido' || r.etapa === 'descartado') return true;
-    if ((r.etapa === 'preparado' || r.etapa === 'abordado') && r.previa.publicadaEm) {
-      return diasEntre(r.previa.publicadaEm, agora) >= DIAS_PARA_EXPIRAR;
-    }
-    return false;
-  });
+  return registros.filter((r) => alvosDoRegistro(r, agora).length > 0);
 }
 
 /** Remove do GitHub as prévias vencidas e limpa o endereço delas no registro. */
 export async function limparPreviasVencidas({ loja, servicos, agora = new Date() }) {
   const registros = await loja.ler('negocios', []);
-  const alvos = previasParaRemover(registros, agora);
+  const alvos = registros.flatMap((r) => alvosDoRegistro(r, agora).map((slug) => ({ slug, nome: r.nome })));
   if (!alvos.length) return { removidas: [], avisos: [] };
   if (!servicos?.github) return { removidas: [], avisos: [`Configure o GitHub para tirar do ar ${alvos.length} prévia(s) vencida(s).`] };
   const removidas = [];
   const avisos = [];
   for (const alvo of alvos) {
     try {
-      await servicos.github.remover(alvo.previa.slug, `Remove a prévia ${alvo.previa.slug}`);
-      removidas.push(alvo.previa.slug);
+      await servicos.github.remover(alvo.slug, `Remove a prévia ${alvo.slug}`);
+      removidas.push(alvo.slug);
     } catch (erro) {
       avisos.push(`Não consegui tirar do ar a prévia de ${alvo.nome}: ${erro.message}`);
     }
   }
   const data = agora.toISOString();
   await loja.atualizar('negocios', (atual) => atual.map((r) => {
-    if (!removidas.includes(r.previa?.slug)) return r;
-    const { url: _url, publicadaEm: _publicadaEm, ...previa } = r.previa;
-    return { ...r, previa, historico: [...(r.historico ?? []), { tipo: 'previa_removida', data, detalhe: r.previa.slug }] };
+    if (!r.previa) return r;
+    let previa = r.previa;
+    const historico = [...(r.historico ?? [])];
+    if (previa.url && removidas.includes(previa.slug)) {
+      const { url: _url, publicadaEm: _publicadaEm, ...resto } = previa;
+      previa = resto;
+      historico.push({ tipo: 'previa_removida', data, detalhe: r.previa.slug });
+    }
+    if (previa.substitui && removidas.includes(previa.substitui.slug)) {
+      const { substitui, ...resto } = previa;
+      previa = resto;
+      historico.push({ tipo: 'previa_removida', data, detalhe: substitui.slug });
+    }
+    return previa === r.previa ? r : { ...r, previa, historico };
   }), []);
   return { removidas, avisos };
 }

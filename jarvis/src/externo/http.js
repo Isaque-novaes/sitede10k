@@ -19,7 +19,10 @@ const esperar = (ms) => new Promise((r) => setTimeout(r, ms));
 
 function erroPorStatus(servico, status, corpo) {
   const codigo = corpo?.error?.code;
-  if (status === 401 || status === 403) {
+  // O Google responde chave inválida ou vencida com 400 (INVALID_ARGUMENT), não 401/403.
+  const motivos = Array.isArray(corpo?.error?.details) ? corpo.error.details.map((d) => String(d?.reason ?? '')) : [];
+  const chaveRuim = status === 400 && (motivos.some((m) => m.startsWith('API_KEY_')) || /API key/i.test(String(corpo?.error?.message ?? '')));
+  if (status === 401 || status === 403 || chaveRuim) {
     return new ErroExterno(servico, `O ${servico} recusou a chave. Confira a chave do ${servico} nas configurações.`, { status, codigo, corpo });
   }
   if (status === 429) {

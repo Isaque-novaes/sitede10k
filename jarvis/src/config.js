@@ -35,6 +35,13 @@ async function lerJson(arquivo) {
   try { return JSON.parse(await readFile(arquivo, 'utf8')); } catch { return {}; }
 }
 
+/** "dono/repo", também a partir do endereço copiado do navegador. Qualquer outra coisa vira undefined. */
+function lerRepositorio(valor) {
+  if (!valor) return undefined;
+  const limpo = String(valor).trim().replace(/^https?:\/\/(www\.)?github\.com\//i, '').replace(/\.git$/i, '').replace(/\/+$/, '');
+  return /^[A-Za-z0-9-]+\/[A-Za-z0-9._-]+$/.test(limpo) ? limpo : undefined;
+}
+
 /**
  * Configuração do Jarvis: chaves do .env (ou do ambiente), preferências do usuário e padrões.
  * @param {{raiz?: string, env?: Record<string,string>}} [opcoes]
@@ -44,7 +51,7 @@ export async function carregarConfig({ raiz = RAIZ_PADRAO, env = process.env } =
   const v = (nome) => (env[nome] || arquivo[nome] || undefined);
   const pastaDados = join(raiz, 'dados');
   const preferencias = await lerJson(join(pastaDados, 'config.json'));
-  const githubRepo = v('GITHUB_REPO');
+  const githubRepo = lerRepositorio(v('GITHUB_REPO'));
   const [dono, repo] = githubRepo ? githubRepo.split('/') : [];
   return {
     raiz,
@@ -59,7 +66,7 @@ export async function carregarConfig({ raiz = RAIZ_PADRAO, env = process.env } =
     },
     githubRepo,
     githubRamo: v('GITHUB_RAMO') ?? 'main',
-    baseUrlPrevias: v('BASE_URL_PREVIAS') ?? (dono && repo ? `https://${dono}.github.io/${repo}` : undefined),
+    baseUrlPrevias: v('BASE_URL_PREVIAS') ?? (dono && repo ? `https://${dono.toLowerCase()}.github.io/${repo}` : undefined),
     geminiModelo: v('GEMINI_MODELO') ?? 'gemini-flash-latest',
     geminiReserva: 'gemini-flash-lite-latest',
     metaVersao: v('META_VERSAO') ?? 'v23.0',
