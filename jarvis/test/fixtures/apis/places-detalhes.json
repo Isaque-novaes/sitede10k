@@ -1,0 +1,195 @@
+{
+ "id": "sem-site-1",
+ "regularOpeningHours": {
+  "weekdayDescriptions": [
+   "segunda-feira: 09:00–19:00",
+   "terça-feira: 09:00–19:00",
+   "quarta-feira: 09:00–19:00",
+   "quinta-feira: 09:00–19:00",
+   "sexta-feira: 09:00–20:00",
+   "sábado: 08:00–17:00",
+   "domingo: Fechado"
+  ]
+ },
+ "reviews": [
+  {
+   "name": "places/sem-site-1/reviews/Rafael M.",
+   "rating": 5,
+   "text": {
+    "text": "Corte impecável e atendimento sem pressa.",
+    "languageCode": "pt"
+   },
+   "authorAttribution": {
+    "displayName": "Rafael M."
+   }
+  },
+  {
+   "name": "places/sem-site-1/reviews/Lucas A.",
+   "rating": 5,
+   "text": {
+    "text": "Melhor barba de Campinas.",
+    "languageCode": "pt"
+   },
+   "authorAttribution": {
+    "displayName": "Lucas A."
+   }
+  },
+  {
+   "name": "places/sem-site-1/reviews/Ana P.",
+   "rating": 4,
+   "text": {
+    "text": "Ambiente bonito e café bom.",
+    "languageCode": "pt"
+   },
+   "authorAttribution": {
+    "displayName": "Ana P."
+   }
+  },
+  {
+   "name": "places/sem-site-1/reviews/Sem texto",
+   "rating": 5,
+   "authorAttribution": {
+    "displayName": "Sem texto"
+   }
+  },
+  {
+   "name": "places/sem-site-1/reviews/Bruno S.",
+   "rating": 5,
+   "text": {
+    "text": "Profissionais que entendem o que você pede.",
+    "languageCode": "pt"
+   },
+   "authorAttribution": {
+    "displayName": "Bruno S."
+   }
+  },
+  {
+   "name": "places/sem-site-1/reviews/Thiago R.",
+   "rating": 4,
+   "text": {
+    "text": "Ótimo, só vale agendar antes.",
+    "languageCode": "pt"
+   },
+   "authorAttribution": {
+    "displayName": "Thiago R."
+   }
+  },
+  {
+   "name": "places/sem-site-1/reviews/Carla D.",
+   "rating": 5,
+   "text": {
+    "text": "Levei meu filho e ele amou.",
+    "languageCode": "pt"
+   },
+   "authorAttribution": {
+    "displayName": "Carla D."
+   }
+  }
+ ],
+ "photos": [
+  {
+   "name": "places/sem-site-1/photos/foto0",
+   "widthPx": 4032,
+   "heightPx": 3024,
+   "authorAttributions": []
+  },
+  {
+   "name": "places/sem-site-1/photos/foto1",
+   "widthPx": 4032,
+   "heightPx": 3024,
+   "authorAttributions": [
+    {
+     "displayName": "Cliente 1"
+    }
+   ]
+  },
+  {
+   "name": "places/sem-site-1/photos/foto2",
+   "widthPx": 4032,
+   "heightPx": 3024,
+   "authorAttributions": [
+    {
+     "displayName": "Cliente 2"
+    }
+   ]
+  },
+  {
+   "name": "places/sem-site-1/photos/foto3",
+   "widthPx": 4032,
+   "heightPx": 3024,
+   "authorAttributions": []
+  },
+  {
+   "name": "places/sem-site-1/photos/foto4",
+   "widthPx": 4032,
+   "heightPx": 3024,
+   "authorAttributions": [
+    {
+     "displayName": "Cliente 4"
+    }
+   ]
+  },
+  {
+   "name": "places/sem-site-1/photos/foto5",
+   "widthPx": 4032,
+   "heightPx": 3024,
+   "authorAttributions": [
+    {
+     "displayName": "Cliente 5"
+    }
+   ]
+  },
+  {
+   "name": "places/sem-site-1/photos/foto6",
+   "widthPx": 4032,
+   "heightPx": 3024,
+   "authorAttributions": []
+  },
+  {
+   "name": "places/sem-site-1/photos/foto7",
+   "widthPx": 4032,
+   "heightPx": 3024,
+   "authorAttributions": [
+    {
+     "displayName": "Cliente 7"
+    }
+   ]
+  },
+  {
+   "name": "places/sem-site-1/photos/foto8",
+   "widthPx": 4032,
+   "heightPx": 3024,
+   "authorAttributions": [
+    {
+     "displayName": "Cliente 8"
+    }
+   ]
+  },
+  {
+   "name": "places/sem-site-1/photos/foto9",
+   "widthPx": 4032,
+   "heightPx": 3024,
+   "authorAttributions": []
+  },
+  {
+   "name": "places/sem-site-1/photos/foto10",
+   "widthPx": 4032,
+   "heightPx": 3024,
+   "authorAttributions": [
+    {
+     "displayName": "Cliente 10"
+    }
+   ]
+  },
+  {
+   "name": "places/sem-site-1/photos/foto11",
+   "widthPx": 4032,
+   "heightPx": 3024,
+   "authorAttributions": [
+    {
+     "displayName": "Cliente 11"
+    }
+   ]
+  }
+ ]
+}

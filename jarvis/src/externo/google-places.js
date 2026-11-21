@@ -45,3 +45,32 @@ export async function buscarLugares(texto, { chave, fetch, registrar, local, rai
   });
   return (resposta?.places ?? []).map(paraLugar);
 }
+
+/**
+ * Detalhes de um lugar: horários, até 5 avaliações com texto e até 10 fotos.
+ * @param {string} id
+ */
+export async function detalharLugar(id, { chave, fetch, registrar }) {
+  const r = await requisitarJson(`https://places.googleapis.com/v1/places/${encodeURIComponent(id)}?languageCode=pt-BR`, {
+    servico: SERVICO, fetch, registrar,
+    cabecalhos: { 'X-Goog-Api-Key': chave, 'X-Goog-FieldMask': 'id,regularOpeningHours,reviews,photos' },
+  });
+  return {
+    horarios: r?.regularOpeningHours?.weekdayDescriptions ?? [],
+    avaliacoes: (r?.reviews ?? [])
+      .filter((a) => a.text?.text?.trim())
+      .slice(0, 5)
+      .map((a) => ({ autor: a.authorAttribution?.displayName ?? 'Cliente', nota: a.rating, texto: a.text.text.trim() })),
+    fotos: (r?.photos ?? []).slice(0, 10).map((f) => {
+      const autor = f.authorAttributions?.[0]?.displayName;
+      return { nome: f.name, largura: f.widthPx, altura: f.heightPx, credito: autor ? `Foto: ${autor} (Google Maps)` : 'Foto: Google Maps' };
+    }),
+  };
+}
+
+/** Baixa uma foto do Google Maps pelo nome do recurso. */
+export async function baixarFotoLugar(nome, destino, { chave, fetch, registrar, larguraMax = 1600 }) {
+  const { baixarArquivo } = await import('./baixar.js');
+  const url = `https://places.googleapis.com/v1/${nome}/media?maxWidthPx=${larguraMax}&key=${encodeURIComponent(chave)}`;
+  return baixarArquivo(url, destino, { servico: SERVICO, fetch, registrar });
+}

@@ -1,0 +1,47 @@
+{
+ "places": [
+  {
+   "id": "sem-site-1",
+   "displayName": {
+    "text": "Barbearia Navalha de Ouro"
+   },
+   "rating": 4.8,
+   "userRatingCount": 50
+  },
+  {
+   "id": "conc-1",
+   "displayName": {
+    "text": "Barbearia Central"
+   },
+   "websiteUri": "https://barbeariacentral.com.br",
+   "rating": 4.7,
+   "userRatingCount": 50
+  },
+  {
+   "id": "conc-2",
+   "displayName": {
+    "text": "Barber Club"
+   },
+   "websiteUri": "https://barberclub.com.br",
+   "rating": 4.9,
+   "userRatingCount": 50
+  },
+  {
+   "id": "conc-3",
+   "displayName": {
+    "text": "Corte Rápido"
+   },
+   "websiteUri": "https://instagram.com/corterapido",
+   "rating": 4.5,
+   "userRatingCount": 50
+  },
+  {
+   "id": "conc-4",
+   "displayName": {
+    "text": "Salão do Zé"
+   },
+   "rating": 4.1,
+   "userRatingCount": 50
+  }
+ ]
+}

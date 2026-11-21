@@ -56,3 +56,21 @@ export async function ambienteBusca({ pagespeedStatus = 200, chaves = { google: 
   const servicos = criarServicos({ chaves }, { fetch: f });
   return { pasta, loja, servicos, f };
 }
+
+/** Registro de um negócio sem site, como sai da busca. */
+export const registroSemSite = {
+  id: 'sem-site-1', nome: 'Barbearia Navalha de Ouro', endereco: 'R. Maria Monteiro, 820 - Cambuí, Campinas - SP', bairro: 'Cambuí', cidade: 'Campinas',
+  local: { lat: -22.8953, lng: -47.0523 }, tipos: ['barber_shop'], tipoPrincipal: 'Barbearia', situacao: 'OPERATIONAL',
+  mapsUrl: 'https://maps.google.com/?cid=1', telefone: '(19) 99876-5432', telefoneInternacional: '+55 19 99876-5432',
+  nota: 4.8, totalAvaliacoes: 230, nicho: 'barbearia', presenca: 'sem_site', prioridade: 378, whatsappProvavel: true,
+  etapa: 'encontrado', datas: { encontrado: '2026-11-20T12:00:00.000Z' }, acompanhamentos: 0, naoContatar: false, notas: '', historico: [],
+};
+
+/** Loja + serviços com as fixtures de detalhes e concorrentes. */
+export async function ambienteDiagnostico({ concorrentes } = {}) {
+  const rotas = [
+    { metodo: 'POST', contem: 'places:searchText', json: concorrentes ? { places: concorrentes } : fixture('places-concorrentes') },
+    { contem: '/v1/places/sem-site-1', arquivo: 'places-detalhes' },
+  ];
+  return ambienteBusca({ rotasExtras: rotas });
+}

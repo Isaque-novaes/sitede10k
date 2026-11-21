@@ -1,5 +1,5 @@
 import { baixarArquivo } from './baixar.js';
-import { buscarLugares } from './google-places.js';
+import { buscarLugares, detalharLugar, baixarFotoLugar } from './google-places.js';
 import { testarSite } from './pagespeed.js';
 
 /**
@@ -15,7 +15,12 @@ export function criarServicos(config, { fetch = globalThis.fetch, registrar } = 
   return {
     places: comChave(chaves.google, () => {
       const c = { ...base, chave: chaves.google };
-      return { ...c, buscar: (texto, opcoes = {}) => buscarLugares(texto, { ...c, ...opcoes }) };
+      return {
+        ...c,
+        buscar: (texto, opcoes = {}) => buscarLugares(texto, { ...c, ...opcoes }),
+        detalhar: (id) => detalharLugar(id, c),
+        baixarFoto: (nome, destino) => baixarFotoLugar(nome, destino, c),
+      };
     }),
     pagespeed: comChave(chaves.google, () => {
       const c = { ...base, chave: chaves.google };
