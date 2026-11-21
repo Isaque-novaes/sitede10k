@@ -166,3 +166,13 @@ export const abordagemIA = {
     ja_tenho_site: 'Posso mostrar o que dá para melhorar.', ja_tenho_clientes: 'Ótimo, o site ajuda a manter a agenda cheia.',
   },
 };
+
+/** Loja com registros + GitHub falso com a prévia x-1a2b publicada. */
+export async function ambienteFunil(registros, { github = true } = {}) {
+  const pasta = await mkdtemp(join(tmpdir(), 'jarvis-funil-'));
+  const loja = criarLoja(join(pasta, 'dados'));
+  await loja.gravar('negocios', registros);
+  const f = fetchGitHubFalso({ arvore: ['x-1a2b/index.html', 'x-1a2b/midias/a.webp'] });
+  const config = github ? { chaves: { github: 'T' }, githubRepo: 'isaque/previas', baseUrlPrevias: 'https://isaque.github.io/previas' } : { chaves: {} };
+  return { pasta, loja, servicos: criarServicos(config, { fetch: f }), f };
+}
