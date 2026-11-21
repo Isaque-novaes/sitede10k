@@ -132,3 +132,28 @@ export async function prepararMontagemExemplo(pasta) {
     opcoes: {},
   };
 }
+
+// ---------- Contexto completo com arquivos reais (fotos e vídeo) ----------
+import { execFileSync } from 'node:child_process';
+import { tratarVideo } from '../src/previa/midia.js';
+import { criarContextoPeca } from '../src/previa/montar.js';
+
+/** Gera um vídeo vertical de teste e trata. */
+export async function criarVideoTratado(pasta, { largura = 1080, altura = 1920, duracao = 4 } = {}) {
+  await mkdir(join(pasta, 'originais'), { recursive: true });
+  const orig = join(pasta, 'originais', 'video.mp4');
+  execFileSync('ffmpeg', ['-y', '-v', 'error', '-f', 'lavfi', '-i', `testsrc=size=${largura}x${altura}:rate=24:duration=${duracao}`, orig]);
+  return tratarVideo({ arquivo: orig, tipo: 'video', origem: 'instagram', credito: '@barbeariadoze' }, join(pasta, 'tratadas'), 'video');
+}
+
+/** Montagem e contexto de peça com 8 fotos, vídeo e todos os dados (para testar peças sozinhas). */
+export async function prepararCtxCompleto(pasta) {
+  const fotos = await criarFotosTratadas(pasta, 8);
+  const video = await criarVideoTratado(pasta);
+  const paleta = derivarPaleta(fotos.flatMap((f) => f.cores.slice(0, 3)), negocioCompleto.clima);
+  const montagem = {
+    negocio: negocioCompleto, textos: textosCompletos, fotos, video, opcoes: {},
+    assinatura: { topo: 'foto-cheia', fontes: 'bebas-manrope', movimento: 'energico', secoes: TODAS_AS_SECOES_A, paleta },
+  };
+  return { montagem, ctx: criarContextoPeca(montagem) };
+}
