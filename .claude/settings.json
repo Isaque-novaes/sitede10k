@@ -6,9 +6,17 @@
         "repo": "nextlevelbuilder/ui-ux-pro-max-skill",
         "ref": "f823ab5fb970de820e5a0626a0786aba9aee0543"
       }
+    },
+    "planning-with-files": {
+      "source": {
+        "source": "github",
+        "repo": "OthmanAdi/planning-with-files",
+        "ref": "aaa38bc62053f5f7c1bfbcb60f0405f7cf0ee228"
+      }
     }
   },
   "enabledPlugins": {
-    "ui-ux-pro-max@ui-ux-pro-max-skill": true
+    "ui-ux-pro-max@ui-ux-pro-max-skill": true,
+    "planning-with-files@planning-with-files": true
   }
 }
