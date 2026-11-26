@@ -619,6 +619,40 @@ return function(Sim)
 			checar(string.find(props.PrefixText, "[VIP]", 1, true) ~= nil, "mensagem do VIP ganha a etiqueta")
 		end
 
+		-- a interface cabe em telas pequenas e grandes
+		local camera = Sim.novaInstancia("Camera", true)
+		camera.Name = "Camera"
+		Sim.definir(camera, "ViewportSize", G.Vector2.new(1280, 720))
+		camera.Parent = workspace
+		Sim.definir(workspace, "CurrentCamera", camera)
+		Sim.avancar(0.5)
+		local escalaTopo = hud.Topo:FindFirstChildOfClass("UIScale")
+		local escalaLoja = hud.Loja:FindFirstChildOfClass("UIScale")
+		local escalaBotoes = hud.Botoes:FindFirstChildOfClass("UIScale")
+		checar(escalaTopo ~= nil and escalaLoja ~= nil and escalaBotoes ~= nil, "interface tem controle de tamanho")
+		if escalaTopo and escalaLoja and escalaBotoes then
+			for _, medida in ipairs({ { 386, 412 }, { 640, 480 }, { 1280, 720 }, { 1920, 1080 } }) do
+				local larguraTela, alturaTela = medida[1], medida[2]
+				local nome = larguraTela .. "x" .. alturaTela
+				Sim.definir(camera, "ViewportSize", G.Vector2.new(larguraTela, alturaTela))
+				Sim.avancar(0.3)
+				local placarLargura = 232 * escalaTopo.Scale
+				local placarAltura = 50 * escalaTopo.Scale
+				checar(placarLargura <= larguraTela * 0.45,
+					"em " .. nome .. " o placar ocupa no máximo 45% da largura (" .. math.floor(placarLargura) .. "px)")
+				checar(placarAltura <= alturaTela * 0.18, "em " .. nome .. " o placar não é alto demais")
+				checar(560 * escalaLoja.Scale <= larguraTela and 420 * escalaLoja.Scale <= alturaTela,
+					"em " .. nome .. " a loja cabe inteira na tela")
+				checar(132 * escalaBotoes.Scale <= larguraTela * 0.35, "em " .. nome .. " os botões cabem na lateral")
+			end
+			-- numa tela grande a interface não fica gigante
+			Sim.definir(camera, "ViewportSize", G.Vector2.new(1920, 1080))
+			Sim.avancar(0.3)
+			checar(escalaTopo.Scale <= 1.1 and escalaLoja.Scale <= 1.15, "interface não cresce sem limite")
+			Sim.definir(camera, "ViewportSize", G.Vector2.new(1280, 720))
+			Sim.avancar(0.3)
+		end
+
 		-- empurrão e arco-íris
 		Remotos.Empurrao:FireClient(beto, Vector3.new(70, 0, 0))
 		Sim.avancar(0.1)

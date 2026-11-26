@@ -196,12 +196,31 @@ local tela = novo("ScreenGui", {
 	Parent = playerGui,
 })
 
+-- Tamanho da interface ---------------------------------------------------------
+-- A interface encolhe sozinha em telas e janelas pequenas. Se ainda achar
+-- grande (ou pequena) demais, mude só este número: 0.8 deixa menor, 1.2 maior.
+local ESCALA_DA_TELA = 1
+
+-- Tamanho dos painéis (Loja, Índice...) antes de caber na tela
+local LARGURA_PAINEL, ALTURA_PAINEL = 560, 420
+
+local escalas = {} -- cantos da tela: placar, faixas e botões
+local escalasPainel = {} -- janelas do meio: encolhem só o quanto precisam para caber
+local escalaAtual = 1
+local escalaPainel = 1
+local function escalavel(objeto, ehPainel)
+	local lista = ehPainel and escalasPainel or escalas
+	local escala = novo("UIScale", { Scale = ehPainel and escalaPainel or escalaAtual, Parent = objeto })
+	table.insert(lista, escala)
+	return escala
+end
+
 -- Coluna do topo ---------------------------------------------------------------
 local topo = novo("Frame", {
 	Name = "Topo",
 	AnchorPoint = Vector2.new(0.5, 0),
 	Position = UDim2.new(0.5, 0, 0, 6),
-	Size = UDim2.new(0.6, 0, 0, 0),
+	Size = UDim2.new(0.5, 0, 0, 0),
 	AutomaticSize = Enum.AutomaticSize.Y,
 	BackgroundTransparency = 1,
 	Parent = tela,
@@ -211,56 +230,75 @@ local topo = novo("Frame", {
 		HorizontalAlignment = Enum.HorizontalAlignment.Center,
 		Padding = UDim.new(0, 6),
 	}),
-	novo("UISizeConstraint", { MinSize = Vector2.new(300, 0), MaxSize = Vector2.new(460, math.huge) }),
+	novo("UISizeConstraint", { MinSize = Vector2.new(240, 0), MaxSize = Vector2.new(400, math.huge) }),
 })
+escalavel(topo)
 
 local placar = novo("Frame", {
 	Name = "Placar",
 	LayoutOrder = 1,
-	Size = UDim2.new(0, 290, 0, 64),
+	Size = UDim2.new(0, 232, 0, 50),
 	BackgroundColor3 = COR.painel,
 	Parent = topo,
-}, { cantos(18), borda(3) })
+}, { cantos(15), borda(3) })
 local moeda = novo("Frame", {
 	Name = "Moeda",
-	Size = UDim2.new(0, 44, 0, 44),
-	Position = UDim2.new(0, 10, 0.5, 0),
+	Size = UDim2.new(0, 34, 0, 34),
+	Position = UDim2.new(0, 8, 0.5, 0),
 	AnchorPoint = Vector2.new(0, 0.5),
 	BackgroundColor3 = COR.dinheiro,
 	Parent = placar,
-}, { cantos(22), borda(3) })
+}, { cantos(17), borda(3) })
 texto({ Size = UDim2.fromScale(1, 1), Text = "$", Font = TITULO, TextColor3 = Color3.fromRGB(20, 87, 47), Contorno = false, Parent = moeda })
 local rotuloDinheiro = texto({
 	Name = "Dinheiro",
-	Size = UDim2.new(1, -70, 0, 36),
-	Position = UDim2.new(0, 62, 0, 4),
+	Size = UDim2.new(1, -56, 0, 27),
+	Position = UDim2.new(0, 48, 0, 4),
 	Text = "$0",
 	Font = TITULO,
 	TextColor3 = COR.dinheiro,
 	TextXAlignment = Enum.TextXAlignment.Left,
+	TamanhoMax = 26,
 	Parent = placar,
 })
 local rotuloRenda = texto({
 	Name = "Renda",
-	Size = UDim2.new(1, -70, 0, 18),
-	Position = UDim2.new(0, 62, 0, 40),
+	Size = UDim2.new(1, -56, 0, 15),
+	Position = UDim2.new(0, 48, 0, 31),
 	Text = "",
 	TextColor3 = COR.renda,
 	TextXAlignment = Enum.TextXAlignment.Left,
 	Contorno = 1,
+	TamanhoMax = 14,
 	Parent = placar,
 })
 
+-- faixa fina que fica do tamanho do próprio texto
 local function faixa(nome, ordem, cor)
 	local f = novo("Frame", {
 		Name = nome,
 		LayoutOrder = ordem,
-		Size = UDim2.new(1, 0, 0, 30),
+		Size = UDim2.new(0, 0, 0, 25),
+		AutomaticSize = Enum.AutomaticSize.X,
 		BackgroundColor3 = cor,
 		Visible = false,
 		Parent = topo,
-	}, { cantos(12), borda(3) })
-	local r = texto({ Name = "Texto", Size = UDim2.new(1, -16, 1, -8), Position = UDim2.new(0, 8, 0, 4), TamanhoMax = 18, Parent = f })
+	}, {
+		cantos(10),
+		borda(2),
+		novo("UIPadding", { PaddingLeft = UDim.new(0, 9), PaddingRight = UDim.new(0, 9) }),
+		novo("UISizeConstraint", { MaxSize = Vector2.new(420, math.huge) }),
+	})
+	local r = texto({
+		Name = "Texto",
+		Size = UDim2.new(0, 0, 1, 0),
+		AutomaticSize = Enum.AutomaticSize.X,
+		TextScaled = false,
+		TextSize = 14,
+		TextTruncate = Enum.TextTruncate.AtEnd,
+		Contorno = 1,
+		Parent = f,
+	})
 	return f, r
 end
 local faixaBase, rotuloBase = faixa("Base", 2, COR.aberta)
@@ -294,18 +332,18 @@ local function mostrarAviso(mensagem, tipo)
 		BackgroundColor3 = CORES_AVISO[tipo] or CORES_AVISO.info,
 		Font = FONTE,
 		TextColor3 = COR.branco,
-		TextSize = 17,
+		TextSize = 15,
 		TextWrapped = true,
 		Text = mensagem,
 		Parent = avisos,
 	}, {
-		cantos(12),
-		borda(3),
+		cantos(10),
+		borda(2),
 		novo("UIPadding", {
-			PaddingTop = UDim.new(0, 7),
-			PaddingBottom = UDim.new(0, 7),
-			PaddingLeft = UDim.new(0, 12),
-			PaddingRight = UDim.new(0, 12),
+			PaddingTop = UDim.new(0, 6),
+			PaddingBottom = UDim.new(0, 6),
+			PaddingLeft = UDim.new(0, 10),
+			PaddingRight = UDim.new(0, 10),
 		}),
 	})
 	pulo(caixa)
@@ -339,33 +377,35 @@ local colunaEsquerda = novo("Frame", {
 	Name = "Botoes",
 	AnchorPoint = Vector2.new(0, 0.5),
 	Position = UDim2.new(0, 12, 0.5, 0),
-	Size = UDim2.new(0, 150, 0, 0),
+	Size = UDim2.new(0, 132, 0, 0),
 	AutomaticSize = Enum.AutomaticSize.Y,
 	BackgroundTransparency = 1,
 	Parent = tela,
 })
 local layoutEsquerda = novo("UIGridLayout", {
 	SortOrder = Enum.SortOrder.LayoutOrder,
-	CellSize = UDim2.new(0, 150, 0, 50),
-	CellPadding = UDim2.new(0, 8, 0, 10),
+	CellSize = UDim2.new(0, 132, 0, 44),
+	CellPadding = UDim2.new(0, 8, 0, 8),
 	Parent = colunaEsquerda,
 })
+escalavel(colunaEsquerda)
 
 local colunaDireita = novo("Frame", {
 	Name = "Lado",
 	AnchorPoint = Vector2.new(1, 0.5),
 	Position = UDim2.new(1, -12, 0.5, 0),
-	Size = UDim2.new(0, 150, 0, 0),
+	Size = UDim2.new(0, 132, 0, 0),
 	AutomaticSize = Enum.AutomaticSize.Y,
 	BackgroundTransparency = 1,
 	Parent = tela,
 })
 local layoutDireita = novo("UIGridLayout", {
 	SortOrder = Enum.SortOrder.LayoutOrder,
-	CellSize = UDim2.new(0, 150, 0, 50),
-	CellPadding = UDim2.new(0, 8, 0, 10),
+	CellSize = UDim2.new(0, 132, 0, 44),
+	CellPadding = UDim2.new(0, 8, 0, 8),
 	Parent = colunaDireita,
 })
+escalavel(colunaDireita)
 
 local botoesMenu = {}
 local function botaoMenu(coluna, chave, icone, cor, ordem, aoClicar)
@@ -407,7 +447,7 @@ local function painel(nome, titulo, corTitulo)
 		Name = nome,
 		AnchorPoint = Vector2.new(0.5, 0.5),
 		Position = UDim2.fromScale(0.5, 0.52),
-		Size = UDim2.new(0.9, 0, 0.8, 0),
+		Size = UDim2.fromOffset(LARGURA_PAINEL, ALTURA_PAINEL),
 		BackgroundColor3 = COR.painel,
 		Visible = false,
 		ZIndex = 10,
@@ -415,9 +455,8 @@ local function painel(nome, titulo, corTitulo)
 	}, {
 		cantos(22),
 		borda(4),
-		novo("UISizeConstraint", { MaxSize = Vector2.new(620, 470) }),
 	})
-	local escala = novo("UIScale", { Parent = p })
+	local escala = escalavel(p, true)
 	texto({
 		Name = "Titulo",
 		Size = UDim2.new(1, -80, 0, 40),
@@ -477,8 +516,8 @@ local function abrir(nome)
 	end
 	painelAberto = nome
 	info.frame.Visible = true
-	info.escala.Scale = 0.85
-	TweenService:Create(info.escala, ANIM.mola, { Scale = 1 }):Play()
+	info.escala.Scale = escalaPainel * 0.85
+	TweenService:Create(info.escala, ANIM.mola, { Scale = escalaPainel }):Play()
 	atualizarTudo()
 end
 
@@ -954,24 +993,47 @@ end
 local compactoAtual = nil
 local function arrumar()
 	local camera = workspace.CurrentCamera
-	local largura = camera and camera.ViewportSize.X or 1280
+	local tamanho = camera and camera.ViewportSize or Vector2.new(1280, 720)
+	local largura, altura = tamanho.X, tamanho.Y
+
+	-- encolhe a interface em janelas pequenas (no toque não encolhe tanto,
+	-- senão os botões ficam difíceis de acertar com o dedo)
+	local minimo = UserInputService.TouchEnabled and 0.8 or 0.6
+	local alvo = math.clamp(math.min(largura / 1100, altura / 620), minimo, 1.1) * ESCALA_DA_TELA
+	if math.abs(alvo - escalaAtual) > 0.005 then
+		escalaAtual = alvo
+		for _, escala in ipairs(escalas) do
+			escala.Scale = alvo
+		end
+	end
+
+	-- o painel encolhe só o necessário para caber inteiro na tela
+	local cabe = math.min(largura * 0.94 / LARGURA_PAINEL, altura * 0.88 / ALTURA_PAINEL)
+	local alvoPainel = math.clamp(math.min(cabe, 1.1 * ESCALA_DA_TELA), 0.35, 1.3)
+	if math.abs(alvoPainel - escalaPainel) > 0.005 then
+		escalaPainel = alvoPainel
+		for _, escala in ipairs(escalasPainel) do
+			escala.Scale = alvoPainel
+		end
+	end
+
 	local compacto = largura < 900 or (UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled)
 	if compacto == compactoAtual then
 		return
 	end
 	compactoAtual = compacto
 	if compacto then
-		layoutEsquerda.CellSize = UDim2.new(0, 64, 0, 64)
-		layoutDireita.CellSize = UDim2.new(0, 64, 0, 64)
-		colunaEsquerda.Size = UDim2.new(0, 136, 0, 0)
-		colunaDireita.Size = UDim2.new(0, 64, 0, 0)
+		layoutEsquerda.CellSize = UDim2.new(0, 58, 0, 58)
+		layoutDireita.CellSize = UDim2.new(0, 58, 0, 58)
+		colunaEsquerda.Size = UDim2.new(0, 124, 0, 0)
+		colunaDireita.Size = UDim2.new(0, 58, 0, 0)
 		colunaDireita.AnchorPoint = Vector2.new(1, 0)
 		colunaDireita.Position = UDim2.new(1, -10, 0, 8)
 	else
-		layoutEsquerda.CellSize = UDim2.new(0, 150, 0, 50)
-		layoutDireita.CellSize = UDim2.new(0, 150, 0, 50)
-		colunaEsquerda.Size = UDim2.new(0, 150, 0, 0)
-		colunaDireita.Size = UDim2.new(0, 150, 0, 0)
+		layoutEsquerda.CellSize = UDim2.new(0, 132, 0, 44)
+		layoutDireita.CellSize = UDim2.new(0, 132, 0, 44)
+		colunaEsquerda.Size = UDim2.new(0, 132, 0, 0)
+		colunaDireita.Size = UDim2.new(0, 132, 0, 0)
 		colunaDireita.AnchorPoint = Vector2.new(1, 0.5)
 		colunaDireita.Position = UDim2.new(1, -12, 0.5, 0)
 	end
@@ -998,6 +1060,13 @@ arrumar()
 if workspace.CurrentCamera then
 	workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(arrumar)
 end
+workspace:GetPropertyChangedSignal("CurrentCamera"):Connect(function()
+	local camera = workspace.CurrentCamera
+	if camera then
+		camera:GetPropertyChangedSignal("ViewportSize"):Connect(arrumar)
+		arrumar()
+	end
+end)
 
 -- Atualização --------------------------------------------------------------------
 local valorDinheiro = nil

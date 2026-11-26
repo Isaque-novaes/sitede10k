@@ -41,8 +41,14 @@ sem estarem configurados, para você ver como fica.
 **Testar com 2 jogadores:** aba **Teste** (*Test*) > "Clientes e Servidores"
 (*Clients and Servers*) > **2 jogadores** > **Iniciar** (*Start*).
 
-**Testar em inglês:** mude o idioma da sua conta do Roblox (Configurações >
-Informações da conta > Idioma) e jogue de novo.
+**O jogo apareceu em inglês?** Ele segue o idioma da sua conta do Roblox.
+Para ver em português, mude em roblox.com > Configurações > Informações da
+conta > Idioma. É assim que os jogadores de fora vão ver o jogo.
+
+**Se a interface ficar grande ou pequena demais:** ela encolhe sozinha em
+janelas pequenas, mas você pode ajustar no começo de
+`src/client/HUD.client.luau`, na linha `local ESCALA_DA_TELA = 1`
+(0.8 deixa menor, 1.2 maior).
 
 ## Publicar
 
@@ -135,4 +141,5 @@ no Claude Code, peça por exemplo:
   roubar, tapa, tranca, melhorias, prêmio diário, missões, offline, loja,
   anúncio, caixa, trava de sessão, falha de dados, interface nos dois
   idiomas...) e confere cada classe, propriedade e evento na API oficial do
-  Roblox, além de todos os textos nos dois idiomas. Hoje: 203 verificações, 0 falhas.
+  Roblox, todos os textos nos dois idiomas e se a interface cabe em telas de
+  386x412 até 1920x1080. Hoje: 221 verificações, 0 falhas.
