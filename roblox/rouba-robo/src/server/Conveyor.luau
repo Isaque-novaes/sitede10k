@@ -1,6 +1,7 @@
 --[[
 	A esteira da fábrica: sorteia robôs, faz eles andarem e cuida da
-	compra. Também controla o evento "Hora da Sorte".
+	compra. Também controla a "Hora da Sorte" (grátis a cada 10 minutos,
+	ou comprada por alguém para o servidor inteiro).
 ]]
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -8,7 +9,6 @@ local RunService = game:GetService("RunService")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Config = require(Shared:WaitForChild("Config"))
-local Format = require(Shared:WaitForChild("Format"))
 local Game = require(script.Parent:WaitForChild("Game"))
 
 local Conveyor = {}
@@ -19,18 +19,24 @@ local FRENTE = CFrame.Angles(0, -math.pi / 2, 0) -- olhando para +X (sentido da 
 local sorteAte = 0
 
 function Conveyor.sorteAtual()
-	if os.clock() < sorteAte then
-		return Config.HORA_DA_SORTE.SORTE
+	if Game.agora() < sorteAte then
+		return Config.SORTE.FORCA
 	end
 	return 1
 end
 
-function Conveyor.iniciarHoraDaSorte()
-	local duracao = Config.HORA_DA_SORTE.DURACAO
-	sorteAte = os.clock() + duracao
-	ReplicatedStorage:SetAttribute("HoraDaSorteAte", workspace:GetServerTimeNow() + duracao)
-	Game.notificarTodos("HORA DA SORTE! Robôs raros saem " .. Config.HORA_DA_SORTE.SORTE
-		.. "x mais da fábrica por " .. Format.tempo(duracao) .. "!", "alerta")
+-- Começa (ou estende) a sorte. quem = nome de quem pagou (nil = evento grátis)
+function Conveyor.iniciarSorte(segundos, quem)
+	local inicio = math.max(Game.agora(), sorteAte)
+	sorteAte = inicio + segundos
+	ReplicatedStorage:SetAttribute("HoraDaSorteAte", sorteAte)
+	ReplicatedStorage:SetAttribute("HoraDaSortePor", quem or "")
+	local restante = Game.tempoTexto(sorteAte - Game.agora())
+	if quem then
+		Game.notificarTodos("alerta", "sorte_presente", quem, Config.SORTE.FORCA, restante)
+	else
+		Game.notificarTodos("alerta", "sorte_gratis", Config.SORTE.FORCA, restante)
+	end
 end
 
 function Conveyor.gerar(x)
@@ -41,10 +47,8 @@ function Conveyor.gerar(x)
 	robo.x = x
 	table.insert(ativos, robo)
 
-	local raridade = Config.Raridades[def.raridade]
 	if def.raridade >= 5 or mutacaoId == "diamante" or mutacaoId == "arcoiris" then
-		Game.notificarTodos("Saiu da fábrica: " .. Config.nomeCompleto(def, mutacaoId)
-			.. " (" .. raridade.nome .. ")! Corre!", "alerta")
+		Game.notificarTodos("alerta", "saiu_fabrica", Game.nomeRobo(def, mutacaoId), Game.nomeRaridade(def.raridade))
 	end
 	return robo
 end
@@ -75,17 +79,18 @@ function Conveyor.comprar(robo, player)
 	end
 	local vaga = Game.vagaLivre(estado)
 	if not vaga then
-		Game.notificar(player, "Sua base está cheia! Segure E num robô seu para vender e abrir espaço.", "ruim")
+		Game.notificar(player, "ruim", "base_cheia_compra")
 		return
 	end
 	local preco = Config.precoDe(robo.def, robo.mut)
 	if not Game.gastar(estado, preco) then
-		Game.notificar(player, "Falta dinheiro: " .. Config.nomeCompleto(robo.def, robo.mut)
-			.. " custa " .. Format.dinheiro(preco) .. ".", "ruim")
+		Game.notificar(player, "ruim", "falta_dinheiro", Game.nomeRobo(robo.def, robo.mut), Game.dinheiroTexto(preco))
 		return
 	end
+	Game.efeito("compra", robo.modelo:GetPivot().Position, Config.Raridades[robo.def.raridade].cor)
 	Game.colocarNaBase(estado, robo, vaga, false)
-	Game.notificar(player, "Você comprou " .. Config.nomeCompleto(robo.def, robo.mut) .. "!", "bom")
+	Game.notificar(player, "bom", "comprou", Game.nomeRobo(robo.def, robo.mut))
+	Game.emitir(estado, "comprar", 1, { raridade = robo.def.raridade })
 end
 
 function Conveyor.quantidade()
@@ -98,6 +103,8 @@ end
 
 function Conveyor.iniciar()
 	Game.acoes.esteira = Conveyor.comprar
+	ReplicatedStorage:SetAttribute("HoraDaSorteAte", 0)
+	ReplicatedStorage:SetAttribute("HoraDaSortePor", "")
 
 	-- já começa com a esteira cheia, para ninguém esperar
 	local esteira = Game.mundo.esteira
@@ -119,8 +126,8 @@ function Conveyor.iniciar()
 
 	task.spawn(function()
 		while true do
-			task.wait(Config.HORA_DA_SORTE.A_CADA)
-			Conveyor.iniciarHoraDaSorte()
+			task.wait(Config.SORTE.A_CADA)
+			Conveyor.iniciarSorte(Config.SORTE.DURACAO, nil)
 		end
 	end)
 end

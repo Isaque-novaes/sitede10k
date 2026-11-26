@@ -14,7 +14,6 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Config = require(Shared:WaitForChild("Config"))
-local Format = require(Shared:WaitForChild("Format"))
 local Game = require(script.Parent:WaitForChild("Game"))
 local MapBuilder = require(script.Parent:WaitForChild("MapBuilder"))
 
@@ -33,7 +32,7 @@ local function partesDo(robo)
 end
 
 local function nomeDo(robo)
-	return Config.nomeCompleto(robo.def, robo.mut)
+	return Game.nomeRobo(robo.def, robo.mut)
 end
 
 -- Venda ------------------------------------------------------------------------
@@ -44,7 +43,8 @@ function Stealing.vender(estado, robo)
 	Game.destruirRobo(robo)
 	Game.adicionarDinheiro(estado, valor)
 	Game.atualizarAtributos(estado)
-	Game.notificar(estado.player, "Você vendeu " .. nome .. " por " .. Format.dinheiro(valor) .. ".", "info")
+	Game.notificar(estado.player, "info", "vendeu", nome, Game.dinheiroTexto(valor))
+	Game.emitir(estado, "vender", 1)
 end
 
 -- Roubo ------------------------------------------------------------------------
@@ -57,18 +57,18 @@ function Stealing.roubar(ladrao, robo)
 		return
 	end
 	if ladrao.carregando then
-		Game.notificar(player, "Você já está carregando um robô!", "ruim")
+		Game.notificar(player, "ruim", "ja_carregando")
 		return
 	end
 	if Game.trancada(dono) then
-		Game.notificar(player, "Essa base está trancada! Espere a tranca acabar.", "ruim")
+		Game.notificar(player, "ruim", "base_trancada_roubo")
 		return
 	end
 	if not MapBuilder.dentroDaBase(dono.base, raiz.Position, 2) then
 		return
 	end
 	if not Game.vagaLivre(ladrao) then
-		Game.notificar(player, "Sua base está cheia, não cabe mais nenhum robô!", "ruim")
+		Game.notificar(player, "ruim", "base_cheia_roubo")
 		return
 	end
 
@@ -105,14 +105,15 @@ function Stealing.roubar(ladrao, robo)
 	end
 
 	humanoid.WalkSpeed = Config.ROUBO.VELOCIDADE_CARREGANDO
-	player:SetAttribute("Carregando", nomeDo(robo))
+	player:SetAttribute("Carregando", robo.def.id)
+	player:SetAttribute("CarregandoMut", robo.mut or "")
 	robo.conexaoMorte = humanoid.Died:Connect(function()
-		Stealing.falhar(ladrao, "Você caiu e o robô voltou para o dono.")
+		Stealing.falhar(ladrao, "caiu")
 	end)
 
-	Game.notificar(player, "Você pegou " .. nomeDo(robo) .. "! Corra até a SUA base!", "bom")
-	Game.notificar(dono.player, "ALERTA: " .. player.DisplayName .. " está roubando seu "
-		.. nomeDo(robo) .. "! Dê um tapa nele!", "alerta")
+	Game.notificar(player, "bom", "pegou", nomeDo(robo))
+	Game.notificar(dono.player, "alerta", "alerta_roubo", player.DisplayName, nomeDo(robo))
+	Game.remotos.Efeito:FireClient(dono.player, "alarme", dono.base.barreira.Position, Color3.fromRGB(255, 59, 59))
 end
 
 -- Solta o robô da cabeça do ladrão (não decide para onde ele vai).
@@ -135,6 +136,7 @@ function Stealing.desprender(robo)
 		ladrao.carregando = nil
 		ladroes[ladrao] = nil
 		ladrao.player:SetAttribute("Carregando", nil)
+		ladrao.player:SetAttribute("CarregandoMut", nil)
 		local _, humanoid = Game.raizDe(ladrao.player)
 		if humanoid then
 			humanoid.WalkSpeed = Config.ROUBO.VELOCIDADE_NORMAL
@@ -146,8 +148,8 @@ function Stealing.desprender(robo)
 	end
 end
 
--- O roubo deu errado: o robô volta para o dono.
-function Stealing.falhar(ladrao, motivo)
+-- O roubo deu errado: o robô volta para o dono. motivo = chave de texto (ou nil)
+function Stealing.falhar(ladrao, motivo, ...)
 	local robo = ladrao.carregando
 	if not robo then
 		return
@@ -157,12 +159,12 @@ function Stealing.falhar(ladrao, motivo)
 	local dono = robo.dono
 	if dono and not dono.saindo and robo.vaga and dono.vagas[robo.vaga] == robo then
 		Game.colocarNaBase(dono, robo, robo.vaga, false)
-		Game.notificar(dono.player, "Seu " .. nomeDo(robo) .. " voltou para a base!", "bom")
+		Game.notificar(dono.player, "bom", "voltou_base", nomeDo(robo))
 	else
 		Game.destruirRobo(robo)
 	end
 	if motivo then
-		Game.notificar(ladrao.player, motivo, "ruim")
+		Game.notificar(ladrao.player, "ruim", motivo, ...)
 	end
 end
 
@@ -174,7 +176,7 @@ function Stealing.entregar(ladrao)
 	end
 	local vaga = Game.vagaLivre(ladrao)
 	if not vaga then
-		Stealing.falhar(ladrao, "Sua base está cheia! O robô voltou para o dono.")
+		Stealing.falhar(ladrao, "base_cheia_entrega")
 		return
 	end
 	local dono = robo.dono
@@ -183,9 +185,10 @@ function Stealing.entregar(ladrao)
 	Game.tirarDaBase(robo)
 	Game.colocarNaBase(ladrao, robo, vaga, false)
 
-	Game.notificar(ladrao.player, "Você roubou " .. nome .. "!", "bom")
+	Game.notificar(ladrao.player, "bom", "roubou", nome)
+	Game.emitir(ladrao, "roubar", 1)
 	if dono then
-		Game.notificar(dono.player, ladrao.player.DisplayName .. " roubou seu " .. nome .. "!", "ruim")
+		Game.notificar(dono.player, "ruim", "foi_roubado", ladrao.player.DisplayName, nome)
 	end
 end
 
@@ -197,9 +200,9 @@ function Stealing.vigiar()
 		else
 			local raiz = Game.raizDe(ladrao.player)
 			if not raiz then
-				Stealing.falhar(ladrao, "Você caiu e o robô voltou para o dono.")
+				Stealing.falhar(ladrao, "caiu")
 			elseif os.clock() - robo.inicioRoubo > Config.ROUBO.TEMPO_MAXIMO then
-				Stealing.falhar(ladrao, "Demorou demais! O robô fugiu de volta para o dono.")
+				Stealing.falhar(ladrao, "demorou")
 			elseif MapBuilder.dentroDaBase(ladrao.base, raiz.Position, -1) then
 				Stealing.entregar(ladrao)
 			end
@@ -221,7 +224,7 @@ function Stealing.darTapa(player)
 
 	local ferramenta = Instance.new("Tool")
 	ferramenta.Name = "Tapa"
-	ferramenta.ToolTip = "Clique para dar um tapa: faz o ladrão soltar o robô"
+	ferramenta.ToolTip = "Slap! / Tapa!"
 	ferramenta.CanBeDropped = false
 	ferramenta.RequiresHandle = true
 
@@ -298,13 +301,16 @@ function Stealing.tapa(player)
 		direcao = raiz.CFrame.LookVector
 	end
 	direcao = direcao.Unit
-	Game.remotos.Empurrao:FireClient(alvo.player, direcao * Config.TAPA.FORCA)
+	local forca = Config.TAPA.FORCA + Config.TAPA.FORCA_POR_NIVEL * estado.melhorias.tapa
+	Game.remotos.Empurrao:FireClient(alvo.player, direcao * forca)
 	efeitoDeTapa(raizAlvo.Position)
+	Game.efeito("tapa", raizAlvo.Position, Color3.fromRGB(255, 255, 200))
 
 	if alvo.carregando then
 		local nome = nomeDo(alvo.carregando)
-		Stealing.falhar(alvo, "Você levou um tapa de " .. player.DisplayName .. " e soltou o robô!")
-		Game.notificar(player, "PÁ! " .. alvo.player.DisplayName .. " soltou " .. nome .. "!", "bom")
+		Stealing.falhar(alvo, "tapa_soltou", player.DisplayName)
+		Game.notificar(player, "bom", "tapa_acertou", alvo.player.DisplayName, nome)
+		Game.emitir(estado, "tapaLadrao", 1)
 	end
 end
 
@@ -328,7 +334,7 @@ function Stealing.iniciar()
 		local ladrao = robo.ladrao
 		Stealing.desprender(robo)
 		if ladrao then
-			Game.notificar(ladrao.player, "O robô que você carregava sumiu (o dono saiu ou renasceu).", "info")
+			Game.notificar(ladrao.player, "info", "sumiu")
 		end
 	end
 

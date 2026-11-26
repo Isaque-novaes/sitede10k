@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import json
 import pathlib
+import re
 import sys
 import urllib.request
 
@@ -158,6 +159,61 @@ return falhas, normal
 """
 
 
+# Chaves de texto usadas no código (Textos.luau precisa ter pt e en para todas)
+PADROES_CHAVES = [
+    r'\bT\("([A-Za-z0-9_]+)"',
+    r'Textos\.t\([^,()]+(?:\([^()]*\))?,\s*"([A-Za-z0-9_]+)"',
+    r'notificar\([^,]+,\s*"(?:bom|ruim|alerta|info)",\s*"([A-Za-z0-9_]+)"',
+    r'notificarTodos\("(?:bom|ruim|alerta|info)",\s*"([A-Za-z0-9_]+)"',
+    r'falhar\([^,]+,\s*"([A-Za-z0-9_]+)"',
+    r'linhaInfo\([^,]+,\s*\d+,\s*"([A-Za-z0-9_]+)"',
+    r'SetAttribute\("Chave",\s*"([A-Za-z0-9_]+)"',
+    r'placa\([^,]+,\s*"([A-Za-z0-9_]+)"',
+    r'botaoMenu\([^,]+,\s*"([A-Za-z0-9_]+)"',
+    r'\{\s*"(teste_[a-z]+)"',
+    r'"(aba_[a-z]+)"',
+    r'quadroDeAviso\(mapa,\s*"[A-Za-z]+",[^\n]*\n?\s*"([a-z_]+)"',
+]
+
+FAMILIAS = r"""
+local Config = ...
+local chaves = {}
+for _, tipo in ipairs({ "renda", "vagas", "tapa" }) do
+  table.insert(chaves, "melhoria_" .. tipo); table.insert(chaves, "efeito_" .. tipo)
+end
+for _, m in ipairs(Config.MISSOES) do table.insert(chaves, "missao_" .. m.tipo) end
+for _, p in ipairs(Config.LOJA.PACOTES) do table.insert(chaves, "pacote_" .. p.chave) end
+for _, p in ipairs(Config.LOJA.PASSES) do table.insert(chaves, "passe_" .. p.chave); table.insert(chaves, "desc_" .. p.chave) end
+for i = 1, 4 do table.insert(chaves, "passo" .. i) end
+return chaves
+"""
+
+
+def chaves_usadas() -> set[str]:
+    chaves = set()
+    for _, _, _, caminho in listar_scripts():
+        fonte = (SRC / caminho).read_text(encoding="utf-8")
+        for padrao in PADROES_CHAVES:
+            # ignora prefixos de nomes montados ("melhoria_" .. tipo): esses são conferidos em FAMILIAS
+            chaves.update(re.findall(padrao + r'(?!\s*\.\.)', fonte))
+    return chaves
+
+
+def checar_textos(lua, sim, config_mod) -> list[str]:
+    shared = sim.novaInstancia("Folder", True)
+    textos_mod = sim.criarScript("ModuleScript", "Textos", "shared/Textos.luau", shared)
+    dados = sim.requerer(textos_mod).dados
+    chaves = chaves_usadas() | set(lua.execute(FAMILIAS, sim.requerer(config_mod)).values())
+    problemas = []
+    for chave in sorted(chaves):
+        entrada = dados[chave]
+        if entrada is None:
+            problemas.append(f"texto '{chave}' usado no código mas não existe em Textos.luau")
+        elif entrada["pt"] is None or entrada["en"] is None:
+            problemas.append(f"texto '{chave}' sem português ou sem inglês")
+    return problemas
+
+
 def rodar(api: dict) -> int:
     lua = luajit21.LuaRuntime(unpack_returned_tuples=True)
     g = lua.globals()
@@ -176,6 +232,11 @@ def rodar(api: dict) -> int:
     falhas_rapidas = list(falhas_rapidas.values())
     distribuicao = {int(k): v for k, v in contagem.items() if k != "mut"}
     print(f"Sorteio em 20000 robôs (por raridade 1..7): {dict(sorted(distribuicao.items()))}")
+    problemas_textos = checar_textos(lua, sim, config_mod)
+    print(f"Textos: {len(chaves_usadas())} chaves encontradas no código, {len(problemas_textos)} problema(s)")
+    for problema in problemas_textos:
+        print("  FALHOU:", problema)
+    falhas_rapidas = falhas_rapidas + problemas_textos
 
     # um Roblox novo para o cenário completo
     lua = luajit21.LuaRuntime(unpack_returned_tuples=True)
@@ -185,18 +246,26 @@ def rodar(api: dict) -> int:
     g.ARQUIVOS = lua.table_from([list(x) for x in listar_scripts()], recursive=True)
     sim = lua.execute((AQUI / "roblox_simulado.lua").read_text(encoding="utf-8"))
     cenario = lua.execute((AQUI / "cenario.lua").read_text(encoding="utf-8"))
-    resultado = cenario(sim)
+    from lupa.luajit21 import LuaError
+
+    try:
+        resultado = cenario(sim)
+        falhas = list(resultado.falhas.values())
+        quantos_ok = resultado.ok
+    except LuaError as erro:
+        # o roteiro parou no meio (normalmente porque o jogo quebrou antes)
+        falhas = [f"o roteiro de teste parou: {erro}".split("\n")[0]]
+        quantos_ok = 0
 
     erros = list(sim.erros.values())
     avisos = list(sim.avisos.values())
-    falhas = list(resultado.falhas.values())
     saida = list(sim.saida.values())
 
     print(f"\nTestes rápidos: {'OK' if not falhas_rapidas else f'{len(falhas_rapidas)} falha(s)'}")
     for f in falhas_rapidas:
         print("  FALHOU:", f)
 
-    print(f"\nCenário: {resultado.ok} verificações OK, {len(falhas)} falha(s)")
+    print(f"\nCenário: {quantos_ok} verificações OK, {len(falhas)} falha(s)")
     for f in falhas:
         print("  FALHOU:", f)
 

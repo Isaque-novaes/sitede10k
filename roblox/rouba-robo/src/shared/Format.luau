@@ -1,13 +1,18 @@
 --[[
-	Formatação de números para a tela: 1500 -> "1,5K", 2300000 -> "2,3M".
+	Formatação de números para a tela.
+	  pt: 1500 -> "1,5K"   en: 1500 -> "1.5K"
+	O idioma é opcional (o padrão é "pt").
 ]]
 
 local Format = {}
 
-local SUFIXOS = { "", "K", "M", "B", "T", "Qa", "Qi", "Sx" }
+local SUFIXOS = { "", "K", "M", "B", "T", "Qa", "Qi", "Sx", "Sp", "Oc" }
 
-function Format.numero(n)
-	n = n or 0
+function Format.numero(n, idioma)
+	n = tonumber(n) or 0
+	if n ~= n then
+		n = 0
+	end
 	local negativo = n < 0
 	if negativo then
 		n = -n
@@ -33,7 +38,10 @@ function Format.numero(n)
 			texto = (string.gsub(texto, "0+$", ""))
 			texto = (string.gsub(texto, "%.$", ""))
 		end
-		texto = (string.gsub(texto, "%.", ",")) .. SUFIXOS[i]
+		if idioma ~= "en" then
+			texto = (string.gsub(texto, "%.", ","))
+		end
+		texto = texto .. SUFIXOS[i]
 	end
 
 	if negativo then
@@ -42,21 +50,28 @@ function Format.numero(n)
 	return texto
 end
 
-function Format.dinheiro(n)
-	return "$" .. Format.numero(n)
+function Format.dinheiro(n, idioma)
+	return "$" .. Format.numero(n, idioma)
 end
 
--- 1.5 -> "x1,5", 2 -> "x2"
-function Format.multiplicador(m)
+-- 1.5 -> "x1,5" (pt) / "x1.5" (en), 2 -> "x2"
+function Format.multiplicador(m, idioma)
 	local texto = string.format("%.1f", m)
 	texto = (string.gsub(texto, "%.0$", ""))
-	return "x" .. (string.gsub(texto, "%.", ","))
+	if idioma ~= "en" then
+		texto = (string.gsub(texto, "%.", ","))
+	end
+	return "x" .. texto
 end
 
 function Format.tempo(segundos)
 	segundos = math.max(0, math.ceil(segundos))
-	local minutos = math.floor(segundos / 60)
-	return string.format("%d:%02d", minutos, segundos % 60)
+	if segundos >= 3600 then
+		local horas = math.floor(segundos / 3600)
+		local resto = segundos % 3600
+		return string.format("%d:%02d:%02d", horas, math.floor(resto / 60), resto % 60)
+	end
+	return string.format("%d:%02d", math.floor(segundos / 60), segundos % 60)
 end
 
 return Format

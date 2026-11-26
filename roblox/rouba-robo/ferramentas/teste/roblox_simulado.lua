@@ -30,6 +30,12 @@ Sim.passes = {}
 Sim.falharDataStore = false
 Sim.cofres = {}
 Sim.aoFechar = {}
+Sim.amizades = {} -- ["1:2"] = true
+Sim.grupos = {} -- ["userId:grupoId"] = true
+Sim.caixaRestrita = {} -- [userId] = true
+Sim.anuncios = {} -- pedidos de anúncio
+Sim.resultadoAnuncio = nil -- EnumItem ShowAdResult (nil = ShowCompleted)
+Sim.precos = {}
 
 local avisados = {}
 local function avisar(msg)
@@ -593,9 +599,66 @@ local Random = {
 	end,
 }
 
+local CS = { __type = "ColorSequence" }
+CS.__index = function(t, k)
+	if k == "Keypoints" then
+		return rawget(t, "_k")
+	end
+	error(tostring(k) .. " is not a valid member of ColorSequence", 2)
+end
+local ColorSequence = {
+	new = function(a, b)
+		if typeof(a) == "Color3" then
+			if b ~= nil and typeof(b) ~= "Color3" then
+				error("ColorSequence.new: segundo argumento precisa ser Color3", 2)
+			end
+			return setmetatable({ _k = { a, b or a } }, CS)
+		elseif type(a) == "table" and getmetatable(a) == nil then
+			return setmetatable({ _k = a }, CS)
+		end
+		error("ColorSequence.new: argumentos inválidos (" .. typeof(a) .. ")", 2)
+	end,
+}
+local NS = { __type = "NumberSequence" }
+NS.__index = function(t, k)
+	if k == "Keypoints" then
+		return rawget(t, "_k")
+	end
+	error(tostring(k) .. " is not a valid member of NumberSequence", 2)
+end
+local NumberSequence = {
+	new = function(a, b)
+		if type(a) == "number" then
+			if b ~= nil and type(b) ~= "number" then
+				error("NumberSequence.new: segundo argumento precisa ser número", 2)
+			end
+			return setmetatable({ _k = { a, b or a } }, NS)
+		elseif type(a) == "table" and getmetatable(a) == nil then
+			return setmetatable({ _k = a }, NS)
+		end
+		error("NumberSequence.new: argumentos inválidos (" .. typeof(a) .. ")", 2)
+	end,
+}
+local NR = { __type = "NumberRange" }
+NR.__index = function(_, k)
+	error(tostring(k) .. " is not a valid member of NumberRange", 2)
+end
+local NumberRange = {
+	new = function(a, b)
+		if type(a) ~= "number" or (b ~= nil and type(b) ~= "number") then
+			error("NumberRange.new espera números", 2)
+		end
+		if b and b < a then
+			error("NumberRange: o máximo precisa ser maior que o mínimo", 2)
+		end
+		return setmetatable({ Min = a, Max = b or a }, NR)
+	end,
+}
+
 local TIPOS_SIMULADOS = {
 	Vector3 = true, Vector2 = true, CFrame = true, Color3 = true,
 	UDim = true, UDim2 = true, TweenInfo = true,
+	ColorSequence = true, NumberSequence = true, NumberRange = true,
 }
 
 ---------------------------------------------------------------------------
@@ -1229,7 +1292,7 @@ end)
 local TIPOS_ATRIBUTO = {
 	["nil"] = true, boolean = true, number = true, string = true,
 	Vector3 = true, Vector2 = true, Color3 = true, UDim = true, UDim2 = true,
-	CFrame = true, EnumItem = true,
+	CFrame = true, EnumItem = true, ColorSequence = true, NumberSequence = true, NumberRange = true,
 }
 
 metodo("Instance", "SetAttribute", function(self, nome, valor)
@@ -1559,6 +1622,94 @@ metodo("GlobalDataStore", "SetAsync", function(self, chave, valor, ids)
 	internos[self].dados[chave] = copiaProfunda(valor)
 end)
 
+metodo("GlobalDataStore", "UpdateAsync", function(self, chave, transformar)
+	if Sim.falharDataStore then
+		error("502: API Services rejected request (simulado)", 2)
+	end
+	local antigo = copiaProfunda(internos[self].dados[chave])
+	local novo = transformar(antigo, nil)
+	if novo == nil then
+		return nil
+	end
+	validarSalvavel(novo, chave)
+	internos[self].dados[chave] = copiaProfunda(novo)
+	return copiaProfunda(novo)
+end)
+metodo("DataStoreService", "GetOrderedDataStore", function(_, nome)
+	local cofre = novaInstancia("OrderedDataStore", true)
+	internos[cofre].props.Name = nome
+	local chave = "ordenado:" .. nome
+	Sim.cofres[chave] = Sim.cofres[chave] or {}
+	internos[cofre].dados = Sim.cofres[chave]
+	return cofre
+end)
+metodo("OrderedDataStore", "SetAsync", function(self, chave, valor)
+	if type(valor) ~= "number" or valor ~= math.floor(valor) then
+		error("OrderedDataStore só aceita números inteiros", 2)
+	end
+	internos[self].dados[chave] = valor
+end)
+metodo("OrderedDataStore", "GetSortedAsync", function(self, crescente, tamanho)
+	local lista = {}
+	for k, v in pairs(internos[self].dados) do
+		table.insert(lista, { key = k, value = v })
+	end
+	table.sort(lista, function(a, b)
+		if crescente then
+			return a.value < b.value
+		end
+		return a.value > b.value
+	end)
+	local pagina = {}
+	for i = 1, math.min(tamanho or 50, #lista) do
+		pagina[i] = lista[i]
+	end
+	local paginas = novaInstancia("DataStorePages", true)
+	internos[paginas].pagina = pagina
+	return paginas
+end)
+metodo("Pages", "GetCurrentPage", function(self)
+	return internos[self].pagina or {}
+end)
+
+-- PolicyService, AdService, grupos e amigos
+metodo("PolicyService", "GetPolicyInfoForPlayerAsync", function(_, jogador)
+	return { ArePaidRandomItemsRestricted = Sim.caixaRestrita[jogador.UserId] == true }
+end)
+local AdRewardMT = { __type = "AdReward" }
+metodo("AdService", "CreateAdRewardFromDevProductId", function(_, id)
+	if type(id) ~= "number" then
+		error("CreateAdRewardFromDevProductId espera um número", 2)
+	end
+	return setmetatable({ produto = id }, AdRewardMT)
+end)
+metodo("AdService", "ShowRewardedVideoAdAsync", function(_, jogador, premio)
+	if typeof(jogador) ~= "Instance" or internos[jogador].classe ~= "Player" then
+		error("ShowRewardedVideoAdAsync: precisa de um Player", 2)
+	end
+	if typeof(premio) ~= "AdReward" then
+		error("ShowRewardedVideoAdAsync: precisa de um AdReward", 2)
+	end
+	table.insert(Sim.anuncios, { jogador = jogador, produto = premio.produto })
+	return Sim.resultadoAnuncio or Enum.ShowAdResult.ShowCompleted
+end)
+metodo("Player", "IsFriendsWithAsync", function(self, outroId)
+	local a, b = internos[self].props.UserId, outroId
+	return Sim.amizades[math.min(a, b) .. ":" .. math.max(a, b)] == true
+end)
+metodo("Player", "IsInGroupAsync", function(self, grupo)
+	return Sim.grupos[internos[self].props.UserId .. ":" .. grupo] == true
+end)
+metodo("Players", "GetNameFromUserIdAsync", function(_, id)
+	return "Usuario" .. tostring(id)
+end)
+metodo("MarketplaceService", "GetProductInfoAsync", function(_, id)
+	return { PriceInRobux = Sim.precos[id] or 10 }
+end)
+metodo("ParticleEmitter", "Emit", function() end)
+metodo("Sound", "Play", function() end)
+metodo("Sound", "Stop", function() end)
+
 -- MarketplaceService
 metodo("MarketplaceService", "UserOwnsGamePassAsync", function(_, userId, passe)
 	return Sim.passes[userId .. ":" .. passe] == true
@@ -1674,6 +1825,25 @@ local G = {
 	UDim2 = UDim2,
 	TweenInfo = TweenInfo,
 	Random = Random,
+	ColorSequence = ColorSequence,
+	NumberSequence = NumberSequence,
+	NumberRange = NumberRange,
+	utf8 = {
+		char = function(...)
+			local partes = {}
+			for i = 1, select("#", ...) do
+				local c = select(i, ...)
+				if c < 0x80 then
+					partes[i] = string.char(c)
+				elseif c < 0x800 then
+					partes[i] = string.char(0xC0 + math.floor(c / 0x40), 0x80 + c % 0x40)
+				else
+					partes[i] = string.char(0xE0 + math.floor(c / 0x1000), 0x80 + math.floor(c / 0x40) % 0x40, 0x80 + c % 0x40)
+				end
+			end
+			return table.concat(partes)
+		end,
+	},
 	Enum = Enum,
 	typeof = typeof,
 	task = task,
@@ -1814,12 +1984,14 @@ end
 ---------------------------------------------------------------------------
 -- Jogadores e personagens
 ---------------------------------------------------------------------------
-function Sim.novoJogador(userId, nome)
+function Sim.novoJogador(userId, nome, localeId, premium)
 	local p = novaInstancia("Player", true)
 	local d = internos[p]
 	d.props.Name = nome
 	d.props.DisplayName = nome
 	d.props.UserId = userId
+	d.props.LocaleId = localeId or "en-us"
+	d.props.MembershipType = premium and Enum.MembershipType.Premium or Enum.MembershipType.None
 	local mochila = novaInstancia("Backpack", true)
 	reparentar(mochila, p)
 	local gui = novaInstancia("PlayerGui", true)
@@ -1885,5 +2057,6 @@ function Sim.moverPara(p, cframeOuPosicao)
 end
 
 Sim.Vector3, Sim.CFrame, Sim.Color3, Sim.Enum = Vector3, CFrame, Color3, Enum
+Sim.Instance = Instance
 
 return Sim
