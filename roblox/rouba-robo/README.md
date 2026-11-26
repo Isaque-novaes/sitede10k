@@ -35,6 +35,23 @@ para você testar sem esperar. Eles não funcionam no jogo publicado.
 Aba **Teste** (*Test*) > em "Clientes e Servidores" (*Clients and Servers*) escolha **2 jogadores** > **Iniciar** (*Start*).
 Abrem duas janelas, uma para cada jogador.
 
+### Testar com o Claude conectado ao Studio (plugin oficial do Roblox)
+
+O plugin [Roblox Studio](https://github.com/Roblox/roblox-studio-agent-plugin)
+conecta o Claude Code ao Studio aberto no seu computador. Com ele o Claude
+consegue apertar Play, ler o console, tirar print da tela e corrigir os
+scripts direto no seu place. Só funciona no Claude Code instalado no seu
+Mac ou PC (não funciona no Claude pela web nem em sessões na nuvem).
+
+1. No Claude Code do seu computador, rode `/plugin`, procure **Roblox Studio** e instale.
+2. Abra o `RoubaRobo.rbxlx` no Studio.
+3. No Studio: **Assistant → … → Settings → MCP Servers** → ligue **Enable Studio as MCP server**.
+4. Volte ao Claude Code e peça: *"lista minhas janelas do Roblox Studio"*. Ele deve mostrar o Rouba Robô.
+5. Depois peça, por exemplo: *"Dá Play no Rouba Robô, compra um robô na esteira,
+   olha o console e corrige qualquer erro. Depois tira um print da minha base."*
+
+Antes de mudanças grandes, salve uma cópia do place: o plugin altera o place direto.
+
 ## Publicar
 
 1. **Arquivo > Publicar no Roblox** (*File > Publish to Roblox*) e dê um nome ao jogo.
