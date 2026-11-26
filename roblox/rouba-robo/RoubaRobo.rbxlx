@@ -1,0 +1,2785 @@
+<roblox xmlns:xmime="http://www.w3.org/2005/05/xmlmime" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://www.roblox.com/roblox.xsd" version="4"><Item class="ReplicatedStorage" referent="RBX0000000000000000000000000000000E"><Properties><string name="Name">ReplicatedStorage</string></Properties><Item class="Folder" referent="RBX0000000000000000000000000000000D"><Properties><string name="Name">Shared</string></Properties><Item class="ModuleScript" referent="RBX00000000000000000000000000000001"><Properties><string name="Name">Config</string><ProtectedString name="Source"><![CDATA[--[[
+	Rouba Robô — configuração do jogo.
+
+	Tudo que dá pra ajustar sem mexer na lógica fica aqui: preços, renda,
+	chances, tempos, robôs e loja. Este módulo fica em ReplicatedStorage,
+	então o servidor e os jogadores leem os mesmos valores.
+]]
+
+local Config = {}
+
+Config.NOME_DO_JOGO = "Rouba Robô"
+
+-- Economia -------------------------------------------------------------------
+Config.DINHEIRO_INICIAL = 100
+Config.VAGAS_POR_BASE = 10
+Config.VENDA_DEVOLVE = 0.5 -- vender um robô devolve 50% do preço
+
+-- Esteira da fábrica ---------------------------------------------------------
+Config.ESTEIRA = {
+	INTERVALO = 2.2, -- segundos entre um robô e outro
+	VELOCIDADE = 7, -- studs por segundo
+}
+
+-- Roubo ----------------------------------------------------------------------
+Config.ROUBO = {
+	SEGURAR = 1, -- segundos segurando E para roubar ou vender
+	VELOCIDADE_CARREGANDO = 11, -- velocidade de quem está carregando um robô
+	VELOCIDADE_NORMAL = 16,
+	TEMPO_MAXIMO = 45, -- depois disso o robô volta sozinho pro dono
+}
+
+-- Tranca da base -------------------------------------------------------------
+Config.TRANCA = {
+	DURACAO = 60, -- segundos
+	EXTRA_POR_RENASCIMENTO = 10,
+}
+
+-- Tapa (a arma de defesa) ----------------------------------------------------
+Config.TAPA = {
+	RECARGA = 1.2,
+	ALCANCE = 8,
+	FORCA = 70,
+}
+
+-- Renascimento ---------------------------------------------------------------
+Config.RENASCER = {
+	CUSTO_BASE = 1000000,
+	CRESCIMENTO = 5, -- cada renascimento custa 5x o anterior
+	BONUS = 0.5, -- +50% de renda por renascimento
+}
+
+-- Evento "Hora da Sorte" -----------------------------------------------------
+Config.HORA_DA_SORTE = {
+	A_CADA = 600, -- segundos entre eventos
+	DURACAO = 120,
+	SORTE = 3, -- multiplica a chance de robôs Raro ou melhor
+}
+
+-- Raridades ------------------------------------------------------------------
+-- peso = chance relativa de aparecer na esteira.
+Config.Raridades = {
+	{ nome = "Comum", cor = Color3.fromRGB(200, 200, 200), peso = 50, escala = 1.0 },
+	{ nome = "Incomum", cor = Color3.fromRGB(90, 220, 110), peso = 25, escala = 1.1 },
+	{ nome = "Raro", cor = Color3.fromRGB(70, 160, 255), peso = 13, escala = 1.2 },
+	{ nome = "Épico", cor = Color3.fromRGB(180, 90, 255), peso = 7, escala = 1.35 },
+	{ nome = "Lendário", cor = Color3.fromRGB(255, 190, 40), peso = 3.5, escala = 1.5 },
+	{ nome = "Mítico", cor = Color3.fromRGB(255, 70, 70), peso = 1.2, escala = 1.65 },
+	{ nome = "Secreto", cor = Color3.fromRGB(30, 30, 30), peso = 0.3, escala = 1.85 },
+}
+
+-- Mutações: aparecem por acaso e multiplicam preço e renda.
+Config.Mutacoes = {
+	{ id = "dourado", nome = "Dourado", chance = 0.08, mult = 2, cor = Color3.fromRGB(255, 200, 40) },
+	{ id = "diamante", nome = "Diamante", chance = 0.02, mult = 4, cor = Color3.fromRGB(150, 235, 255) },
+	{ id = "arcoiris", nome = "Arco-íris", chance = 0.005, mult = 8, cor = Color3.fromRGB(255, 120, 200) },
+}
+
+-- Robôs ----------------------------------------------------------------------
+-- forma: "caixa", "barril" ou "bola". preco em $, renda em $ por segundo.
+Config.Robos = {
+	-- Comum
+	{ id = "parafusinho", nome = "Parafusinho", raridade = 1, preco = 25, renda = 1,
+		forma = "caixa", cor = Color3.fromRGB(160, 165, 175), detalhe = Color3.fromRGB(90, 95, 105) },
+	{ id = "bipbop", nome = "Bip-Bop", raridade = 1, preco = 60, renda = 2,
+		forma = "bola", cor = Color3.fromRGB(120, 200, 230), detalhe = Color3.fromRGB(40, 90, 120) },
+	{ id = "torradeira", nome = "Torradeira Turbo", raridade = 1, preco = 150, renda = 5,
+		forma = "caixa", cor = Color3.fromRGB(210, 120, 70), detalhe = Color3.fromRGB(70, 50, 40) },
+
+	-- Incomum
+	{ id = "ventilador", nome = "Ventilador Valente", raridade = 2, preco = 400, renda = 12,
+		forma = "barril", cor = Color3.fromRGB(110, 210, 160), detalhe = Color3.fromRGB(40, 80, 70) },
+	{ id = "lata", nome = "Lata Elétrica", raridade = 2, preco = 900, renda = 25,
+		forma = "barril", cor = Color3.fromRGB(230, 60, 60), detalhe = Color3.fromRGB(240, 240, 240) },
+	{ id = "aspirador", nome = "Aspirador Espião", raridade = 2, preco = 2000, renda = 50,
+		forma = "bola", cor = Color3.fromRGB(60, 60, 70), detalhe = Color3.fromRGB(0, 255, 140) },
+
+	-- Raro
+	{ id = "microondas", nome = "Micro-ondas Maluco", raridade = 3, preco = 5000, renda = 110,
+		forma = "caixa", cor = Color3.fromRGB(235, 235, 240), detalhe = Color3.fromRGB(40, 40, 50) },
+	{ id = "drone", nome = "Drone Fofoqueiro", raridade = 3, preco = 12000, renda = 240,
+		forma = "bola", cor = Color3.fromRGB(255, 140, 40), detalhe = Color3.fromRGB(30, 30, 30) },
+	{ id = "geladeira", nome = "Geladeira Ninja", raridade = 3, preco = 25000, renda = 450,
+		forma = "caixa", cor = Color3.fromRGB(30, 35, 45), detalhe = Color3.fromRGB(220, 30, 30) },
+
+	-- Épico
+	{ id = "liquidificador", nome = "Liquidificador Sinistro", raridade = 4, preco = 60000, renda = 1000,
+		forma = "barril", cor = Color3.fromRGB(120, 60, 180), detalhe = Color3.fromRGB(200, 255, 80) },
+	{ id = "pastel", nome = "Robô Pastel", raridade = 4, preco = 140000, renda = 2200,
+		forma = "caixa", cor = Color3.fromRGB(240, 200, 110), detalhe = Color3.fromRGB(170, 100, 40) },
+	{ id = "tanquinho", nome = "Tanquinho 3000", raridade = 4, preco = 300000, renda = 4500,
+		forma = "barril", cor = Color3.fromRGB(200, 230, 255), detalhe = Color3.fromRGB(40, 110, 220) },
+
+	-- Lendário
+	{ id = "capitao", nome = "Capitão Circuito", raridade = 5, preco = 750000, renda = 10000,
+		forma = "caixa", cor = Color3.fromRGB(30, 90, 200), detalhe = Color3.fromRGB(255, 210, 0) },
+	{ id = "forro", nome = "Ciborgue do Forró", raridade = 5, preco = 1800000, renda = 22000,
+		forma = "bola", cor = Color3.fromRGB(190, 120, 60), detalhe = Color3.fromRGB(250, 230, 120) },
+	{ id = "bateria", nome = "Rainha Bateria", raridade = 5, preco = 4000000, renda = 45000,
+		forma = "barril", cor = Color3.fromRGB(255, 220, 60), detalhe = Color3.fromRGB(30, 30, 30) },
+
+	-- Mítico
+	{ id = "sucata", nome = "Titã de Sucata", raridade = 6, preco = 10000000, renda = 100000,
+		forma = "caixa", cor = Color3.fromRGB(130, 90, 60), detalhe = Color3.fromRGB(255, 90, 30) },
+	{ id = "dragao", nome = "Dragão Mecânico", raridade = 6, preco = 25000000, renda = 220000,
+		forma = "barril", cor = Color3.fromRGB(40, 140, 80), detalhe = Color3.fromRGB(255, 60, 60) },
+	{ id = "colosso", nome = "Colosso Turbinado", raridade = 6, preco = 60000000, renda = 500000,
+		forma = "caixa", cor = Color3.fromRGB(90, 90, 110), detalhe = Color3.fromRGB(0, 220, 255) },
+
+	-- Secreto
+	{ id = "fantasma", nome = "Robô Fantasma", raridade = 7, preco = 150000000, renda = 1200000,
+		forma = "bola", cor = Color3.fromRGB(235, 240, 255), detalhe = Color3.fromRGB(120, 200, 255) },
+	{ id = "galactico", nome = "Núcleo Galáctico", raridade = 7, preco = 400000000, renda = 3000000,
+		forma = "bola", cor = Color3.fromRGB(40, 20, 90), detalhe = Color3.fromRGB(255, 100, 255) },
+	{ id = "supremo", nome = "Supremo Pixel", raridade = 7, preco = 1000000000, renda = 8000000,
+		forma = "caixa", cor = Color3.fromRGB(20, 20, 20), detalhe = Color3.fromRGB(0, 255, 120) },
+}
+
+-- Loja (opcional) ------------------------------------------------------------
+-- Crie o Passe de Jogo e os Produtos no site do Roblox (Criações > seu jogo >
+-- Monetização) e cole os números aqui. Com 0 o item não aparece na loja.
+Config.Loja = {
+	PASSE_DINHEIRO_EM_DOBRO = 0,
+	PACOTES = {
+		-- recompensa = o maior valor entre "minimo" e "minutos" de renda atual
+		{ id = 0, nome = "Maleta de Dinheiro", minutos = 10, minimo = 5000 },
+		{ id = 0, nome = "Cofre de Dinheiro", minutos = 60, minimo = 50000 },
+	},
+}
+
+-- Índices auxiliares (não mexa) ----------------------------------------------
+Config.RoboPorId = {}
+for _, robo in ipairs(Config.Robos) do
+	Config.RoboPorId[robo.id] = robo
+end
+
+Config.MutacaoPorId = {}
+for _, mutacao in ipairs(Config.Mutacoes) do
+	Config.MutacaoPorId[mutacao.id] = mutacao
+end
+
+function Config.custoRenascer(renascimentos)
+	return Config.RENASCER.CUSTO_BASE * (Config.RENASCER.CRESCIMENTO ^ renascimentos)
+end
+
+function Config.multiplicador(renascimentos)
+	return 1 + Config.RENASCER.BONUS * renascimentos
+end
+
+function Config.duracaoTranca(renascimentos)
+	return Config.TRANCA.DURACAO + Config.TRANCA.EXTRA_POR_RENASCIMENTO * renascimentos
+end
+
+-- Preço e renda de um robô considerando a mutação (sem bônus do jogador).
+function Config.precoDe(robo, mutacaoId)
+	local mutacao = mutacaoId and Config.MutacaoPorId[mutacaoId]
+	return robo.preco * (mutacao and mutacao.mult or 1)
+end
+
+function Config.rendaDe(robo, mutacaoId)
+	local mutacao = mutacaoId and Config.MutacaoPorId[mutacaoId]
+	return robo.renda * (mutacao and mutacao.mult or 1)
+end
+
+function Config.nomeCompleto(robo, mutacaoId)
+	local mutacao = mutacaoId and Config.MutacaoPorId[mutacaoId]
+	if mutacao then
+		return robo.nome .. " " .. mutacao.nome
+	end
+	return robo.nome
+end
+
+-- Sorteia um robô e uma mutação. `sorte` > 1 favorece Raro ou melhor.
+-- `aleatorio` é um objeto Random (opcional, ajuda nos testes).
+function Config.sortear(sorte, aleatorio)
+	sorte = sorte or 1
+	aleatorio = aleatorio or Random.new()
+
+	local total = 0
+	local pesos = {}
+	for i, raridade in ipairs(Config.Raridades) do
+		local peso = raridade.peso
+		if i >= 3 then
+			peso = peso * sorte
+		end
+		pesos[i] = peso
+		total = total + peso
+	end
+
+	local alvo = aleatorio:NextNumber() * total
+	local escolhida = #Config.Raridades
+	for i, peso in ipairs(pesos) do
+		alvo = alvo - peso
+		if alvo <= 0 then
+			escolhida = i
+			break
+		end
+	end
+
+	local candidatos = {}
+	for _, robo in ipairs(Config.Robos) do
+		if robo.raridade == escolhida then
+			table.insert(candidatos, robo)
+		end
+	end
+	local robo = candidatos[aleatorio:NextInteger(1, #candidatos)]
+
+	local mutacaoId = nil
+	local dado = aleatorio:NextNumber()
+	-- da mais rara para a mais comum
+	for i = #Config.Mutacoes, 1, -1 do
+		local mutacao = Config.Mutacoes[i]
+		if dado < mutacao.chance then
+			mutacaoId = mutacao.id
+			break
+		end
+	end
+
+	return robo, mutacaoId
+end
+
+return Config
+]]></ProtectedString></Properties></Item><Item class="ModuleScript" referent="RBX00000000000000000000000000000002"><Properties><string name="Name">Format</string><ProtectedString name="Source"><![CDATA[--[[
+	Formatação de números para a tela: 1500 -> "1,5K", 2300000 -> "2,3M".
+]]
+
+local Format = {}
+
+local SUFIXOS = { "", "K", "M", "B", "T", "Qa", "Qi", "Sx" }
+
+function Format.numero(n)
+	n = n or 0
+	local negativo = n < 0
+	if negativo then
+		n = -n
+	end
+
+	local texto
+	if n < 1000 then
+		texto = tostring(math.floor(n))
+	else
+		local i = 1
+		while n >= 1000 and i < #SUFIXOS do
+			n = n / 1000
+			i = i + 1
+		end
+		if n >= 100 then
+			texto = tostring(math.floor(n + 1e-6))
+		elseif n >= 10 then
+			texto = string.format("%.1f", math.floor(n * 10 + 1e-6) / 10)
+		else
+			texto = string.format("%.2f", math.floor(n * 100 + 1e-6) / 100)
+		end
+		if string.find(texto, ".", 1, true) then
+			texto = (string.gsub(texto, "0+$", ""))
+			texto = (string.gsub(texto, "%.$", ""))
+		end
+		texto = (string.gsub(texto, "%.", ",")) .. SUFIXOS[i]
+	end
+
+	if negativo then
+		return "-" .. texto
+	end
+	return texto
+end
+
+function Format.dinheiro(n)
+	return "$" .. Format.numero(n)
+end
+
+-- 1.5 -> "x1,5", 2 -> "x2"
+function Format.multiplicador(m)
+	local texto = string.format("%.1f", m)
+	texto = (string.gsub(texto, "%.0$", ""))
+	return "x" .. (string.gsub(texto, "%.", ","))
+end
+
+function Format.tempo(segundos)
+	segundos = math.max(0, math.ceil(segundos))
+	local minutos = math.floor(segundos / 60)
+	return string.format("%d:%02d", minutos, segundos % 60)
+end
+
+return Format
+]]></ProtectedString></Properties></Item></Item></Item><Item class="ServerScriptService" referent="RBX00000000000000000000000000000010"><Properties><string name="Name">ServerScriptService</string></Properties><Item class="Folder" referent="RBX0000000000000000000000000000000F"><Properties><string name="Name">Server</string></Properties><Item class="ModuleScript" referent="RBX00000000000000000000000000000003"><Properties><string name="Name">Conveyor</string><ProtectedString name="Source"><![CDATA[--[[
+	A esteira da fábrica: sorteia robôs, faz eles andarem e cuida da
+	compra. Também controla o evento "Hora da Sorte".
+]]
+
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
+
+local Shared = ReplicatedStorage:WaitForChild("Shared")
+local Config = require(Shared:WaitForChild("Config"))
+local Format = require(Shared:WaitForChild("Format"))
+local Game = require(script.Parent:WaitForChild("Game"))
+
+local Conveyor = {}
+
+local ativos = {} -- robôs na esteira, em ordem de criação
+local aleatorio = Random.new()
+local FRENTE = CFrame.Angles(0, -math.pi / 2, 0) -- olhando para +X (sentido da esteira)
+local sorteAte = 0
+
+function Conveyor.sorteAtual()
+	if os.clock() < sorteAte then
+		return Config.HORA_DA_SORTE.SORTE
+	end
+	return 1
+end
+
+function Conveyor.iniciarHoraDaSorte()
+	local duracao = Config.HORA_DA_SORTE.DURACAO
+	sorteAte = os.clock() + duracao
+	ReplicatedStorage:SetAttribute("HoraDaSorteAte", workspace:GetServerTimeNow() + duracao)
+	Game.notificarTodos("HORA DA SORTE! Robôs raros saem " .. Config.HORA_DA_SORTE.SORTE
+		.. "x mais da fábrica por " .. Format.tempo(duracao) .. "!", "alerta")
+end
+
+function Conveyor.gerar(x)
+	local esteira = Game.mundo.esteira
+	x = x or esteira.inicioX
+	local def, mutacaoId = Config.sortear(Conveyor.sorteAtual(), aleatorio)
+	local robo = Game.novoRobo(def, mutacaoId, CFrame.new(x, esteira.y, esteira.z) * FRENTE)
+	robo.x = x
+	table.insert(ativos, robo)
+
+	local raridade = Config.Raridades[def.raridade]
+	if def.raridade >= 5 or mutacaoId == "diamante" or mutacaoId == "arcoiris" then
+		Game.notificarTodos("Saiu da fábrica: " .. Config.nomeCompleto(def, mutacaoId)
+			.. " (" .. raridade.nome .. ")! Corre!", "alerta")
+	end
+	return robo
+end
+
+function Conveyor.passo(dt)
+	local esteira = Game.mundo.esteira
+	local distancia = Config.ESTEIRA.VELOCIDADE * dt
+	for i = #ativos, 1, -1 do
+		local robo = ativos[i]
+		if robo.estado ~= "esteira" then
+			table.remove(ativos, i)
+		else
+			robo.x = robo.x + distancia
+			if robo.x >= esteira.fimX then
+				table.remove(ativos, i)
+				Game.destruirRobo(robo)
+			else
+				robo.modelo:PivotTo(CFrame.new(robo.x, esteira.y, esteira.z) * FRENTE)
+			end
+		end
+	end
+end
+
+function Conveyor.comprar(robo, player)
+	local estado = Game.estados[player]
+	if not estado or robo.estado ~= "esteira" then
+		return
+	end
+	local vaga = Game.vagaLivre(estado)
+	if not vaga then
+		Game.notificar(player, "Sua base está cheia! Segure E num robô seu para vender e abrir espaço.", "ruim")
+		return
+	end
+	local preco = Config.precoDe(robo.def, robo.mut)
+	if not Game.gastar(estado, preco) then
+		Game.notificar(player, "Falta dinheiro: " .. Config.nomeCompleto(robo.def, robo.mut)
+			.. " custa " .. Format.dinheiro(preco) .. ".", "ruim")
+		return
+	end
+	Game.colocarNaBase(estado, robo, vaga, false)
+	Game.notificar(player, "Você comprou " .. Config.nomeCompleto(robo.def, robo.mut) .. "!", "bom")
+end
+
+function Conveyor.quantidade()
+	return #ativos
+end
+
+function Conveyor.robos()
+	return ativos
+end
+
+function Conveyor.iniciar()
+	Game.acoes.esteira = Conveyor.comprar
+
+	-- já começa com a esteira cheia, para ninguém esperar
+	local esteira = Game.mundo.esteira
+	local espaco = Config.ESTEIRA.VELOCIDADE * Config.ESTEIRA.INTERVALO
+	local x = esteira.fimX - espaco
+	while x > esteira.inicioX do
+		Conveyor.gerar(x)
+		x = x - espaco
+	end
+
+	RunService.Heartbeat:Connect(Conveyor.passo)
+
+	task.spawn(function()
+		while true do
+			Conveyor.gerar()
+			task.wait(Config.ESTEIRA.INTERVALO)
+		end
+	end)
+
+	task.spawn(function()
+		while true do
+			task.wait(Config.HORA_DA_SORTE.A_CADA)
+			Conveyor.iniciarHoraDaSorte()
+		end
+	end)
+end
+
+return Conveyor
+]]></ProtectedString></Properties></Item><Item class="ModuleScript" referent="RBX00000000000000000000000000000004"><Properties><string name="Name">Data</string><ProtectedString name="Source"><![CDATA[--[[
+	Salva e carrega o progresso com DataStore.
+
+	No Roblox Studio, o salvamento só funciona se você ativar
+	"Game Settings > Security > Enable Studio Access to API Services".
+	Sem isso o jogo roda normal, só não guarda o progresso.
+
+	Se a leitura falhar, o jogador fica marcado para NÃO salvar, assim um
+	erro passageiro do Roblox nunca apaga o progresso verdadeiro.
+]]
+
+local DataStoreService = game:GetService("DataStoreService")
+
+local Data = {}
+
+local NOME_DO_COFRE = "RoubaRobo_v1"
+local TENTATIVAS = 3
+
+local cofre = nil
+local okCofre, erroCofre = pcall(function()
+	cofre = DataStoreService:GetDataStore(NOME_DO_COFRE)
+end)
+if not okCofre then
+	warn("[Rouba Robô] DataStore indisponível: " .. tostring(erroCofre))
+end
+
+local function chave(player)
+	return "jogador_" .. player.UserId
+end
+
+function Data.padrao()
+	return {
+		versao = 1,
+		dinheiro = nil, -- nil = usa o dinheiro inicial
+		renascimentos = 0,
+		robos = {}, -- { { id = "parafusinho", mut = "dourado", vaga = 1 }, ... }
+		descobertos = {}, -- { parafusinho = true, ... }
+	}
+end
+
+-- Retorna (dados, podeSalvar)
+function Data.carregar(player)
+	if not cofre then
+		return Data.padrao(), false
+	end
+	for tentativa = 1, TENTATIVAS do
+		local ok, resultado = pcall(function()
+			return cofre:GetAsync(chave(player))
+		end)
+		if ok then
+			if type(resultado) == "table" then
+				local dados = Data.padrao()
+				for k, v in pairs(resultado) do
+					dados[k] = v
+				end
+				return dados, true
+			end
+			return Data.padrao(), true
+		end
+		warn(string.format("[Rouba Robô] Falha ao carregar %s (tentativa %d): %s",
+			player.Name, tentativa, tostring(resultado)))
+		if string.find(tostring(resultado), "Studio", 1, true) then
+			-- Studio sem acesso às APIs: não adianta tentar de novo
+			break
+		end
+		if tentativa < TENTATIVAS then
+			task.wait(1.5 * tentativa)
+		end
+	end
+	return Data.padrao(), false
+end
+
+function Data.salvar(player, dados)
+	if not cofre then
+		return false
+	end
+	for tentativa = 1, TENTATIVAS do
+		local ok, erro = pcall(function()
+			cofre:SetAsync(chave(player), dados, { player.UserId })
+		end)
+		if ok then
+			return true
+		end
+		warn(string.format("[Rouba Robô] Falha ao salvar %s (tentativa %d): %s",
+			player.Name, tentativa, tostring(erro)))
+		if tentativa < TENTATIVAS then
+			task.wait(1.5 * tentativa)
+		end
+	end
+	return false
+end
+
+return Data
+]]></ProtectedString></Properties></Item><Item class="ModuleScript" referent="RBX00000000000000000000000000000005"><Properties><string name="Name">Game</string><ProtectedString name="Source"><![CDATA[--[[
+	O coração do jogo no servidor: jogadores, bases, vagas, robôs,
+	dinheiro, renda, tranca da base e renascimento.
+
+	Estados de um robô:
+	  "esteira"   andando na esteira, à venda
+	  "voando"    indo para uma base (animação)
+	  "base"      parado num pedestal, gerando dinheiro
+	  "carregado" na cabeça de um ladrão
+	  "destruido" já saiu do jogo
+
+	Os módulos Conveyor e Stealing registram em Game.acoes o que acontece
+	quando alguém segura E num robô em cada estado.
+]]
+
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
+
+local Shared = ReplicatedStorage:WaitForChild("Shared")
+local Config = require(Shared:WaitForChild("Config"))
+local Format = require(Shared:WaitForChild("Format"))
+local MapBuilder = require(script.Parent:WaitForChild("MapBuilder"))
+local RobotFactory = require(script.Parent:WaitForChild("RobotFactory"))
+
+local Game = {}
+
+Game.estados = {} -- [Player] = estado do jogador
+Game.mundo = nil
+Game.remotos = nil
+Game.acoes = {} -- [estadoDoRobo] = function(robo, player)
+
+-- ganchos preenchidos pelo Stealing
+Game.aoDestruirCarregado = nil -- function(robo)
+Game.aoSairComCarga = nil -- function(estadoLadrao)
+
+local MAIOR_INTEIRO = 9e18
+
+local function agora()
+	return workspace:GetServerTimeNow()
+end
+
+function Game.iniciar(mundo, remotos)
+	Game.mundo = mundo
+	Game.remotos = remotos
+end
+
+-- Avisos na tela ---------------------------------------------------------------
+
+-- tipo: "bom", "ruim", "alerta" ou "info"
+function Game.notificar(player, texto, tipo)
+	Game.remotos.Notificar:FireClient(player, texto, tipo or "info")
+end
+
+function Game.notificarTodos(texto, tipo)
+	Game.remotos.Notificar:FireAllClients(texto, tipo or "info")
+end
+
+-- Robôs ------------------------------------------------------------------------
+
+function Game.novoRobo(def, mutacaoId, cframe)
+	local visual = RobotFactory.construir(def, mutacaoId)
+	local robo = {
+		def = def,
+		mut = mutacaoId,
+		modelo = visual.modelo,
+		prompt = visual.prompt,
+		visual = visual,
+		estado = "esteira",
+		dono = nil,
+		vaga = nil,
+		ladrao = nil,
+		voo = 0,
+	}
+	visual.prompt.Triggered:Connect(function(player)
+		local acao = Game.acoes[robo.estado]
+		if acao then
+			acao(robo, player)
+		end
+	end)
+	visual.modelo:PivotTo(cframe)
+	visual.modelo.Parent = Game.mundo.pastaRobos
+	return robo
+end
+
+function Game.valorVenda(robo)
+	return math.floor(Config.precoDe(robo.def, robo.mut) * Config.VENDA_DEVOLVE)
+end
+
+-- Anima o robô num arco até `alvo`. Um voo novo cancela o anterior.
+function Game.voar(robo, alvo, aoTerminar)
+	robo.voo = robo.voo + 1
+	local meuVoo = robo.voo
+	local inicio = robo.modelo:GetPivot()
+	local distancia = (inicio.Position - alvo.Position).Magnitude
+	local duracao = math.clamp(distancia / 70, 0.6, 2)
+	local altura = math.clamp(distancia * 0.25, 4, 30)
+
+	task.spawn(function()
+		local comeco = os.clock()
+		while true do
+			if robo.voo ~= meuVoo or robo.modelo.Parent == nil then
+				return
+			end
+			local t = math.min((os.clock() - comeco) / duracao, 1)
+			robo.modelo:PivotTo(inicio:Lerp(alvo, t) + Vector3.new(0, altura * 4 * t * (1 - t), 0))
+			if t >= 1 then
+				break
+			end
+			RunService.Heartbeat:Wait()
+		end
+		if aoTerminar then
+			aoTerminar()
+		end
+	end)
+end
+
+function Game.destruirRobo(robo)
+	if robo.estado == "destruido" then
+		return
+	end
+	if robo.estado == "carregado" and Game.aoDestruirCarregado then
+		Game.aoDestruirCarregado(robo)
+	end
+	local dono = robo.dono
+	if dono and robo.vaga and dono.vagas[robo.vaga] == robo then
+		dono.vagas[robo.vaga] = nil
+	end
+	robo.estado = "destruido"
+	robo.voo = robo.voo + 1
+	robo.dono = nil
+	robo.vaga = nil
+	robo.modelo:Destroy()
+	if dono then
+		Game.atualizarAtributos(dono)
+	end
+end
+
+-- Vagas e bases ---------------------------------------------------------------
+
+function Game.vagaLivre(estado)
+	for vaga = 1, Config.VAGAS_POR_BASE do
+		if estado.vagas[vaga] == nil then
+			return vaga
+		end
+	end
+	return nil
+end
+
+-- Põe o robô na vaga do jogador. instantaneo = sem animação (ao carregar).
+function Game.colocarNaBase(estado, robo, vaga, instantaneo)
+	estado.vagas[vaga] = robo
+	robo.dono = estado
+	robo.vaga = vaga
+	robo.ladrao = nil
+	estado.descobertos[robo.def.id] = true
+
+	local prompt = robo.prompt
+	prompt.Enabled = false
+	prompt.ActionText = "Roubar"
+	prompt.HoldDuration = Config.ROUBO.SEGURAR
+	prompt.ObjectText = Config.nomeCompleto(robo.def, robo.mut)
+	prompt:SetAttribute("DonoId", estado.player.UserId)
+	prompt:SetAttribute("Venda", Format.dinheiro(Game.valorVenda(robo)))
+
+	local alvo = estado.base.pedestais[vaga]
+	local function chegou()
+		if robo.dono == estado and estado.vagas[vaga] == robo and robo.estado == "voando" then
+			robo.estado = "base"
+			prompt.Enabled = true
+			Game.atualizarAtributos(estado)
+		end
+	end
+
+	robo.estado = "voando"
+	if instantaneo then
+		robo.voo = robo.voo + 1
+		robo.modelo:PivotTo(alvo)
+		chegou()
+	else
+		Game.voar(robo, alvo, chegou)
+	end
+	Game.atualizarAtributos(estado)
+end
+
+-- Tira o robô da vaga do dono atual (sem destruir).
+function Game.tirarDaBase(robo)
+	local dono = robo.dono
+	if dono and robo.vaga and dono.vagas[robo.vaga] == robo then
+		dono.vagas[robo.vaga] = nil
+	end
+	robo.dono = nil
+	robo.vaga = nil
+	if dono then
+		Game.atualizarAtributos(dono)
+	end
+end
+
+function Game.pegarBaseLivre()
+	for _, base in ipairs(Game.mundo.bases) do
+		if base.dono == nil then
+			return base
+		end
+	end
+	return nil
+end
+
+-- Dinheiro e renda ------------------------------------------------------------
+
+function Game.multiplicador(estado)
+	local m = Config.multiplicador(estado.renascimentos)
+	if estado.dobro then
+		m = m * 2
+	end
+	return m
+end
+
+function Game.rendaPorSegundo(estado)
+	local total = 0
+	for _, robo in pairs(estado.vagas) do
+		if robo.estado == "base" then
+			total = total + Config.rendaDe(robo.def, robo.mut)
+		end
+	end
+	return total * Game.multiplicador(estado)
+end
+
+local function mostrarDinheiro(estado)
+	estado.valorDinheiro.Value = math.min(math.floor(estado.dinheiro), MAIOR_INTEIRO)
+end
+
+function Game.adicionarDinheiro(estado, valor)
+	estado.dinheiro = estado.dinheiro + valor
+	mostrarDinheiro(estado)
+end
+
+function Game.gastar(estado, valor)
+	if estado.dinheiro < valor then
+		return false
+	end
+	estado.dinheiro = estado.dinheiro - valor
+	mostrarDinheiro(estado)
+	return true
+end
+
+function Game.pagarRenda()
+	for _, estado in pairs(Game.estados) do
+		local renda = Game.rendaPorSegundo(estado)
+		if renda > 0 then
+			Game.adicionarDinheiro(estado, renda)
+		end
+	end
+end
+
+-- Atributos que a interface do jogador lê
+function Game.atualizarAtributos(estado)
+	local player = estado.player
+	player:SetAttribute("RendaPorSegundo", Game.rendaPorSegundo(estado))
+	player:SetAttribute("Multiplicador", Game.multiplicador(estado))
+	player:SetAttribute("CustoRenascer", Config.custoRenascer(estado.renascimentos))
+	player:SetAttribute("TrancadaAte", estado.trancadaAte)
+
+	local ocupadas = 0
+	for _ in pairs(estado.vagas) do
+		ocupadas = ocupadas + 1
+	end
+	player:SetAttribute("Vagas", ocupadas .. "/" .. Config.VAGAS_POR_BASE)
+
+	local lista = {}
+	for _, def in ipairs(Config.Robos) do
+		if estado.descobertos[def.id] then
+			table.insert(lista, def.id)
+		end
+	end
+	player:SetAttribute("Descobertos", table.concat(lista, ","))
+end
+
+-- Entrada e saída de jogadores ------------------------------------------------
+
+function Game.adicionarJogador(player, dados, podeSalvar)
+	local base = Game.pegarBaseLivre()
+	if not base then
+		player:Kick("Este servidor está cheio. Entre em outro servidor do Rouba Robô!")
+		return nil
+	end
+
+	local estado = {
+		player = player,
+		base = base,
+		vagas = {},
+		dinheiro = tonumber(dados.dinheiro) or Config.DINHEIRO_INICIAL,
+		renascimentos = tonumber(dados.renascimentos) or 0,
+		descobertos = {},
+		podeSalvar = podeSalvar,
+		carregando = nil,
+		trancadaAte = 0,
+		noBotao = false,
+		ultimoTapa = 0,
+		dobro = false,
+		saindo = false,
+		compras = {},
+	}
+	base.dono = estado
+	Game.estados[player] = estado
+
+	if type(dados.descobertos) == "table" then
+		for id, sim in pairs(dados.descobertos) do
+			if sim and Config.RoboPorId[id] then
+				estado.descobertos[id] = true
+			end
+		end
+	end
+
+	local leaderstats = Instance.new("Folder")
+	leaderstats.Name = "leaderstats"
+	local valorDinheiro = Instance.new("IntValue")
+	valorDinheiro.Name = "Dinheiro"
+	valorDinheiro.Parent = leaderstats
+	local valorRenascimentos = Instance.new("IntValue")
+	valorRenascimentos.Name = "Renascimentos"
+	valorRenascimentos.Value = estado.renascimentos
+	valorRenascimentos.Parent = leaderstats
+	leaderstats.Parent = player
+	estado.valorDinheiro = valorDinheiro
+	estado.valorRenascimentos = valorRenascimentos
+	mostrarDinheiro(estado)
+
+	-- devolve os robôs salvos para os pedestais
+	if type(dados.robos) == "table" then
+		for _, salvo in ipairs(dados.robos) do
+			local def = type(salvo) == "table" and Config.RoboPorId[salvo.id]
+			if def then
+				local vaga = tonumber(salvo.vaga)
+				if vaga == nil or vaga < 1 or vaga > Config.VAGAS_POR_BASE or estado.vagas[vaga] then
+					vaga = Game.vagaLivre(estado)
+				end
+				if vaga then
+					local mut = salvo.mut
+					if mut ~= nil and Config.MutacaoPorId[mut] == nil then
+						mut = nil
+					end
+					local robo = Game.novoRobo(def, mut, base.pedestais[vaga])
+					Game.colocarNaBase(estado, robo, vaga, true)
+				end
+			end
+		end
+	end
+
+	base.rotuloDono.Text = "Base de " .. player.DisplayName
+	player:SetAttribute("Base", base.indice)
+	Game.atualizarAtributos(estado)
+	return estado
+end
+
+function Game.serializar(estado)
+	local robos = {}
+	for vaga = 1, Config.VAGAS_POR_BASE do
+		local robo = estado.vagas[vaga]
+		if robo then
+			table.insert(robos, { id = robo.def.id, mut = robo.mut, vaga = vaga })
+		end
+	end
+	local descobertos = {}
+	for id in pairs(estado.descobertos) do
+		descobertos[id] = true
+	end
+	return {
+		versao = 1,
+		dinheiro = math.floor(estado.dinheiro),
+		renascimentos = estado.renascimentos,
+		robos = robos,
+		descobertos = descobertos,
+	}
+end
+
+-- Retorna (estado, dadosParaSalvar)
+function Game.removerJogador(player)
+	local estado = Game.estados[player]
+	if not estado then
+		return nil, nil
+	end
+	estado.saindo = true
+	local dados = Game.serializar(estado)
+
+	if estado.carregando and Game.aoSairComCarga then
+		Game.aoSairComCarga(estado)
+	end
+	for _, robo in pairs(estado.vagas) do
+		Game.destruirRobo(robo)
+	end
+	estado.vagas = {}
+
+	local base = estado.base
+	base.dono = nil
+	base.rotuloDono.Text = "Base livre"
+	base.rotuloTranca.Text = ""
+	base.rotuloBotao.Text = "TRANCAR BASE"
+	base.barreira.Transparency = 1
+	Game.estados[player] = nil
+	return estado, dados
+end
+
+-- Tranca da base --------------------------------------------------------------
+
+function Game.trancada(estado)
+	return agora() < estado.trancadaAte
+end
+
+function Game.trancar(estado)
+	if Game.trancada(estado) then
+		return
+	end
+	local duracao = Config.duracaoTranca(estado.renascimentos)
+	estado.trancadaAte = agora() + duracao
+	estado.base.barreira.Transparency = 0.2
+	Game.atualizarAtributos(estado)
+	Game.notificar(estado.player, "Base trancada por " .. duracao .. " segundos!", "bom")
+end
+
+local function raizDe(player)
+	local personagem = player.Character
+	local humanoid = personagem and personagem:FindFirstChildOfClass("Humanoid")
+	local raiz = personagem and personagem:FindFirstChild("HumanoidRootPart")
+	if raiz and humanoid and humanoid.Health > 0 then
+		return raiz, humanoid, personagem
+	end
+	return nil
+end
+Game.raizDe = raizDe
+
+-- Roda várias vezes por segundo: botão de trancar, contagem e expulsão.
+function Game.vigiarBases()
+	for _, estado in pairs(Game.estados) do
+		local base = estado.base
+		if Game.trancada(estado) then
+			local restante = Format.tempo(estado.trancadaAte - agora())
+			base.rotuloTranca.Text = "TRANCADA " .. restante
+			base.rotuloBotao.Text = "TRANCADA " .. restante
+			base.barreira.Transparency = 0.2
+			-- quem não é dono e está dentro é jogado para fora
+			for player, outro in pairs(Game.estados) do
+				if outro ~= estado then
+					local raiz, _, personagem = raizDe(player)
+					if raiz and MapBuilder.dentroDaBase(base, raiz.Position, 0) then
+						personagem:PivotTo(base.saida)
+					end
+				end
+			end
+		else
+			if base.barreira.Transparency < 1 then
+				base.barreira.Transparency = 1
+				base.rotuloTranca.Text = ""
+				base.rotuloBotao.Text = "TRANCAR BASE"
+			end
+		end
+
+		-- tranca quando o dono PISA no botão (precisa sair e pisar de novo;
+		-- ficar parado em cima não tranca para sempre)
+		local raiz = raizDe(estado.player)
+		local emCima = false
+		if raiz then
+			local delta = raiz.Position - base.botao.Position
+			emCima = math.abs(delta.Y) < 6 and Vector3.new(delta.X, 0, delta.Z).Magnitude < 3.5
+		end
+		if emCima and not estado.noBotao and not Game.trancada(estado) then
+			Game.trancar(estado)
+		end
+		estado.noBotao = emCima
+	end
+end
+
+-- Renascimento ----------------------------------------------------------------
+
+function Game.renascer(estado)
+	local custo = Config.custoRenascer(estado.renascimentos)
+	if estado.dinheiro < custo then
+		Game.notificar(estado.player, "Para renascer você precisa de " .. Format.dinheiro(custo) .. ".", "ruim")
+		return false
+	end
+	if estado.carregando then
+		Game.notificar(estado.player, "Entregue o robô que você está carregando antes de renascer.", "ruim")
+		return false
+	end
+
+	for _, robo in pairs(estado.vagas) do
+		Game.destruirRobo(robo)
+	end
+	estado.vagas = {}
+	estado.renascimentos = estado.renascimentos + 1
+	estado.valorRenascimentos.Value = estado.renascimentos
+	estado.dinheiro = Config.DINHEIRO_INICIAL
+	mostrarDinheiro(estado)
+	Game.atualizarAtributos(estado)
+
+	local mult = Format.multiplicador(Config.multiplicador(estado.renascimentos))
+	Game.notificarTodos(estado.player.DisplayName .. " renasceu! Agora ganha " .. mult .. " de dinheiro.", "alerta")
+	return true
+end
+
+return Game
+]]></ProtectedString></Properties></Item><Item class="Script" referent="RBX00000000000000000000000000000006"><Properties><string name="Name">Main</string><ProtectedString name="Source"><![CDATA[--[[
+	Rouba Robô — script principal do servidor.
+	Monta o mapa, liga os sistemas e cuida da entrada e saída de jogadores.
+]]
+
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
+
+local Shared = ReplicatedStorage:WaitForChild("Shared")
+local Config = require(Shared:WaitForChild("Config"))
+local Format = require(Shared:WaitForChild("Format"))
+
+local pasta = script.Parent
+local MapBuilder = require(pasta:WaitForChild("MapBuilder"))
+local Data = require(pasta:WaitForChild("Data"))
+local Game = require(pasta:WaitForChild("Game"))
+local Conveyor = require(pasta:WaitForChild("Conveyor"))
+local Stealing = require(pasta:WaitForChild("Stealing"))
+local Shop = require(pasta:WaitForChild("Shop"))
+
+-- Canais de comunicação com os jogadores ------------------------------------
+local remotos = Instance.new("Folder")
+remotos.Name = "Remotos"
+local function remoto(nome)
+	local evento = Instance.new("RemoteEvent")
+	evento.Name = nome
+	evento.Parent = remotos
+	return evento
+end
+local Notificar = remoto("Notificar") -- servidor -> jogador: aviso na tela
+local Empurrao = remoto("Empurrao") -- servidor -> jogador: levou um tapa
+local Renascer = remoto("Renascer") -- jogador -> servidor: quer renascer
+local Teste = remoto("Teste") -- jogador -> servidor: botões de teste (só no Studio)
+remotos.Parent = ReplicatedStorage
+
+-- Liga os sistemas -----------------------------------------------------------
+local mundo = MapBuilder.construir()
+Game.iniciar(mundo, {
+	Notificar = Notificar,
+	Empurrao = Empurrao,
+})
+Conveyor.iniciar()
+Stealing.iniciar()
+Shop.iniciar()
+
+local function salvar(estado)
+	if estado.podeSalvar then
+		Data.salvar(estado.player, Game.serializar(estado))
+	end
+end
+Shop.aoComprar = function(estado)
+	task.spawn(salvar, estado)
+end
+
+-- Jogadores ------------------------------------------------------------------
+local function aoNascer(player, estado, personagem)
+	local humanoid = personagem:WaitForChild("Humanoid", 10)
+	local raiz = personagem:WaitForChild("HumanoidRootPart", 10)
+	if not humanoid or not raiz then
+		return
+	end
+	humanoid.WalkSpeed = Config.ROUBO.VELOCIDADE_NORMAL
+	task.wait(0.1) -- deixa o Roblox terminar de posicionar o personagem
+	if Game.estados[player] == estado and personagem.Parent then
+		personagem:PivotTo(estado.base.nascer)
+		Stealing.darTapa(player)
+	end
+end
+
+local function aoEntrar(player)
+	local dados, podeSalvar = Data.carregar(player)
+	if player.Parent == nil then
+		return -- saiu enquanto carregava
+	end
+	local estado = Game.adicionarJogador(player, dados, podeSalvar)
+	if not estado then
+		return
+	end
+	Shop.verificarPasse(estado)
+
+	player.CharacterAdded:Connect(function(personagem)
+		aoNascer(player, estado, personagem)
+	end)
+	if player.Character then
+		task.spawn(aoNascer, player, estado, player.Character)
+	end
+
+	Game.notificar(player, "Bem-vindo ao " .. Config.NOME_DO_JOGO .. "! Compre robôs na esteira segurando E.", "info")
+	Game.notificar(player, "Pise no botão vermelho da sua base para trancá-la. Use o Tapa contra ladrões!", "info")
+	if not podeSalvar then
+		Game.notificar(player, "Atenção: o progresso desta partida não será salvo.", "alerta")
+	end
+end
+
+Players.PlayerAdded:Connect(aoEntrar)
+for _, player in ipairs(Players:GetPlayers()) do
+	task.spawn(aoEntrar, player)
+end
+
+Players.PlayerRemoving:Connect(function(player)
+	local estado, dados = Game.removerJogador(player)
+	if estado and estado.podeSalvar then
+		Data.salvar(player, dados)
+	end
+end)
+
+game:BindToClose(function()
+	local pendentes = 0
+	for _, estado in pairs(Game.estados) do
+		if estado.podeSalvar then
+			pendentes = pendentes + 1
+			task.spawn(function()
+				salvar(estado)
+				pendentes = pendentes - 1
+			end)
+		end
+	end
+	local limite = os.clock() + 20
+	while pendentes > 0 and os.clock() < limite do
+		task.wait(0.1)
+	end
+end)
+
+-- Pedidos dos jogadores ------------------------------------------------------
+Renascer.OnServerEvent:Connect(function(player)
+	local estado = Game.estados[player]
+	if estado then
+		Game.renascer(estado)
+	end
+end)
+
+Teste.OnServerEvent:Connect(function(player, acao)
+	if not RunService:IsStudio() then
+		return -- os botões de teste só funcionam no Roblox Studio
+	end
+	local estado = Game.estados[player]
+	if not estado then
+		return
+	end
+	if acao == "dinheiro" then
+		local valor = math.max(1000000, Game.rendaPorSegundo(estado) * 600)
+		Game.adicionarDinheiro(estado, valor)
+		Game.notificar(player, "[Teste] +" .. Format.dinheiro(valor), "info")
+	elseif acao == "sorte" then
+		Conveyor.iniciarHoraDaSorte()
+	end
+end)
+
+-- Laços do jogo --------------------------------------------------------------
+task.spawn(function()
+	while true do
+		task.wait(1)
+		Game.pagarRenda()
+	end
+end)
+
+task.spawn(function()
+	while true do
+		task.wait(0.2)
+		Game.vigiarBases()
+		Stealing.vigiar()
+	end
+end)
+
+task.spawn(function()
+	while true do
+		task.wait(120)
+		for _, estado in pairs(Game.estados) do
+			task.spawn(salvar, estado)
+		end
+	end
+end)
+
+print("[Rouba Robô] Servidor pronto!")
+]]></ProtectedString></Properties></Item><Item class="ModuleScript" referent="RBX00000000000000000000000000000007"><Properties><string name="Name">MapBuilder</string><ProtectedString name="Source"><![CDATA[--[[
+	Constrói o mapa inteiro por código: chão, esteira, fábrica, reciclagem
+	e as 8 bases. Assim o jogo funciona num lugar vazio do Roblox Studio.
+
+	Cada base tem um "quadro" (CFrame) próprio: a origem fica no centro do
+	piso e o eixo +Z local aponta para a entrada (virada para a esteira).
+]]
+
+local Lighting = game:GetService("Lighting")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local Config = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config"))
+
+local MapBuilder = {}
+
+local LARGURA_BASE = 60 -- eixo X local
+local PROFUNDIDADE_BASE = 50 -- eixo Z local
+local ALTURA_PAREDE = 12
+local LARGURA_ENTRADA = 14
+
+MapBuilder.LARGURA_BASE = LARGURA_BASE
+MapBuilder.PROFUNDIDADE_BASE = PROFUNDIDADE_BASE
+
+local CORES_BASES = {
+	Color3.fromRGB(230, 70, 70),
+	Color3.fromRGB(70, 130, 240),
+	Color3.fromRGB(80, 200, 100),
+	Color3.fromRGB(245, 200, 50),
+	Color3.fromRGB(160, 90, 230),
+	Color3.fromRGB(250, 140, 50),
+	Color3.fromRGB(240, 110, 180),
+	Color3.fromRGB(60, 210, 220),
+}
+
+local function peca(props)
+	local parte = Instance.new("Part")
+	parte.Anchored = true
+	parte.TopSurface = Enum.SurfaceType.Smooth
+	parte.BottomSurface = Enum.SurfaceType.Smooth
+	parte.Material = Enum.Material.SmoothPlastic
+	for nome, valor in pairs(props) do
+		if nome ~= "Parent" then
+			parte[nome] = valor
+		end
+	end
+	parte.Parent = props.Parent
+	return parte
+end
+
+local function placa(parte, texto, cor, largura, altura, deslocamento, distancia)
+	local gui = Instance.new("BillboardGui")
+	gui.Name = "Placa"
+	gui.Size = UDim2.fromOffset(largura or 300, altura or 60)
+	gui.StudsOffset = deslocamento or Vector3.new(0, 0, 0)
+	gui.MaxDistance = distancia or 250
+	gui.LightInfluence = 0
+	gui.Adornee = parte
+
+	local rotulo = Instance.new("TextLabel")
+	rotulo.Name = "Texto"
+	rotulo.Size = UDim2.fromScale(1, 1)
+	rotulo.BackgroundTransparency = 1
+	rotulo.Text = texto
+	rotulo.TextColor3 = cor or Color3.new(1, 1, 1)
+	rotulo.TextStrokeTransparency = 0
+	rotulo.TextScaled = true
+	rotulo.Font = Enum.Font.FredokaOne
+	rotulo.Parent = gui
+
+	gui.Parent = parte
+	return rotulo
+end
+
+local function construirBase(indice, centro, girada, pasta)
+	local cor = CORES_BASES[indice]
+	local quadro = CFrame.new(centro)
+	if girada then
+		quadro = quadro * CFrame.Angles(0, math.pi, 0)
+	end
+
+	local modelo = Instance.new("Model")
+	modelo.Name = "Base" .. indice
+	modelo.Parent = pasta
+
+	local function local_(x, y, z)
+		return quadro * CFrame.new(x, y, z)
+	end
+
+	-- piso
+	peca({
+		Name = "Piso",
+		Size = Vector3.new(LARGURA_BASE, 0.4, PROFUNDIDADE_BASE),
+		CFrame = local_(0, -0.2, 0),
+		Color = cor:Lerp(Color3.new(1, 1, 1), 0.6),
+		Material = Enum.Material.Concrete,
+		Parent = modelo,
+	})
+
+	-- paredes (fundo, laterais e frente com a entrada no meio)
+	local meiaLargura = LARGURA_BASE / 2
+	local meiaProfundidade = PROFUNDIDADE_BASE / 2
+	local yParede = ALTURA_PAREDE / 2
+	local function parede(nome, tamanho, x, z)
+		peca({
+			Name = nome,
+			Size = tamanho,
+			CFrame = local_(x, yParede, z),
+			Color = cor,
+			Material = Enum.Material.SmoothPlastic,
+			Parent = modelo,
+		})
+	end
+	parede("ParedeFundo", Vector3.new(LARGURA_BASE, ALTURA_PAREDE, 2), 0, -meiaProfundidade + 1)
+	parede("ParedeEsquerda", Vector3.new(2, ALTURA_PAREDE, PROFUNDIDADE_BASE), -meiaLargura + 1, 0)
+	parede("ParedeDireita", Vector3.new(2, ALTURA_PAREDE, PROFUNDIDADE_BASE), meiaLargura - 1, 0)
+	local larguraFrente = (LARGURA_BASE - LARGURA_ENTRADA) / 2
+	local xFrente = LARGURA_ENTRADA / 2 + larguraFrente / 2
+	parede("FrenteEsquerda", Vector3.new(larguraFrente, ALTURA_PAREDE, 2), -xFrente, meiaProfundidade - 1)
+	parede("FrenteDireita", Vector3.new(larguraFrente, ALTURA_PAREDE, 2), xFrente, meiaProfundidade - 1)
+
+	-- pedestais: 2 fileiras de 5
+	local pedestais = {}
+	for fileira, z in ipairs({ -16, -4 }) do
+		for coluna, x in ipairs({ -20, -10, 0, 10, 20 }) do
+			local numero = (fileira - 1) * 5 + coluna
+			peca({
+				Name = "Pedestal" .. numero,
+				Size = Vector3.new(6, 1, 6),
+				CFrame = local_(x, 0.5, z),
+				Color = Color3.fromRGB(70, 70, 80),
+				Material = Enum.Material.DiamondPlate,
+				Parent = modelo,
+			})
+			-- o robô fica em cima do pedestal, olhando para a entrada
+			pedestais[numero] = local_(x, 1, z) * CFrame.Angles(0, math.pi, 0)
+		end
+	end
+
+	-- botão de trancar (o dono pisa nele)
+	local botao = peca({
+		Name = "BotaoTrancar",
+		Size = Vector3.new(6, 0.3, 6),
+		CFrame = local_(-22, 0.15, 17),
+		Color = Color3.fromRGB(255, 60, 60),
+		Material = Enum.Material.Neon,
+		CanCollide = false,
+		Parent = modelo,
+	})
+	local rotuloBotao = placa(botao, "TRANCAR BASE", Color3.new(1, 1, 1), 200, 40, Vector3.new(0, 3, 0), 60)
+
+	-- barreira de laser na entrada (só aparece quando trancada)
+	local barreira = peca({
+		Name = "Barreira",
+		Size = Vector3.new(LARGURA_ENTRADA, ALTURA_PAREDE, 1),
+		CFrame = local_(0, yParede, meiaProfundidade - 1),
+		Color = Color3.fromRGB(255, 40, 40),
+		Material = Enum.Material.ForceField,
+		Transparency = 1,
+		CanCollide = false,
+		Parent = modelo,
+	})
+	local rotuloTranca = placa(barreira, "", Color3.fromRGB(255, 90, 90), 260, 50, Vector3.new(0, ALTURA_PAREDE / 2 + 3, 0), 150)
+
+	-- placa com o nome do dono
+	local suportePlaca = peca({
+		Name = "SuportePlaca",
+		Size = Vector3.new(1, 1, 1),
+		CFrame = local_(0, ALTURA_PAREDE + 4, -meiaProfundidade + 1),
+		Transparency = 1,
+		CanCollide = false,
+		Parent = modelo,
+	})
+	local rotuloDono = placa(suportePlaca, "Base livre", Color3.new(1, 1, 1), 360, 70, Vector3.new(0, 0, 0), 300)
+
+	return {
+		indice = indice,
+		quadro = quadro,
+		cor = cor,
+		modelo = modelo,
+		pedestais = pedestais,
+		botao = botao,
+		rotuloBotao = rotuloBotao,
+		barreira = barreira,
+		rotuloTranca = rotuloTranca,
+		rotuloDono = rotuloDono,
+		nascer = local_(0, 3, 16),
+		saida = local_(0, 3, meiaProfundidade + 8),
+	}
+end
+
+function MapBuilder.construir()
+	Lighting.ClockTime = 14
+	Lighting.Brightness = 2
+
+	local mapa = Instance.new("Folder")
+	mapa.Name = "Mapa"
+	mapa.Parent = workspace
+
+	-- chão
+	peca({
+		Name = "Chao",
+		Size = Vector3.new(420, 1, 330),
+		CFrame = CFrame.new(0, -0.5, 0),
+		Color = Color3.fromRGB(90, 170, 80),
+		Material = Enum.Material.Grass,
+		Parent = mapa,
+	})
+
+	-- bordas invisíveis para ninguém cair do mapa
+	local bordas = {
+		{ Vector3.new(420, 60, 2), Vector3.new(0, 30, -166) },
+		{ Vector3.new(420, 60, 2), Vector3.new(0, 30, 166) },
+		{ Vector3.new(2, 60, 330), Vector3.new(-211, 30, 0) },
+		{ Vector3.new(2, 60, 330), Vector3.new(211, 30, 0) },
+	}
+	for i, borda in ipairs(bordas) do
+		peca({
+			Name = "Borda" .. i,
+			Size = borda[1],
+			CFrame = CFrame.new(borda[2]),
+			Transparency = 1,
+			Parent = mapa,
+		})
+	end
+
+	-- esteira
+	local yEsteira = 1
+	local esteira = peca({
+		Name = "Esteira",
+		Size = Vector3.new(330, 1, 10),
+		CFrame = CFrame.new(0, 0.5, 0),
+		Color = Color3.fromRGB(45, 45, 50),
+		Material = Enum.Material.DiamondPlate,
+		Parent = mapa,
+	})
+	-- esteira de verdade: quem sobe nela é levado junto com os robôs
+	esteira.AssemblyLinearVelocity = Vector3.new(Config.ESTEIRA.VELOCIDADE, 0, 0)
+	for _, z in ipairs({ -5.4, 5.4 }) do
+		peca({
+			Name = "Trilho",
+			Size = Vector3.new(330, 1.4, 0.8),
+			CFrame = CFrame.new(0, 0.7, z),
+			Color = Color3.fromRGB(255, 200, 0),
+			Material = Enum.Material.Neon,
+			Parent = mapa,
+		})
+	end
+
+	-- fábrica (de onde saem os robôs)
+	local fabrica = peca({
+		Name = "Fabrica",
+		Size = Vector3.new(26, 22, 26),
+		CFrame = CFrame.new(-163, 11, 0),
+		Color = Color3.fromRGB(110, 115, 130),
+		Material = Enum.Material.Metal,
+		Parent = mapa,
+	})
+	placa(fabrica, "FÁBRICA DE ROBÔS", Color3.fromRGB(255, 220, 60), 420, 80, Vector3.new(0, 15, 0), 400)
+	peca({
+		Name = "Chamine",
+		Shape = Enum.PartType.Cylinder,
+		Size = Vector3.new(16, 5, 5),
+		CFrame = CFrame.new(-168, 30, 6) * CFrame.Angles(0, 0, math.pi / 2),
+		Color = Color3.fromRGB(80, 80, 90),
+		Material = Enum.Material.Metal,
+		Parent = mapa,
+	})
+
+	-- reciclagem (onde somem os robôs que ninguém comprou)
+	local reciclagem = peca({
+		Name = "Reciclagem",
+		Size = Vector3.new(22, 16, 22),
+		CFrame = CFrame.new(163, 8, 0),
+		Color = Color3.fromRGB(40, 70, 50),
+		Material = Enum.Material.Metal,
+		Parent = mapa,
+	})
+	placa(reciclagem, "RECICLAGEM", Color3.fromRGB(120, 255, 140), 320, 60, Vector3.new(0, 11, 0), 400)
+
+	-- ponto de nascimento neutro (todo mundo é levado para a própria base)
+	local nascer = Instance.new("SpawnLocation")
+	nascer.Name = "Nascer"
+	nascer.Anchored = true
+	nascer.Size = Vector3.new(8, 0.4, 8)
+	nascer.CFrame = CFrame.new(0, 0.2, 21)
+	nascer.Neutral = true
+	nascer.Duration = 0
+	nascer.Transparency = 0.6
+	nascer.CanCollide = false
+	nascer.Parent = mapa
+
+	-- bases: 4 ao norte (entrada para +Z) e 4 ao sul (giradas)
+	local pastaBases = Instance.new("Folder")
+	pastaBases.Name = "Bases"
+	pastaBases.Parent = mapa
+
+	local bases = {}
+	local xs = { -114, -38, 38, 114 }
+	for i, x in ipairs(xs) do
+		bases[i] = construirBase(i, Vector3.new(x, 0.2, -62), false, pastaBases)
+	end
+	for i, x in ipairs(xs) do
+		bases[4 + i] = construirBase(4 + i, Vector3.new(x, 0.2, 62), true, pastaBases)
+	end
+
+	local pastaRobos = Instance.new("Folder")
+	pastaRobos.Name = "Robos"
+	pastaRobos.Parent = workspace
+
+	return {
+		bases = bases,
+		pastaRobos = pastaRobos,
+		esteira = {
+			inicioX = -158,
+			fimX = 154,
+			y = yEsteira,
+			z = 0,
+		},
+	}
+end
+
+-- Converte uma posição do mundo para o espaço da base e diz se está dentro.
+-- `folga` aumenta (ou diminui, se negativa) a área considerada.
+function MapBuilder.dentroDaBase(base, posicao, folga)
+	folga = folga or 0
+	local relativo = base.quadro:PointToObjectSpace(posicao)
+	return math.abs(relativo.X) <= LARGURA_BASE / 2 + folga
+		and math.abs(relativo.Z) <= PROFUNDIDADE_BASE / 2 + folga
+		and relativo.Y > -5
+		and relativo.Y < 40
+end
+
+return MapBuilder
+]]></ProtectedString></Properties></Item><Item class="ModuleScript" referent="RBX00000000000000000000000000000008"><Properties><string name="Name">RobotFactory</string><ProtectedString name="Source"><![CDATA[--[[
+	Monta o modelo 3D de cada robô com peças simples (sem precisar de
+	malhas ou imagens enviadas). Robôs mais raros ficam maiores e ganham
+	luz, asas e auréola. A mutação muda a cor e o material.
+
+	O modelo é construído com a base dos pés na origem; quem chama usa
+	modelo:PivotTo(cframe) para colocá-lo no lugar.
+]]
+
+local CollectionService = game:GetService("CollectionService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local Config = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config"))
+local Format = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Format"))
+
+local RobotFactory = {}
+
+local function novaParte(modelo, nome, tamanho, cframe, cor, material)
+	local parte = Instance.new("Part")
+	parte.Name = nome
+	parte.Size = tamanho
+	parte.CFrame = cframe
+	parte.Color = cor
+	parte.Material = material or Enum.Material.SmoothPlastic
+	parte.TopSurface = Enum.SurfaceType.Smooth
+	parte.BottomSurface = Enum.SurfaceType.Smooth
+	parte.Anchored = true
+	parte.CanCollide = false
+	parte.CanTouch = false
+	parte.Parent = modelo
+	return parte
+end
+
+local function rotulo(pai, nome, texto, cor, ordem, altura)
+	local r = Instance.new("TextLabel")
+	r.Name = nome
+	r.BackgroundTransparency = 1
+	r.Size = UDim2.new(1, 0, 0, altura or 18)
+	r.Text = texto
+	r.TextColor3 = cor
+	r.TextStrokeTransparency = 0
+	r.TextStrokeColor3 = Color3.new(0, 0, 0)
+	r.TextScaled = true
+	r.Font = Enum.Font.FredokaOne
+	r.LayoutOrder = ordem
+	r.Parent = pai
+	return r
+end
+
+function RobotFactory.construir(robo, mutacaoId)
+	local raridade = Config.Raridades[robo.raridade]
+	local mutacao = mutacaoId and Config.MutacaoPorId[mutacaoId] or nil
+	local s = raridade.escala
+
+	local corPrincipal = robo.cor
+	local materialPrincipal = Enum.Material.SmoothPlastic
+	if mutacao and mutacao.id == "dourado" then
+		corPrincipal = mutacao.cor
+		materialPrincipal = Enum.Material.Metal
+	elseif mutacao and mutacao.id == "diamante" then
+		corPrincipal = mutacao.cor
+		materialPrincipal = Enum.Material.Glass
+	elseif mutacao and mutacao.id == "arcoiris" then
+		corPrincipal = mutacao.cor
+		materialPrincipal = Enum.Material.Neon
+	end
+	local corDetalhe = robo.detalhe
+	local corOlhos = Color3.fromRGB(140, 255, 255)
+	if robo.raridade >= 7 then
+		corOlhos = robo.detalhe
+	end
+	local corBrilho = raridade.cor
+	if robo.raridade >= 7 then
+		corBrilho = robo.detalhe
+	end
+
+	local modelo = Instance.new("Model")
+	modelo.Name = robo.id
+
+	-- raiz invisível nos pés: é o ponto de referência do modelo
+	local raiz = novaParte(modelo, "Raiz", Vector3.new(0.4, 0.4, 0.4), CFrame.new(0, 0, 0), corDetalhe)
+	raiz.Transparency = 1
+	modelo.PrimaryPart = raiz
+
+	-- pernas
+	for _, lado in ipairs({ -1, 1 }) do
+		novaParte(modelo, "Perna", Vector3.new(0.7, 1.2, 0.7) * s,
+			CFrame.new(0.6 * lado * s, 0.6 * s, 0), corDetalhe)
+	end
+
+	-- corpo
+	local alturaCorpo
+	local larguraCorpo
+	local corpo
+	if robo.forma == "barril" then
+		alturaCorpo, larguraCorpo = 2.2, 2.2
+		corpo = novaParte(modelo, "Corpo", Vector3.new(alturaCorpo, larguraCorpo, larguraCorpo) * s,
+			CFrame.new(0, (1.2 + alturaCorpo / 2) * s, 0) * CFrame.Angles(0, 0, math.pi / 2),
+			corPrincipal, materialPrincipal)
+		corpo.Shape = Enum.PartType.Cylinder
+	elseif robo.forma == "bola" then
+		alturaCorpo, larguraCorpo = 2.4, 2.4
+		corpo = novaParte(modelo, "Corpo", Vector3.new(2.4, 2.4, 2.4) * s,
+			CFrame.new(0, (1.1 + alturaCorpo / 2) * s, 0), corPrincipal, materialPrincipal)
+		corpo.Shape = Enum.PartType.Ball
+	else
+		alturaCorpo, larguraCorpo = 2, 2.4
+		corpo = novaParte(modelo, "Corpo", Vector3.new(larguraCorpo, alturaCorpo, 1.8) * s,
+			CFrame.new(0, (1.2 + alturaCorpo / 2) * s, 0), corPrincipal, materialPrincipal)
+	end
+	if mutacao and mutacao.id == "dourado" then
+		corpo.Reflectance = 0.3
+	elseif mutacao and mutacao.id == "diamante" then
+		corpo.Transparency = 0.15
+		corpo.Reflectance = 0.2
+	end
+	local yCorpo = (1.2 + alturaCorpo / 2) * s
+	local topoCorpo = (1.2 + alturaCorpo) * s
+
+	-- braços
+	for _, lado in ipairs({ -1, 1 }) do
+		novaParte(modelo, "Braco", Vector3.new(0.5, 1.6, 0.5) * s,
+			CFrame.new((larguraCorpo / 2 + 0.3) * lado * s, yCorpo, 0) * CFrame.Angles(0, 0, 0.25 * lado),
+			corDetalhe)
+	end
+
+	-- cabeça, olhos e boca (a frente do robô é o -Z)
+	local yCabeca = topoCorpo + 0.6 * s
+	local cabeca = novaParte(modelo, "Cabeca", Vector3.new(1.7, 1.2, 1.5) * s,
+		CFrame.new(0, yCabeca, 0), corPrincipal, materialPrincipal)
+	for _, lado in ipairs({ -1, 1 }) do
+		novaParte(modelo, "Olho", Vector3.new(0.4, 0.4, 0.12) * s,
+			CFrame.new(0.4 * lado * s, yCabeca + 0.12 * s, -0.76 * s), corOlhos, Enum.Material.Neon)
+	end
+	novaParte(modelo, "Boca", Vector3.new(0.9, 0.15, 0.1) * s,
+		CFrame.new(0, yCabeca - 0.3 * s, -0.76 * s), corDetalhe)
+
+	-- antena
+	local topoCabeca = yCabeca + 0.6 * s
+	novaParte(modelo, "Antena", Vector3.new(0.15, 0.8, 0.15) * s,
+		CFrame.new(0, topoCabeca + 0.4 * s, 0), corDetalhe)
+	novaParte(modelo, "PontaAntena", Vector3.new(0.4, 0.4, 0.4) * s,
+		CFrame.new(0, topoCabeca + 0.9 * s, 0), corBrilho, Enum.Material.Neon).Shape = Enum.PartType.Ball
+
+	-- extras por raridade
+	if robo.raridade >= 4 then
+		novaParte(modelo, "Peito", Vector3.new(0.8, 0.8, 0.1) * s,
+			CFrame.new(0, yCorpo, -(larguraCorpo / 2 + 0.02) * s), corBrilho, Enum.Material.Neon)
+	end
+	if robo.raridade >= 5 then
+		local luz = Instance.new("PointLight")
+		luz.Color = corBrilho
+		luz.Range = 10 * s
+		luz.Brightness = 2
+		luz.Parent = corpo
+	end
+	if robo.raridade >= 6 then
+		for _, lado in ipairs({ -1, 1 }) do
+			novaParte(modelo, "Asa", Vector3.new(0.2, 1.8, 1.4) * s,
+				CFrame.new(1.1 * lado * s, yCorpo + 0.4 * s, 1.0 * s) * CFrame.Angles(0, 0.5 * lado, 0.35 * lado),
+				corDetalhe, Enum.Material.Neon)
+		end
+	end
+	if robo.raridade >= 7 then
+		local aureola = novaParte(modelo, "Aureola", Vector3.new(0.15, 1.8, 1.8) * s,
+			CFrame.new(0, topoCabeca + 1.4 * s, 0) * CFrame.Angles(0, 0, math.pi / 2),
+			corBrilho, Enum.Material.Neon)
+		aureola.Shape = Enum.PartType.Cylinder
+		aureola.Transparency = 0.3
+	end
+
+	if mutacao and mutacao.id == "arcoiris" then
+		CollectionService:AddTag(corpo, "Arcoiris")
+		CollectionService:AddTag(cabeca, "Arcoiris")
+	end
+
+	-- placa de informações em cima da cabeça
+	local gui = Instance.new("BillboardGui")
+	gui.Name = "Info"
+	gui.Adornee = cabeca
+	gui.Size = UDim2.fromOffset(220, 100)
+	gui.StudsOffset = Vector3.new(0, 1.2 * s + 2.2, 0)
+	gui.MaxDistance = 70
+	gui.LightInfluence = 0
+	gui.Parent = raiz
+
+	local lista = Instance.new("UIListLayout")
+	lista.SortOrder = Enum.SortOrder.LayoutOrder
+	lista.HorizontalAlignment = Enum.HorizontalAlignment.Center
+	lista.VerticalAlignment = Enum.VerticalAlignment.Bottom
+	lista.Parent = gui
+
+	if mutacao then
+		rotulo(gui, "Mutacao", mutacao.nome, mutacao.cor, 1, 16)
+	end
+	rotulo(gui, "Nome", robo.nome, Color3.new(1, 1, 1), 2, 22)
+	local rotuloRaridade = rotulo(gui, "Raridade", raridade.nome, raridade.cor, 3, 18)
+	if robo.raridade >= 7 then
+		rotuloRaridade.TextStrokeColor3 = Color3.new(1, 1, 1)
+	end
+	local rotuloPreco = rotulo(gui, "Preco", Format.dinheiro(Config.precoDe(robo, mutacaoId)),
+		Color3.fromRGB(120, 255, 120), 4, 18)
+	local rotuloRenda = rotulo(gui, "Renda", Format.dinheiro(Config.rendaDe(robo, mutacaoId)) .. "/s",
+		Color3.fromRGB(255, 230, 90), 5, 16)
+
+	-- o botão "segure E" do robô
+	local prompt = Instance.new("ProximityPrompt")
+	prompt.Name = "Interagir"
+	prompt.ActionText = "Comprar"
+	prompt.ObjectText = Config.nomeCompleto(robo, mutacaoId) .. " — " .. Format.dinheiro(Config.precoDe(robo, mutacaoId))
+	prompt.HoldDuration = 0
+	prompt.MaxActivationDistance = 10
+	prompt.RequiresLineOfSight = false
+	prompt.KeyboardKeyCode = Enum.KeyCode.E
+	prompt:SetAttribute("Robo", true)
+	prompt.Parent = corpo
+
+	return {
+		modelo = modelo,
+		raiz = raiz,
+		corpo = corpo,
+		prompt = prompt,
+		rotuloPreco = rotuloPreco,
+		rotuloRenda = rotuloRenda,
+	}
+end
+
+return RobotFactory
+]]></ProtectedString></Properties></Item><Item class="ModuleScript" referent="RBX00000000000000000000000000000009"><Properties><string name="Name">Shop</string><ProtectedString name="Source"><![CDATA[--[[
+	Loja com Robux (opcional). Só funciona depois que você cria o Passe e
+	os Produtos no site do Roblox e coloca os números em Config.Loja.
+]]
+
+local MarketplaceService = game:GetService("MarketplaceService")
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local Shared = ReplicatedStorage:WaitForChild("Shared")
+local Config = require(Shared:WaitForChild("Config"))
+local Format = require(Shared:WaitForChild("Format"))
+local Game = require(script.Parent:WaitForChild("Game"))
+
+local Shop = {}
+
+Shop.aoComprar = nil -- function(estado): o Main usa para salvar na hora
+
+local function pacotePorId(id)
+	for _, pacote in ipairs(Config.Loja.PACOTES) do
+		if pacote.id ~= 0 and pacote.id == id then
+			return pacote
+		end
+	end
+	return nil
+end
+
+function Shop.recompensaDe(estado, pacote)
+	return math.max(pacote.minimo, Game.rendaPorSegundo(estado) * 60 * pacote.minutos)
+end
+
+function Shop.verificarPasse(estado)
+	local passe = Config.Loja.PASSE_DINHEIRO_EM_DOBRO
+	if passe == 0 then
+		return
+	end
+	local ok, tem = pcall(function()
+		return MarketplaceService:UserOwnsGamePassAsync(estado.player.UserId, passe)
+	end)
+	if ok and tem then
+		estado.dobro = true
+		Game.atualizarAtributos(estado)
+	end
+end
+
+local function processarCompra(info)
+	local player = Players:GetPlayerByUserId(info.PlayerId)
+	local estado = player and Game.estados[player]
+	local pacote = pacotePorId(info.ProductId)
+	if not estado or not pacote then
+		return Enum.ProductPurchaseDecision.NotProcessedYet
+	end
+	if estado.compras[info.PurchaseId] then
+		return Enum.ProductPurchaseDecision.PurchaseGranted
+	end
+
+	local valor = Shop.recompensaDe(estado, pacote)
+	Game.adicionarDinheiro(estado, valor)
+	estado.compras[info.PurchaseId] = true
+	if Shop.aoComprar then
+		Shop.aoComprar(estado)
+	end
+	Game.notificar(player, "Obrigado pela compra! +" .. Format.dinheiro(valor), "bom")
+	return Enum.ProductPurchaseDecision.PurchaseGranted
+end
+
+function Shop.iniciar()
+	MarketplaceService.ProcessReceipt = processarCompra
+	MarketplaceService.PromptGamePassPurchaseFinished:Connect(function(player, passeId, comprou)
+		local estado = Game.estados[player]
+		if comprou and estado and passeId == Config.Loja.PASSE_DINHEIRO_EM_DOBRO then
+			estado.dobro = true
+			Game.atualizarAtributos(estado)
+			Game.notificar(player, "Dinheiro em dobro ativado!", "bom")
+		end
+	end)
+end
+
+return Shop
+]]></ProtectedString></Properties></Item><Item class="ModuleScript" referent="RBX0000000000000000000000000000000A"><Properties><string name="Name">Stealing</string><ProtectedString name="Source"><![CDATA[--[[
+	Roubo, venda e o Tapa.
+
+	Como funciona o roubo:
+	  1. O ladrão entra numa base destrancada e segura E num robô.
+	  2. O robô vai para cima da cabeça dele e ele fica mais lento.
+	  3. Se chegar na PRÓPRIA base, o robô passa a ser dele.
+	  4. Se levar um tapa, morrer, sair do jogo ou demorar demais,
+	     o robô volta voando para o dono.
+]]
+
+local Debris = game:GetService("Debris")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local Shared = ReplicatedStorage:WaitForChild("Shared")
+local Config = require(Shared:WaitForChild("Config"))
+local Format = require(Shared:WaitForChild("Format"))
+local Game = require(script.Parent:WaitForChild("Game"))
+local MapBuilder = require(script.Parent:WaitForChild("MapBuilder"))
+
+local Stealing = {}
+
+local ladroes = {} -- [estadoDoLadrao] = true
+
+local function partesDo(robo)
+	local partes = {}
+	for _, item in ipairs(robo.modelo:GetDescendants()) do
+		if item:IsA("BasePart") then
+			table.insert(partes, item)
+		end
+	end
+	return partes
+end
+
+local function nomeDo(robo)
+	return Config.nomeCompleto(robo.def, robo.mut)
+end
+
+-- Venda ------------------------------------------------------------------------
+
+function Stealing.vender(estado, robo)
+	local valor = Game.valorVenda(robo)
+	local nome = nomeDo(robo)
+	Game.destruirRobo(robo)
+	Game.adicionarDinheiro(estado, valor)
+	Game.atualizarAtributos(estado)
+	Game.notificar(estado.player, "Você vendeu " .. nome .. " por " .. Format.dinheiro(valor) .. ".", "info")
+end
+
+-- Roubo ------------------------------------------------------------------------
+
+function Stealing.roubar(ladrao, robo)
+	local dono = robo.dono
+	local player = ladrao.player
+	local raiz, humanoid = Game.raizDe(player)
+	if not raiz or not dono then
+		return
+	end
+	if ladrao.carregando then
+		Game.notificar(player, "Você já está carregando um robô!", "ruim")
+		return
+	end
+	if Game.trancada(dono) then
+		Game.notificar(player, "Essa base está trancada! Espere a tranca acabar.", "ruim")
+		return
+	end
+	if not MapBuilder.dentroDaBase(dono.base, raiz.Position, 2) then
+		return
+	end
+	if not Game.vagaLivre(ladrao) then
+		Game.notificar(player, "Sua base está cheia, não cabe mais nenhum robô!", "ruim")
+		return
+	end
+
+	robo.estado = "carregado"
+	robo.ladrao = ladrao
+	robo.inicioRoubo = os.clock()
+	robo.voo = robo.voo + 1
+	robo.prompt.Enabled = false
+	ladrao.carregando = robo
+	ladroes[ladrao] = true
+
+	-- prende o robô em cima da cabeça do ladrão
+	local partes = partesDo(robo)
+	local raizRobo = robo.visual.raiz
+	robo.modelo:PivotTo(raiz.CFrame * CFrame.new(0, 3.2, 0))
+	local soldas = Instance.new("Folder")
+	soldas.Name = "Soldas"
+	for _, parte in ipairs(partes) do
+		if parte ~= raizRobo then
+			local solda = Instance.new("WeldConstraint")
+			solda.Part0 = raizRobo
+			solda.Part1 = parte
+			solda.Parent = soldas
+		end
+	end
+	local soldaNaCabeca = Instance.new("WeldConstraint")
+	soldaNaCabeca.Part0 = raiz
+	soldaNaCabeca.Part1 = raizRobo
+	soldaNaCabeca.Parent = soldas
+	soldas.Parent = robo.modelo
+	for _, parte in ipairs(partes) do
+		parte.Massless = true
+		parte.Anchored = false
+	end
+
+	humanoid.WalkSpeed = Config.ROUBO.VELOCIDADE_CARREGANDO
+	player:SetAttribute("Carregando", nomeDo(robo))
+	robo.conexaoMorte = humanoid.Died:Connect(function()
+		Stealing.falhar(ladrao, "Você caiu e o robô voltou para o dono.")
+	end)
+
+	Game.notificar(player, "Você pegou " .. nomeDo(robo) .. "! Corra até a SUA base!", "bom")
+	Game.notificar(dono.player, "ALERTA: " .. player.DisplayName .. " está roubando seu "
+		.. nomeDo(robo) .. "! Dê um tapa nele!", "alerta")
+end
+
+-- Solta o robô da cabeça do ladrão (não decide para onde ele vai).
+function Stealing.desprender(robo)
+	if robo.conexaoMorte then
+		robo.conexaoMorte:Disconnect()
+		robo.conexaoMorte = nil
+	end
+	for _, parte in ipairs(partesDo(robo)) do
+		parte.Anchored = true
+		parte.Massless = false
+	end
+	local soldas = robo.modelo:FindFirstChild("Soldas")
+	if soldas then
+		soldas:Destroy()
+	end
+
+	local ladrao = robo.ladrao
+	if ladrao then
+		ladrao.carregando = nil
+		ladroes[ladrao] = nil
+		ladrao.player:SetAttribute("Carregando", nil)
+		local _, humanoid = Game.raizDe(ladrao.player)
+		if humanoid then
+			humanoid.WalkSpeed = Config.ROUBO.VELOCIDADE_NORMAL
+		end
+	end
+	robo.ladrao = nil
+	if robo.estado == "carregado" then
+		robo.estado = "solto"
+	end
+end
+
+-- O roubo deu errado: o robô volta para o dono.
+function Stealing.falhar(ladrao, motivo)
+	local robo = ladrao.carregando
+	if not robo then
+		return
+	end
+	Stealing.desprender(robo)
+
+	local dono = robo.dono
+	if dono and not dono.saindo and robo.vaga and dono.vagas[robo.vaga] == robo then
+		Game.colocarNaBase(dono, robo, robo.vaga, false)
+		Game.notificar(dono.player, "Seu " .. nomeDo(robo) .. " voltou para a base!", "bom")
+	else
+		Game.destruirRobo(robo)
+	end
+	if motivo then
+		Game.notificar(ladrao.player, motivo, "ruim")
+	end
+end
+
+-- O ladrão chegou na própria base.
+function Stealing.entregar(ladrao)
+	local robo = ladrao.carregando
+	if not robo then
+		return
+	end
+	local vaga = Game.vagaLivre(ladrao)
+	if not vaga then
+		Stealing.falhar(ladrao, "Sua base está cheia! O robô voltou para o dono.")
+		return
+	end
+	local dono = robo.dono
+	local nome = nomeDo(robo)
+	Stealing.desprender(robo)
+	Game.tirarDaBase(robo)
+	Game.colocarNaBase(ladrao, robo, vaga, false)
+
+	Game.notificar(ladrao.player, "Você roubou " .. nome .. "!", "bom")
+	if dono then
+		Game.notificar(dono.player, ladrao.player.DisplayName .. " roubou seu " .. nome .. "!", "ruim")
+	end
+end
+
+function Stealing.vigiar()
+	for ladrao in pairs(ladroes) do
+		local robo = ladrao.carregando
+		if not robo then
+			ladroes[ladrao] = nil
+		else
+			local raiz = Game.raizDe(ladrao.player)
+			if not raiz then
+				Stealing.falhar(ladrao, "Você caiu e o robô voltou para o dono.")
+			elseif os.clock() - robo.inicioRoubo > Config.ROUBO.TEMPO_MAXIMO then
+				Stealing.falhar(ladrao, "Demorou demais! O robô fugiu de volta para o dono.")
+			elseif MapBuilder.dentroDaBase(ladrao.base, raiz.Position, -1) then
+				Stealing.entregar(ladrao)
+			end
+		end
+	end
+end
+
+-- Tapa -------------------------------------------------------------------------
+
+function Stealing.darTapa(player)
+	local mochila = player:FindFirstChildOfClass("Backpack")
+	local personagem = player.Character
+	if not mochila then
+		return
+	end
+	if mochila:FindFirstChild("Tapa") or (personagem and personagem:FindFirstChild("Tapa")) then
+		return
+	end
+
+	local ferramenta = Instance.new("Tool")
+	ferramenta.Name = "Tapa"
+	ferramenta.ToolTip = "Clique para dar um tapa: faz o ladrão soltar o robô"
+	ferramenta.CanBeDropped = false
+	ferramenta.RequiresHandle = true
+
+	local mao = Instance.new("Part")
+	mao.Name = "Handle"
+	mao.Shape = Enum.PartType.Ball
+	mao.Size = Vector3.new(1.3, 1.3, 1.3)
+	mao.Color = Color3.fromRGB(230, 50, 50)
+	mao.Material = Enum.Material.SmoothPlastic
+	mao.CanCollide = false
+	mao.Massless = true
+	mao.Parent = ferramenta
+
+	ferramenta.Activated:Connect(function()
+		Stealing.tapa(player)
+	end)
+	ferramenta.Parent = mochila
+end
+
+local function efeitoDeTapa(posicao)
+	local estouro = Instance.new("Part")
+	estouro.Name = "Pa"
+	estouro.Shape = Enum.PartType.Ball
+	estouro.Size = Vector3.new(3, 3, 3)
+	estouro.CFrame = CFrame.new(posicao)
+	estouro.Anchored = true
+	estouro.CanCollide = false
+	estouro.CanTouch = false
+	estouro.CanQuery = false
+	estouro.Material = Enum.Material.Neon
+	estouro.Color = Color3.fromRGB(255, 255, 200)
+	estouro.Transparency = 0.3
+	estouro.Parent = workspace
+	Debris:AddItem(estouro, 0.2)
+end
+
+function Stealing.tapa(player)
+	local estado = Game.estados[player]
+	if not estado then
+		return
+	end
+	local instante = os.clock()
+	if instante - estado.ultimoTapa < Config.TAPA.RECARGA then
+		return
+	end
+	estado.ultimoTapa = instante
+
+	local raiz = Game.raizDe(player)
+	if not raiz then
+		return
+	end
+
+	local alvo, raizAlvo, melhor = nil, nil, math.huge
+	for outroPlayer, outro in pairs(Game.estados) do
+		if outro ~= estado then
+			local outraRaiz = Game.raizDe(outroPlayer)
+			if outraRaiz then
+				local delta = outraRaiz.Position - raiz.Position
+				local distancia = delta.Magnitude
+				if distancia <= Config.TAPA.ALCANCE and distancia < melhor then
+					if distancia < 3 or raiz.CFrame.LookVector:Dot(delta.Unit) > 0.2 then
+						alvo, raizAlvo, melhor = outro, outraRaiz, distancia
+					end
+				end
+			end
+		end
+	end
+	if not alvo then
+		return
+	end
+
+	local direcao = (raizAlvo.Position - raiz.Position) * Vector3.new(1, 0, 1)
+	if direcao.Magnitude < 0.1 then
+		direcao = raiz.CFrame.LookVector
+	end
+	direcao = direcao.Unit
+	Game.remotos.Empurrao:FireClient(alvo.player, direcao * Config.TAPA.FORCA)
+	efeitoDeTapa(raizAlvo.Position)
+
+	if alvo.carregando then
+		local nome = nomeDo(alvo.carregando)
+		Stealing.falhar(alvo, "Você levou um tapa de " .. player.DisplayName .. " e soltou o robô!")
+		Game.notificar(player, "PÁ! " .. alvo.player.DisplayName .. " soltou " .. nome .. "!", "bom")
+	end
+end
+
+-- Liga tudo ------------------------------------------------------------------
+
+function Stealing.iniciar()
+	Game.acoes.base = function(robo, player)
+		local estado = Game.estados[player]
+		if not estado or robo.estado ~= "base" then
+			return
+		end
+		if robo.dono == estado then
+			Stealing.vender(estado, robo)
+		else
+			Stealing.roubar(estado, robo)
+		end
+	end
+
+	-- o robô vai sumir enquanto alguém carrega (dono saiu ou renasceu)
+	Game.aoDestruirCarregado = function(robo)
+		local ladrao = robo.ladrao
+		Stealing.desprender(robo)
+		if ladrao then
+			Game.notificar(ladrao.player, "O robô que você carregava sumiu (o dono saiu ou renasceu).", "info")
+		end
+	end
+
+	-- o ladrão saiu do jogo com o robô na cabeça
+	Game.aoSairComCarga = function(ladrao)
+		Stealing.falhar(ladrao, nil)
+	end
+end
+
+return Stealing
+]]></ProtectedString></Properties></Item></Item></Item><Item class="StarterPlayer" referent="RBX00000000000000000000000000000013"><Properties><string name="Name">StarterPlayer</string></Properties><Item class="StarterPlayerScripts" referent="RBX00000000000000000000000000000012"><Properties><string name="Name">StarterPlayerScripts</string></Properties><Item class="Folder" referent="RBX00000000000000000000000000000011"><Properties><string name="Name">Client</string></Properties><Item class="LocalScript" referent="RBX0000000000000000000000000000000B"><Properties><string name="Name">Efeitos</string><ProtectedString name="Source"><![CDATA[--[[
+	Efeitos no jogador:
+	  - troca o texto do "segure E" para Vender (robô seu) ou Roubar (dos outros)
+	  - empurrão quando você leva um tapa
+	  - cores animadas dos robôs Arco-íris
+]]
+
+local CollectionService = game:GetService("CollectionService")
+local Players = game:GetService("Players")
+local ProximityPromptService = game:GetService("ProximityPromptService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
+
+local Remotos = ReplicatedStorage:WaitForChild("Remotos")
+local jogador = Players.LocalPlayer
+
+-- Texto do botão de interação
+ProximityPromptService.PromptShown:Connect(function(prompt)
+	if not prompt:GetAttribute("Robo") then
+		return
+	end
+	local donoId = prompt:GetAttribute("DonoId")
+	if donoId == nil then
+		prompt.ActionText = "Comprar"
+	elseif donoId == jogador.UserId then
+		prompt.ActionText = "Vender por " .. tostring(prompt:GetAttribute("Venda") or "")
+	else
+		prompt.ActionText = "Roubar"
+	end
+end)
+
+-- Empurrão do tapa
+Remotos:WaitForChild("Empurrao").OnClientEvent:Connect(function(velocidade)
+	local personagem = jogador.Character
+	local humanoid = personagem and personagem:FindFirstChildOfClass("Humanoid")
+	local raiz = personagem and personagem:FindFirstChild("HumanoidRootPart")
+	if not humanoid or not raiz or typeof(velocidade) ~= "Vector3" then
+		return
+	end
+	humanoid.PlatformStand = true
+	raiz.AssemblyLinearVelocity = velocidade + Vector3.new(0, 35, 0)
+	task.delay(0.7, function()
+		if humanoid.Parent then
+			humanoid.PlatformStand = false
+		end
+	end)
+end)
+
+-- Robôs Arco-íris
+local partesArcoiris = {}
+local function adicionar(parte)
+	partesArcoiris[parte] = true
+end
+local function remover(parte)
+	partesArcoiris[parte] = nil
+end
+for _, parte in ipairs(CollectionService:GetTagged("Arcoiris")) do
+	adicionar(parte)
+end
+CollectionService:GetInstanceAddedSignal("Arcoiris"):Connect(adicionar)
+CollectionService:GetInstanceRemovedSignal("Arcoiris"):Connect(remover)
+
+RunService.RenderStepped:Connect(function()
+	local matiz = (os.clock() * 0.25) % 1
+	local cor = Color3.fromHSV(matiz, 0.75, 1)
+	for parte in pairs(partesArcoiris) do
+		parte.Color = cor
+	end
+end)
+]]></ProtectedString></Properties></Item><Item class="LocalScript" referent="RBX0000000000000000000000000000000C"><Properties><string name="Name">HUD</string><ProtectedString name="Source"><![CDATA[--[[
+	Interface do jogador: dinheiro, renda, avisos, estado da base,
+	painéis de Renascer, Índice e Loja, e botões de teste no Studio.
+]]
+
+local MarketplaceService = game:GetService("MarketplaceService")
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
+
+local Shared = ReplicatedStorage:WaitForChild("Shared")
+local Config = require(Shared:WaitForChild("Config"))
+local Format = require(Shared:WaitForChild("Format"))
+local Remotos = ReplicatedStorage:WaitForChild("Remotos")
+
+local jogador = Players.LocalPlayer
+local playerGui = jogador:WaitForChild("PlayerGui")
+
+local FONTE = Enum.Font.FredokaOne
+local BRANCO = Color3.new(1, 1, 1)
+local FUNDO = Color3.fromRGB(22, 24, 34)
+local CORES_AVISO = {
+	bom = Color3.fromRGB(40, 160, 70),
+	ruim = Color3.fromRGB(190, 50, 50),
+	alerta = Color3.fromRGB(230, 140, 20),
+	info = Color3.fromRGB(40, 90, 170),
+}
+
+-- Ajudante para criar objetos com propriedades e filhos ---------------------
+local function novo(classe, props, filhos)
+	local objeto = Instance.new(classe)
+	for nome, valor in pairs(props or {}) do
+		if nome ~= "Parent" then
+			objeto[nome] = valor
+		end
+	end
+	for _, filho in ipairs(filhos or {}) do
+		filho.Parent = objeto
+	end
+	if props and props.Parent then
+		objeto.Parent = props.Parent
+	end
+	return objeto
+end
+
+local function cantos(raio)
+	return novo("UICorner", { CornerRadius = UDim.new(0, raio or 10) })
+end
+
+local function borda(cor, espessura)
+	return novo("UIStroke", { Color = cor or Color3.fromRGB(0, 0, 0), Thickness = espessura or 2, Transparency = 0.3 })
+end
+
+local function texto(props)
+	local base = {
+		BackgroundTransparency = 1,
+		Font = FONTE,
+		TextColor3 = BRANCO,
+		TextScaled = true,
+		Text = "",
+	}
+	for k, v in pairs(props) do
+		base[k] = v
+	end
+	return novo("TextLabel", base)
+end
+
+local tela = novo("ScreenGui", {
+	Name = "RoubaRoboHUD",
+	ResetOnSpawn = false,
+	ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
+	Parent = playerGui,
+})
+
+-- Coluna do topo: dinheiro, estado da base, carga, sorte e avisos -----------
+local topo = novo("Frame", {
+	Name = "Topo",
+	AnchorPoint = Vector2.new(0.5, 0),
+	Position = UDim2.new(0.5, 0, 0, 8),
+	Size = UDim2.new(0.92, 0, 0, 0),
+	AutomaticSize = Enum.AutomaticSize.Y,
+	BackgroundTransparency = 1,
+	Parent = tela,
+}, {
+	novo("UIListLayout", {
+		SortOrder = Enum.SortOrder.LayoutOrder,
+		HorizontalAlignment = Enum.HorizontalAlignment.Center,
+		Padding = UDim.new(0, 6),
+	}),
+	novo("UISizeConstraint", { MaxSize = Vector2.new(440, math.huge) }),
+})
+
+local placar = novo("Frame", {
+	Name = "Placar",
+	LayoutOrder = 1,
+	Size = UDim2.new(0, 300, 0, 72),
+	BackgroundColor3 = FUNDO,
+	BackgroundTransparency = 0.2,
+	Parent = topo,
+}, { cantos(14), borda(Color3.fromRGB(120, 255, 140), 2) })
+
+local rotuloDinheiro = texto({
+	Name = "Dinheiro",
+	Size = UDim2.new(1, -16, 0.6, 0),
+	Position = UDim2.new(0, 8, 0, 4),
+	Text = "$0",
+	TextColor3 = Color3.fromRGB(140, 255, 150),
+	Parent = placar,
+})
+local rotuloRenda = texto({
+	Name = "Renda",
+	Size = UDim2.new(1, -16, 0.32, 0),
+	Position = UDim2.new(0, 8, 0.62, 0),
+	Text = "+$0/s",
+	TextColor3 = Color3.fromRGB(255, 230, 110),
+	Parent = placar,
+})
+
+local function faixa(nome, ordem, cor)
+	local f = novo("Frame", {
+		Name = nome,
+		LayoutOrder = ordem,
+		Size = UDim2.new(1, 0, 0, 30),
+		BackgroundColor3 = cor,
+		BackgroundTransparency = 0.15,
+		Visible = false,
+		Parent = topo,
+	}, { cantos(10) })
+	local r = texto({
+		Size = UDim2.new(1, -16, 1, -6),
+		Position = UDim2.new(0, 8, 0, 3),
+		Parent = f,
+	})
+	return f, r
+end
+
+local faixaBase, rotuloBase = faixa("Base", 2, FUNDO)
+faixaBase.Visible = true
+local faixaCarga, rotuloCarga = faixa("Carga", 3, Color3.fromRGB(230, 120, 20))
+local faixaSorte, rotuloSorte = faixa("Sorte", 4, Color3.fromRGB(150, 60, 230))
+
+local avisos = novo("Frame", {
+	Name = "Avisos",
+	LayoutOrder = 5,
+	Size = UDim2.new(1, 0, 0, 0),
+	AutomaticSize = Enum.AutomaticSize.Y,
+	BackgroundTransparency = 1,
+	Parent = topo,
+}, {
+	novo("UIListLayout", { SortOrder = Enum.SortOrder.LayoutOrder, Padding = UDim.new(0, 4) }),
+})
+
+-- Avisos ---------------------------------------------------------------------
+local MAX_AVISOS = 4
+local contadorAvisos = 0
+
+local function mostrarAviso(mensagem, tipo)
+	contadorAvisos = contadorAvisos + 1
+	local caixa = novo("TextLabel", {
+		Name = "Aviso",
+		LayoutOrder = contadorAvisos,
+		Size = UDim2.new(1, 0, 0, 0),
+		AutomaticSize = Enum.AutomaticSize.Y,
+		BackgroundColor3 = CORES_AVISO[tipo] or CORES_AVISO.info,
+		BackgroundTransparency = 0.1,
+		Font = FONTE,
+		TextColor3 = BRANCO,
+		TextSize = 18,
+		TextWrapped = true,
+		Text = mensagem,
+		Parent = avisos,
+	}, {
+		cantos(8),
+		novo("UIPadding", {
+			PaddingTop = UDim.new(0, 6),
+			PaddingBottom = UDim.new(0, 6),
+			PaddingLeft = UDim.new(0, 10),
+			PaddingRight = UDim.new(0, 10),
+		}),
+	})
+
+	local lista = {}
+	for _, filho in ipairs(avisos:GetChildren()) do
+		if filho:IsA("TextLabel") then
+			table.insert(lista, filho)
+		end
+	end
+	table.sort(lista, function(a, b)
+		return a.LayoutOrder < b.LayoutOrder
+	end)
+	for i = 1, #lista - MAX_AVISOS do
+		lista[i]:Destroy()
+	end
+
+	task.delay(4.5, function()
+		if caixa.Parent then
+			local sumir = TweenService:Create(caixa, TweenInfo.new(0.4),
+				{ BackgroundTransparency = 1, TextTransparency = 1 })
+			sumir:Play()
+			sumir.Completed:Wait()
+			caixa:Destroy()
+		end
+	end)
+end
+
+Remotos:WaitForChild("Notificar").OnClientEvent:Connect(mostrarAviso)
+
+-- Botões da esquerda ---------------------------------------------------------
+local coluna = novo("Frame", {
+	Name = "Botoes",
+	AnchorPoint = Vector2.new(0, 0.5),
+	Position = UDim2.new(0, 12, 0.5, 0),
+	Size = UDim2.new(0, 150, 0, 0),
+	AutomaticSize = Enum.AutomaticSize.Y,
+	BackgroundTransparency = 1,
+	Parent = tela,
+}, {
+	novo("UIListLayout", { SortOrder = Enum.SortOrder.LayoutOrder, Padding = UDim.new(0, 8) }),
+})
+
+local function botao(pai, rotulo, cor, ordem, largura)
+	return novo("TextButton", {
+		Name = rotulo,
+		LayoutOrder = ordem or 1,
+		Size = largura or UDim2.new(1, 0, 0, 46),
+		BackgroundColor3 = cor,
+		AutoButtonColor = true,
+		Font = FONTE,
+		TextColor3 = BRANCO,
+		TextScaled = true,
+		Text = rotulo,
+		Parent = pai,
+	}, {
+		cantos(10),
+		borda(Color3.new(0, 0, 0), 2),
+		novo("UIPadding", { PaddingTop = UDim.new(0, 8), PaddingBottom = UDim.new(0, 8) }),
+	})
+end
+
+-- Painéis --------------------------------------------------------------------
+local paineis = {}
+
+local function painel(nome, titulo)
+	local p = novo("Frame", {
+		Name = nome,
+		AnchorPoint = Vector2.new(0.5, 0.5),
+		Position = UDim2.fromScale(0.5, 0.5),
+		Size = UDim2.new(0.9, 0, 0, 360),
+		BackgroundColor3 = FUNDO,
+		BackgroundTransparency = 0.05,
+		Visible = false,
+		ZIndex = 5,
+		Parent = tela,
+	}, {
+		cantos(16),
+		borda(Color3.fromRGB(255, 255, 255), 2),
+		novo("UISizeConstraint", { MaxSize = Vector2.new(520, 420) }),
+	})
+	texto({
+		Name = "Titulo",
+		Size = UDim2.new(1, -70, 0, 40),
+		Position = UDim2.new(0, 16, 0, 10),
+		Text = titulo,
+		TextXAlignment = Enum.TextXAlignment.Left,
+		ZIndex = 6,
+		Parent = p,
+	})
+	local fechar = botao(p, "X", Color3.fromRGB(190, 50, 50), 1, UDim2.new(0, 40, 0, 40))
+	fechar.Position = UDim2.new(1, -50, 0, 10)
+	fechar.ZIndex = 6
+	fechar.Activated:Connect(function()
+		p.Visible = false
+	end)
+	paineis[nome] = p
+	return p
+end
+
+local function abrir(nome)
+	for outro, p in pairs(paineis) do
+		p.Visible = (outro == nome) and not p.Visible
+	end
+end
+
+-- Painel Renascer
+local painelRenascer = painel("Renascer", "Renascer")
+local explicacao = texto({
+	Size = UDim2.new(1, -32, 0, 110),
+	Position = UDim2.new(0, 16, 0, 58),
+	TextScaled = false,
+	TextSize = 20,
+	TextWrapped = true,
+	TextXAlignment = Enum.TextXAlignment.Left,
+	TextYAlignment = Enum.TextYAlignment.Top,
+	ZIndex = 6,
+	Text = "Renascer zera seu dinheiro e seus robôs. Em troca você ganha +"
+		.. math.floor(Config.RENASCER.BONUS * 100) .. "% de dinheiro para sempre e a tranca da base dura "
+		.. Config.TRANCA.EXTRA_POR_RENASCIMENTO .. "s a mais.",
+	Parent = painelRenascer,
+})
+local rotuloCusto = texto({
+	Size = UDim2.new(1, -32, 0, 34),
+	Position = UDim2.new(0, 16, 0, 176),
+	TextColor3 = Color3.fromRGB(140, 255, 150),
+	ZIndex = 6,
+	Parent = painelRenascer,
+})
+local rotuloBonus = texto({
+	Size = UDim2.new(1, -32, 0, 30),
+	Position = UDim2.new(0, 16, 0, 214),
+	TextColor3 = Color3.fromRGB(255, 230, 110),
+	ZIndex = 6,
+	Parent = painelRenascer,
+})
+local botaoRenascer = botao(painelRenascer, "Renascer agora", Color3.fromRGB(150, 60, 230), 1,
+	UDim2.new(1, -32, 0, 56))
+botaoRenascer.Position = UDim2.new(0, 16, 1, -72)
+botaoRenascer.ZIndex = 6
+botaoRenascer.Activated:Connect(function()
+	Remotos:WaitForChild("Renascer"):FireServer()
+	painelRenascer.Visible = false
+end)
+
+-- Painel Índice
+local painelIndice = painel("Indice", "Índice de Robôs")
+local rotuloContagem = texto({
+	Size = UDim2.new(1, -32, 0, 24),
+	Position = UDim2.new(0, 16, 0, 52),
+	TextColor3 = Color3.fromRGB(200, 200, 220),
+	TextXAlignment = Enum.TextXAlignment.Left,
+	ZIndex = 6,
+	Parent = painelIndice,
+})
+local grade = novo("ScrollingFrame", {
+	Size = UDim2.new(1, -32, 1, -96),
+	Position = UDim2.new(0, 16, 0, 84),
+	BackgroundTransparency = 1,
+	BorderSizePixel = 0,
+	ScrollBarThickness = 8,
+	CanvasSize = UDim2.new(0, 0, 0, 0),
+	AutomaticCanvasSize = Enum.AutomaticSize.Y,
+	ZIndex = 6,
+	Parent = painelIndice,
+}, {
+	novo("UIGridLayout", {
+		CellSize = UDim2.new(0, 140, 0, 74),
+		CellPadding = UDim2.new(0, 8, 0, 8),
+		SortOrder = Enum.SortOrder.LayoutOrder,
+	}),
+})
+
+local cartas = {}
+for i, def in ipairs(Config.Robos) do
+	local raridade = Config.Raridades[def.raridade]
+	local carta = novo("Frame", {
+		Name = def.id,
+		LayoutOrder = i,
+		BackgroundColor3 = raridade.cor:Lerp(Color3.new(0, 0, 0), 0.55),
+		ZIndex = 7,
+		Parent = grade,
+	}, { cantos(8), borda(raridade.cor, 2) })
+	local nome = texto({
+		Size = UDim2.new(1, -8, 0.45, 0),
+		Position = UDim2.new(0, 4, 0, 4),
+		Text = "???",
+		ZIndex = 8,
+		Parent = carta,
+	})
+	texto({
+		Size = UDim2.new(1, -8, 0.25, 0),
+		Position = UDim2.new(0, 4, 0.48, 0),
+		Text = raridade.nome,
+		TextColor3 = raridade.cor:Lerp(BRANCO, 0.4),
+		ZIndex = 8,
+		Parent = carta,
+	})
+	texto({
+		Size = UDim2.new(1, -8, 0.22, 0),
+		Position = UDim2.new(0, 4, 0.75, 0),
+		Text = Format.dinheiro(def.renda) .. "/s",
+		TextColor3 = Color3.fromRGB(255, 230, 110),
+		ZIndex = 8,
+		Parent = carta,
+	})
+	cartas[def.id] = { carta = carta, nome = nome, def = def }
+end
+
+local function atualizarIndice()
+	local lista = jogador:GetAttribute("Descobertos") or ""
+	local descobertos = {}
+	for id in string.gmatch(lista, "[^,]+") do
+		descobertos[id] = true
+	end
+	local total = 0
+	for id, c in pairs(cartas) do
+		if descobertos[id] then
+			total = total + 1
+			c.nome.Text = c.def.nome
+		else
+			c.nome.Text = "???"
+		end
+	end
+	rotuloContagem.Text = "Descobertos: " .. total .. "/" .. #Config.Robos
+end
+
+-- Painel Loja (só aparece se houver itens configurados)
+local itensLoja = {}
+if Config.Loja.PASSE_DINHEIRO_EM_DOBRO ~= 0 then
+	table.insert(itensLoja, { nome = "Dinheiro em dobro (para sempre)", passe = Config.Loja.PASSE_DINHEIRO_EM_DOBRO })
+end
+for _, pacote in ipairs(Config.Loja.PACOTES) do
+	if pacote.id ~= 0 then
+		table.insert(itensLoja, {
+			nome = pacote.nome .. " (" .. pacote.minutos .. " min de renda)",
+			produto = pacote.id,
+		})
+	end
+end
+
+local painelLoja = nil
+if #itensLoja > 0 then
+	painelLoja = painel("Loja", "Loja")
+	local listaLoja = novo("Frame", {
+		Size = UDim2.new(1, -32, 1, -70),
+		Position = UDim2.new(0, 16, 0, 60),
+		BackgroundTransparency = 1,
+		ZIndex = 6,
+		Parent = painelLoja,
+	}, {
+		novo("UIListLayout", { SortOrder = Enum.SortOrder.LayoutOrder, Padding = UDim.new(0, 8) }),
+	})
+	for i, item in ipairs(itensLoja) do
+		local b = botao(listaLoja, item.nome, Color3.fromRGB(220, 160, 20), i, UDim2.new(1, 0, 0, 52))
+		b.ZIndex = 7
+		b.Activated:Connect(function()
+			if item.passe then
+				MarketplaceService:PromptGamePassPurchase(jogador, item.passe)
+			else
+				MarketplaceService:PromptProductPurchase(jogador, item.produto)
+			end
+		end)
+	end
+end
+
+-- Botões
+botao(coluna, "Renascer", Color3.fromRGB(150, 60, 230), 1).Activated:Connect(function()
+	abrir("Renascer")
+end)
+botao(coluna, "Índice", Color3.fromRGB(40, 110, 210), 2).Activated:Connect(function()
+	atualizarIndice()
+	abrir("Indice")
+end)
+if painelLoja then
+	botao(coluna, "Loja", Color3.fromRGB(220, 160, 20), 3).Activated:Connect(function()
+		abrir("Loja")
+	end)
+end
+if RunService:IsStudio() then
+	local teste = Remotos:WaitForChild("Teste")
+	botao(coluna, "Teste: +$", Color3.fromRGB(90, 90, 100), 10).Activated:Connect(function()
+		teste:FireServer("dinheiro")
+	end)
+	botao(coluna, "Teste: Sorte", Color3.fromRGB(90, 90, 100), 11).Activated:Connect(function()
+		teste:FireServer("sorte")
+	end)
+end
+
+-- Atualização da tela --------------------------------------------------------
+local valorDinheiro = nil
+local valorRenascimentos = nil
+
+local function dinheiroAtual()
+	return valorDinheiro and valorDinheiro.Value or 0
+end
+
+local function atualizar()
+	rotuloDinheiro.Text = Format.dinheiro(dinheiroAtual())
+	local renda = jogador:GetAttribute("RendaPorSegundo") or 0
+	local mult = jogador:GetAttribute("Multiplicador") or 1
+	local vagas = jogador:GetAttribute("Vagas") or ("0/" .. Config.VAGAS_POR_BASE)
+	rotuloRenda.Text = "+" .. Format.dinheiro(renda) .. "/s   ·   Robôs " .. vagas .. "   ·   " .. Format.multiplicador(mult)
+
+	local custo = jogador:GetAttribute("CustoRenascer") or Config.custoRenascer(0)
+	rotuloCusto.Text = "Custo: " .. Format.dinheiro(custo) .. "  (você tem " .. Format.dinheiro(dinheiroAtual()) .. ")"
+	local renascimentos = valorRenascimentos and valorRenascimentos.Value or 0
+	rotuloBonus.Text = "Bônus de renascimento: " .. Format.multiplicador(Config.multiplicador(renascimentos))
+		.. "  →  " .. Format.multiplicador(Config.multiplicador(renascimentos + 1))
+	local podeRenascer = dinheiroAtual() >= custo
+	botaoRenascer.BackgroundColor3 = podeRenascer and Color3.fromRGB(150, 60, 230) or Color3.fromRGB(80, 80, 90)
+	botaoRenascer.Text = podeRenascer and "Renascer agora" or "Falta dinheiro"
+
+	local carga = jogador:GetAttribute("Carregando")
+	faixaCarga.Visible = carga ~= nil
+	if carga then
+		rotuloCarga.Text = "Levando " .. carga .. " — corra até a SUA base!"
+	end
+
+	if painelIndice.Visible then
+		atualizarIndice()
+	end
+end
+
+local function atualizarContagens()
+	local agora = workspace:GetServerTimeNow()
+	local trancadaAte = jogador:GetAttribute("TrancadaAte") or 0
+	if trancadaAte > agora then
+		rotuloBase.Text = "Sua base está TRANCADA: " .. Format.tempo(trancadaAte - agora)
+		faixaBase.BackgroundColor3 = Color3.fromRGB(40, 140, 70)
+	else
+		rotuloBase.Text = "Base aberta! Pise no botão vermelho dela para trancar."
+		faixaBase.BackgroundColor3 = Color3.fromRGB(150, 50, 50)
+	end
+
+	local sorteAte = ReplicatedStorage:GetAttribute("HoraDaSorteAte") or 0
+	faixaSorte.Visible = sorteAte > agora
+	if faixaSorte.Visible then
+		rotuloSorte.Text = "HORA DA SORTE! " .. Format.tempo(sorteAte - agora)
+	end
+end
+
+jogador.AttributeChanged:Connect(atualizar)
+task.spawn(function()
+	local leaderstats = jogador:WaitForChild("leaderstats")
+	valorDinheiro = leaderstats:WaitForChild("Dinheiro")
+	valorRenascimentos = leaderstats:WaitForChild("Renascimentos")
+	valorDinheiro.Changed:Connect(atualizar)
+	valorRenascimentos.Changed:Connect(atualizar)
+	atualizar()
+end)
+
+atualizar()
+while true do
+	atualizarContagens()
+	task.wait(0.25)
+end
+]]></ProtectedString></Properties></Item></Item></Item></Item></roblox>
