@@ -11,11 +11,13 @@ Verifica o Rouba Robô sem abrir o Roblox Studio.
 Requisitos:  pip install lupa
 A lista da API (Full-API-Dump.json) é baixada uma vez e guardada em .cache/.
 
-Uso:  python3 ferramentas/teste/verificar.py
+Uso:  python3 ferramentas/teste/verificar.py <pasta-do-jogo>
+      (ex.: python3 ferramentas/teste/verificar.py lendas-elementais)
 """
 
 from __future__ import annotations
 
+import argparse
 import json
 import pathlib
 import re
@@ -25,7 +27,8 @@ import urllib.request
 AQUI = pathlib.Path(__file__).resolve().parent
 sys.path.insert(0, str(AQUI.parent))
 
-from montar_place import SRC, listar_scripts  # noqa: E402
+import montar_place  # noqa: E402
+from montar_place import listar_scripts, usar_jogo  # noqa: E402
 
 try:
     from lupa import lua51, luajit21
@@ -91,72 +94,13 @@ def checar_sintaxe() -> list[str]:
     compilar = lua.eval("function(fonte, nome) local f, e = loadstring(fonte, nome) return e end")
     erros = []
     for _, _, _, caminho in listar_scripts():
-        fonte = (SRC / caminho).read_text(encoding="utf-8")
+        fonte = (montar_place.SRC / caminho).read_text(encoding="utf-8")
         erro = compilar(fonte, "@" + caminho)
         if erro:
             erros.append(str(erro))
     return erros
 
 
-TESTES_RAPIDOS = r"""
-local Format, Config, Random = ...
-local falhas = {}
-local function igual(a, b, desc)
-  if a ~= b then table.insert(falhas, desc .. ": esperado " .. tostring(b) .. ", veio " .. tostring(a)) end
-end
-igual(Format.numero(0), "0", "numero 0")
-igual(Format.numero(999), "999", "numero 999")
-igual(Format.numero(1000), "1K", "numero 1000")
-igual(Format.numero(1500), "1,5K", "numero 1500")
-igual(Format.numero(12345), "12,3K", "numero 12345")
-igual(Format.numero(999999), "999K", "numero 999999")
-igual(Format.numero(2300000), "2,3M", "numero 2,3M")
-igual(Format.numero(1e9), "1B", "numero 1B")
-igual(Format.numero(-1500), "-1,5K", "numero negativo")
-igual(Format.dinheiro(25), "$25", "dinheiro")
-igual(Format.tempo(65), "1:05", "tempo")
-igual(Format.tempo(0.2), "0:01", "tempo arredonda pra cima")
-igual(Format.multiplicador(1), "x1", "mult 1")
-igual(Format.multiplicador(1.5), "x1,5", "mult 1,5")
-
--- catálogo consistente
-local ids = {}
-for i, r in ipairs(Config.Robos) do
-  if ids[r.id] then table.insert(falhas, "id repetido: " .. r.id) end
-  ids[r.id] = true
-  if not Config.Raridades[r.raridade] then table.insert(falhas, "raridade inválida: " .. r.id) end
-  if r.forma ~= "caixa" and r.forma ~= "barril" and r.forma ~= "bola" then table.insert(falhas, "forma inválida: " .. r.id) end
-  if r.preco <= 0 or r.renda <= 0 then table.insert(falhas, "preço/renda inválidos: " .. r.id) end
-  local anterior = Config.Robos[i - 1]
-  if anterior and anterior.preco >= r.preco then table.insert(falhas, "preço fora de ordem: " .. r.id) end
-end
-for raridade = 1, #Config.Raridades do
-  local tem = false
-  for _, r in ipairs(Config.Robos) do if r.raridade == raridade then tem = true end end
-  if not tem then table.insert(falhas, "raridade sem robôs: " .. raridade) end
-end
-
--- sorteio: Comum aparece mais que Secreto, e a sorte aumenta os raros
-local function contar(sorte)
-  local aleatorio = Random.new(42)
-  local c = {}
-  for _ = 1, 20000 do
-    local r, mut = Config.sortear(sorte, aleatorio)
-    c[r.raridade] = (c[r.raridade] or 0) + 1
-    if mut then c.mut = (c.mut or 0) + 1 end
-  end
-  return c
-end
-local normal, sorte = contar(1), contar(3)
-if not ((normal[1] or 0) > (normal[7] or 0) * 20) then table.insert(falhas, "Comum deveria ser muito mais frequente que Secreto") end
-if not ((sorte[5] or 0) > (normal[5] or 0) * 1.8) then table.insert(falhas, "Hora da Sorte deveria aumentar os Lendários") end
-local taxaMut = (normal.mut or 0) / 20000
-if taxaMut < 0.05 or taxaMut > 0.11 then table.insert(falhas, "taxa de mutação estranha: " .. taxaMut) end
-igual(Config.custoRenascer(0), 1000000, "custo renascer 0")
-igual(Config.custoRenascer(1), 5000000, "custo renascer 1")
-igual(Config.precoDe(Config.RoboPorId.parafusinho, "dourado"), 50, "preço com mutação")
-return falhas, normal
-"""
 
 
 # Chaves de texto usadas no código (Textos.luau precisa ter pt e en para todas)
@@ -175,35 +119,26 @@ PADROES_CHAVES = [
     r'quadroDeAviso\(mapa,\s*"[A-Za-z]+",[^\n]*\n?\s*"([a-z_]+)"',
 ]
 
-FAMILIAS = r"""
-local Config = ...
-local chaves = {}
-for _, tipo in ipairs({ "renda", "vagas", "tapa" }) do
-  table.insert(chaves, "melhoria_" .. tipo); table.insert(chaves, "efeito_" .. tipo)
-end
-for _, m in ipairs(Config.MISSOES) do table.insert(chaves, "missao_" .. m.tipo) end
-for _, p in ipairs(Config.LOJA.PACOTES) do table.insert(chaves, "pacote_" .. p.chave) end
-for _, p in ipairs(Config.LOJA.PASSES) do table.insert(chaves, "passe_" .. p.chave); table.insert(chaves, "desc_" .. p.chave) end
-for i = 1, 4 do table.insert(chaves, "passo" .. i) end
-return chaves
-"""
 
 
 def chaves_usadas() -> set[str]:
     chaves = set()
     for _, _, _, caminho in listar_scripts():
-        fonte = (SRC / caminho).read_text(encoding="utf-8")
+        fonte = (montar_place.SRC / caminho).read_text(encoding="utf-8")
         for padrao in PADROES_CHAVES:
             # ignora prefixos de nomes montados ("melhoria_" .. tipo): esses são conferidos em FAMILIAS
             chaves.update(re.findall(padrao + r'(?!\s*\.\.)', fonte))
     return chaves
 
 
-def checar_textos(lua, sim, config_mod) -> list[str]:
-    shared = sim.novaInstancia("Folder", True)
-    textos_mod = sim.criarScript("ModuleScript", "Textos", "shared/Textos.luau", shared)
-    dados = sim.requerer(textos_mod).dados
-    chaves = chaves_usadas() | set(lua.execute(FAMILIAS, sim.requerer(config_mod)).values())
+def checar_textos(lua, sim) -> list[str]:
+    pasta = sim.novaInstancia("Folder", True)
+    dados = sim.requerer(sim.criarScript("ModuleScript", "Textos", "shared/Textos.luau", pasta)).dados
+    config = sim.requerer(sim.criarScript("ModuleScript", "Config", "shared/Config.luau", pasta))
+    familias = montar_place.RAIZ / "teste" / "familias.lua"
+    chaves = chaves_usadas()
+    if familias.exists():
+        chaves |= set(lua.execute(familias.read_text(encoding="utf-8"))(config).values())
     problemas = []
     for chave in sorted(chaves):
         entrada = dados[chave]
@@ -218,21 +153,20 @@ def rodar(api: dict) -> int:
     lua = luajit21.LuaRuntime(unpack_returned_tuples=True)
     g = lua.globals()
     g.API = lua.table_from(api, recursive=True)
-    g.ler_arquivo = lambda caminho: (SRC / caminho).read_text(encoding="utf-8")
+    g.ler_arquivo = lambda caminho: (montar_place.SRC / caminho).read_text(encoding="utf-8")
     g.ARQUIVOS = lua.table_from([list(x) for x in listar_scripts()], recursive=True)
 
     sim = lua.execute((AQUI / "roblox_simulado.lua").read_text(encoding="utf-8"))
 
-    # testes rápidos de módulos puros
-    G = sim.G
-    shared = sim.novaInstancia("Folder", True)
-    config_mod = sim.criarScript("ModuleScript", "Config", "shared/Config.luau", shared)
-    format_mod = sim.criarScript("ModuleScript", "Format", "shared/Format.luau", shared)
-    falhas_rapidas, contagem = lua.execute(TESTES_RAPIDOS, sim.requerer(format_mod), sim.requerer(config_mod), G.Random)
-    falhas_rapidas = list(falhas_rapidas.values())
-    distribuicao = {int(k): v for k, v in contagem.items() if k != "mut"}
-    print(f"Sorteio em 20000 robôs (por raridade 1..7): {dict(sorted(distribuicao.items()))}")
-    problemas_textos = checar_textos(lua, sim, config_mod)
+    # testes rápidos do jogo (números, tabelas e contas, sem montar o mundo)
+    falhas_rapidas = []
+    caminho_rapidos = montar_place.RAIZ / "teste" / "rapidos.lua"
+    if caminho_rapidos.exists():
+        resultado_rapidos = lua.execute(caminho_rapidos.read_text(encoding="utf-8"))(sim)
+        falhas_rapidas = list((resultado_rapidos["falhas"] or {}).values())
+        if resultado_rapidos["info"]:
+            print(resultado_rapidos["info"])
+    problemas_textos = checar_textos(lua, sim)
     print(f"Textos: {len(chaves_usadas())} chaves encontradas no código, {len(problemas_textos)} problema(s)")
     for problema in problemas_textos:
         print("  FALHOU:", problema)
@@ -242,10 +176,10 @@ def rodar(api: dict) -> int:
     lua = luajit21.LuaRuntime(unpack_returned_tuples=True)
     g = lua.globals()
     g.API = lua.table_from(api, recursive=True)
-    g.ler_arquivo = lambda caminho: (SRC / caminho).read_text(encoding="utf-8")
+    g.ler_arquivo = lambda caminho: (montar_place.SRC / caminho).read_text(encoding="utf-8")
     g.ARQUIVOS = lua.table_from([list(x) for x in listar_scripts()], recursive=True)
     sim = lua.execute((AQUI / "roblox_simulado.lua").read_text(encoding="utf-8"))
-    cenario = lua.execute((AQUI / "cenario.lua").read_text(encoding="utf-8"))
+    cenario = lua.execute((montar_place.RAIZ / "teste" / "cenario.lua").read_text(encoding="utf-8"))
     from lupa.luajit21 import LuaError
 
     try:
@@ -287,6 +221,11 @@ def rodar(api: dict) -> int:
 
 
 def main() -> int:
+    analise = argparse.ArgumentParser(description=__doc__)
+    analise.add_argument("jogo", nargs="?", help="pasta do jogo (ex.: rouba-robo)")
+    argumentos = analise.parse_args()
+    raiz = usar_jogo(argumentos.jogo)
+    print(f"Jogo: {raiz.name}")
     erros = checar_sintaxe()
     print(f"Sintaxe: {len(listar_scripts())} arquivos, {len(erros)} erro(s)")
     for e in erros:
