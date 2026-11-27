@@ -109,6 +109,8 @@ PADROES_CHAVES = [
     r'Textos\.t\([^,()]+(?:\([^()]*\))?,\s*"([A-Za-z0-9_]+)"',
     r'notificar\([^,]+,\s*"(?:bom|ruim|alerta|info)",\s*"([A-Za-z0-9_]+)"',
     r'notificarTodos\("(?:bom|ruim|alerta|info)",\s*"([A-Za-z0-9_]+)"',
+    r'avisar\([^,]+,\s*"(?:bom|ruim|alerta|info)",\s*"([A-Za-z0-9_]+)"',
+    r'avisarTodos\("(?:bom|ruim|alerta|info)",\s*"([A-Za-z0-9_]+)"',
     r'falhar\([^,]+,\s*"([A-Za-z0-9_]+)"',
     r'linhaInfo\([^,]+,\s*\d+,\s*"([A-Za-z0-9_]+)"',
     r'SetAttribute\("Chave",\s*"([A-Za-z0-9_]+)"',
@@ -188,8 +190,10 @@ def rodar(api: dict) -> int:
         quantos_ok = resultado.ok
     except LuaError as erro:
         # o roteiro parou no meio (normalmente porque o jogo quebrou antes)
-        falhas = [f"o roteiro de teste parou: {erro}".split("\n")[0]]
-        quantos_ok = 0
+        parcial = sim.resultado
+        falhas = list(parcial.falhas.values()) if parcial is not None else []
+        falhas.append(f"o roteiro de teste parou: {erro}".split("\n")[0])
+        quantos_ok = parcial.ok if parcial is not None else 0
 
     erros = list(sim.erros.values())
     avisos = list(sim.avisos.values())

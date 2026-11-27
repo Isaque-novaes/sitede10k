@@ -275,14 +275,68 @@ Vector3.yAxis = v3(0, 1, 0)
 Vector3.zAxis = v3(0, 0, 1)
 
 local V2 = { __type = "Vector2" }
+local metodosV2 = {}
 local function v2(x, y)
 	return setmetatable({ X = x or 0, Y = y or 0 }, V2)
 end
 V2.__index = function(v, k)
 	if k == "Magnitude" then
 		return sqrt(v.X * v.X + v.Y * v.Y)
+	elseif k == "Unit" then
+		local m = sqrt(v.X * v.X + v.Y * v.Y)
+		return v2(v.X / m, v.Y / m)
+	end
+	local m = metodosV2[k]
+	if m then
+		return m
 	end
 	error(tostring(k) .. " is not a valid member of Vector2", 2)
+end
+V2.__newindex = function(_, k)
+	error(tostring(k) .. " cannot be assigned to (Vector2 é imutável)", 2)
+end
+V2.__add = function(a, b)
+	if typeof(a) ~= "Vector2" or typeof(b) ~= "Vector2" then
+		error("soma inválida com Vector2: " .. typeof(a) .. " + " .. typeof(b), 2)
+	end
+	return v2(a.X + b.X, a.Y + b.Y)
+end
+V2.__sub = function(a, b)
+	if typeof(a) ~= "Vector2" or typeof(b) ~= "Vector2" then
+		error("subtração inválida com Vector2: " .. typeof(a) .. " - " .. typeof(b), 2)
+	end
+	return v2(a.X - b.X, a.Y - b.Y)
+end
+V2.__mul = function(a, b)
+	if type(a) == "number" then
+		return v2(a * b.X, a * b.Y)
+	elseif type(b) == "number" then
+		return v2(a.X * b, a.Y * b)
+	elseif typeof(a) == "Vector2" and typeof(b) == "Vector2" then
+		return v2(a.X * b.X, a.Y * b.Y)
+	end
+	error("multiplicação inválida com Vector2", 2)
+end
+V2.__div = function(a, b)
+	if type(b) == "number" then
+		return v2(a.X / b, a.Y / b)
+	end
+	return v2(a.X / b.X, a.Y / b.Y)
+end
+V2.__unm = function(a)
+	return v2(-a.X, -a.Y)
+end
+V2.__eq = function(a, b)
+	return a.X == b.X and a.Y == b.Y
+end
+V2.__tostring = function(v)
+	return string.format("%g, %g", v.X, v.Y)
+end
+function metodosV2.Dot(a, b)
+	return a.X * b.X + a.Y * b.Y
+end
+function metodosV2.Lerp(a, b, t)
+	return a + (b - a) * t
 end
 local Vector2 = {
 	new = function(x, y)
@@ -290,6 +344,7 @@ local Vector2 = {
 	end,
 }
 Vector2.zero = v2(0, 0)
+Vector2.one = v2(1, 1)
 
 -- CFrame: posição + matriz de rotação 3x3 (linhas)
 local CF = { __type = "CFrame" }
@@ -1162,6 +1217,20 @@ InstMT.__newindex = function(obj, chave, valor)
 		dispararMudanca(obj, "Position")
 		return
 	end
+	if chave == "Health" and eh(d.classe, "Humanoid") then
+		local maxima = d.props.MaxHealth or 100
+		valor = math.max(0, math.min(valor, maxima))
+		local antes = d.props.Health or maxima
+		d.props.Health = valor
+		dispararMudanca(obj, chave, valor)
+		if d.sinais.HealthChanged then
+			Sim.disparar(d.sinais.HealthChanged, valor)
+		end
+		if valor <= 0 and antes > 0 and d.sinais.Died then
+			Sim.disparar(d.sinais.Died)
+		end
+		return
+	end
 	d.props[chave] = valor
 	dispararMudanca(obj, chave, valor)
 end
@@ -1468,11 +1537,39 @@ metodo("Players", "GetPlayerFromCharacter", function(self, personagem)
 	end
 	return nil
 end)
+metodo("Humanoid", "TakeDamage", function(self, dano)
+	if type(dano) ~= "number" or dano ~= dano then
+		error("TakeDamage espera um número", 2)
+	end
+	local d = internos[self]
+	if d.props.Health == nil then
+		d.props.Health = d.props.MaxHealth or 100
+	end
+	self.Health = d.props.Health - dano
+end)
+metodo("Humanoid", "MoveTo", function() end)
+metodo("Player", "LoadCharacterAsync", function(self)
+	if Sim.aoRenascer then
+		Sim.aoRenascer(self)
+	end
+end)
 metodo("Player", "Kick", function(self, mensagem)
 	table.insert(Sim.expulsos, { jogador = self, mensagem = mensagem })
 end)
 
 -- RunService
+metodo("UserInputService", "GetMouseLocation", function()
+	return Sim.posicaoDoMouse or v2(640, 360)
+end)
+metodo("Camera", "ViewportPointToRay", function(self, x, y)
+	-- raio simples: sai da câmera na direção que o teste pedir
+	local direcao = Sim.direcaoDoMouse or v3(0, 0, -1)
+	local d = internos[self]
+	local origem = (d.props.CFrame and d.props.CFrame.Position) or v3(0, 10, 0)
+	_ = x
+	_ = y
+	return { Origin = origem, Direction = direcao }
+end)
 metodo("RunService", "IsStudio", function()
 	return Sim.estudio
 end)
@@ -2008,7 +2105,16 @@ function Sim.removerJogador(p)
 	destruir(p)
 end
 
+-- Quando o jogo chama player:LoadCharacter(), nasce um personagem no
+-- último lugar onde esse jogador nasceu.
+Sim.aoRenascer = function(p)
+	local onde = Sim.ondeNasceu and Sim.ondeNasceu[p] or Sim.Vector3.new(0, 5, 0)
+	Sim.criarPersonagem(p, onde)
+end
+Sim.ondeNasceu = setmetatable({}, { __mode = "k" })
+
 function Sim.criarPersonagem(p, posicao)
+	Sim.ondeNasceu[p] = posicao
 	local modelo = novaInstancia("Model", true)
 	internos[modelo].props.Name = p.Name
 	local raiz = Instance.new("Part")
@@ -2021,6 +2127,8 @@ function Sim.criarPersonagem(p, posicao)
 	cabeca.CFrame = cf(posicao.X, posicao.Y + 1.5, posicao.Z)
 	cabeca.Parent = modelo
 	local humanoid = Instance.new("Humanoid")
+	internos[humanoid].props.MaxHealth = 100
+	internos[humanoid].props.Health = 100
 	humanoid.Parent = modelo
 	modelo.PrimaryPart = raiz
 	-- a mochila é limpa a cada nascimento

@@ -1,0 +1,79 @@
+--[[
+	Ranking global: os 10 jogadores de nível mais alto. Fica no quadro da
+	Vila Central e é atualizado a cada 2 minutos.
+
+	Usa um OrderedDataStore. No Studio sem acesso às APIs, o quadro só
+	mostra "Carregando...".
+]]
+
+local DataStoreService = game:GetService("DataStoreService")
+local Players = game:GetService("Players")
+
+local Ranking = {}
+
+local LINHAS = 10
+local nomes = {} -- cache de userId -> nome
+
+local ordenado = nil
+pcall(function()
+	ordenado = DataStoreService:GetOrderedDataStore("RankingNivel_v1")
+end)
+
+-- Guarda nível e XP num número só, para ordenar direito: nivel * 1e6 + xp
+function Ranking.registrar(player, nivel, xp)
+	if not ordenado then
+		return
+	end
+	local valor = math.floor(math.min((tonumber(nivel) or 1) * 1e6 + math.min(tonumber(xp) or 0, 999999), 9e18))
+	pcall(function()
+		ordenado:SetAsync("u_" .. player.UserId, valor)
+	end)
+end
+
+local function nomeDe(userId)
+	if nomes[userId] then
+		return nomes[userId]
+	end
+	local player = Players:GetPlayerByUserId(userId)
+	if player then
+		nomes[userId] = player.DisplayName
+		return nomes[userId]
+	end
+	local ok, nome = pcall(function()
+		return Players:GetNameFromUserIdAsync(userId)
+	end)
+	if ok and type(nome) == "string" then
+		nomes[userId] = nome
+		return nome
+	end
+	return "?"
+end
+
+-- Escreve os resultados como atributos no quadro; cada jogador desenha
+-- no seu idioma (R1Nome, R1Valor, ..., RTotal).
+function Ranking.atualizar(quadro)
+	if not ordenado or not quadro then
+		return
+	end
+	local ok, pagina = pcall(function()
+		return ordenado:GetSortedAsync(false, LINHAS):GetCurrentPage()
+	end)
+	if not ok or type(pagina) ~= "table" then
+		return
+	end
+	local total = 0
+	for i, entrada in ipairs(pagina) do
+		if i > LINHAS then
+			break
+		end
+		local userId = tonumber(string.sub(tostring(entrada.key), 3))
+		if userId then
+			total = total + 1
+			quadro:SetAttribute("R" .. total .. "Nome", nomeDe(userId))
+			quadro:SetAttribute("R" .. total .. "Valor", math.floor((tonumber(entrada.value) or 0) / 1e6))
+		end
+	end
+	quadro:SetAttribute("RTotal", total)
+end
+
+return Ranking
